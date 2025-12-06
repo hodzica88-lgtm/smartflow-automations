@@ -4,101 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Onboarding – SmartFlow Automations</title>
-    <link rel="stylesheet" href="styles/style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f8f9fc;
+            color: #222;
+        }
+
+        header {
+            background: #0a2540;
+            padding: 20px;
+            color: #fff;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 15px;
+            display: block;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #0a2540;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            margin-top: 25px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0d335c;
+        }
+
+        .success-msg {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #e7ffe7;
+            color: #0c7a0c;
+            border: 1px solid #0c7a0c;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<header class="header">
-    <div class="container header-inner">
-        <a href="index.html" class="logo-text">SmartFlow Automations</a>
-    </div>
+<header>
+    SmartFlow Automations – Kunden Onboarding
 </header>
 
-<main class="page-section">
-    <div class="container">
-        <h1>SmartFlow Onboarding</h1>
-        <p>Bitte fülle das folgende Formular aus, damit wir deinen KI-Assistenten optimal einrichten können.</p>
+<div class="container">
+    <h2>Kundendaten aufnehmen</h2>
 
-        <form class="onboarding-form" method="POST" action="https://formsubmit.co/hodzica88@gmail.com" enctype="multipart/form-data">
+    <form id="onboardingForm">
 
-            <h2>Allgemeine Informationen</h2>
-            <label>Geschäftsname:
-                <input type="text" name="Business Name" required>
-            </label>
+        <label>Geschäftsname</label>
+        <input type="text" name="business_name" required>
 
-            <label>Branche:
-                <input type="text" name="Branche" required>
-            </label>
+        <label>Kontaktperson</label>
+        <input type="text" name="contact_person" required>
 
-            <label>Standort / Adresse:
-                <input type="text" name="Adresse">
-            </label>
+        <label>E-Mail-Adresse</label>
+        <input type="email" name="email" required>
 
-            <h2>Öffnungszeiten</h2>
-            <label>Öffnungszeiten:
-                <textarea name="Öffnungszeiten" rows="3"></textarea>
-            </label>
+        <label>Telefonnummer / WhatsApp</label>
+        <input type="text" name="phone" required>
 
-            <h2>Dienstleistungen</h2>
-            <label>Dienstleistungen + Preise:
-                <textarea name="Dienstleistungen" rows="4"></textarea>
-            </label>
+        <label>Website (optional)</label>
+        <input type="url" name="website">
 
-            <h2>Logo (optional)</h2>
-            <label>Logo Upload:
-                <input type="file" name="Logo">
-            </label>
+        <label>Branche</label>
+        <input type="text" name="industry" required>
 
-            <h2>Online Auftritte</h2>
-            <label>Website:
-                <input type="url" name="Website">
-            </label>
+        <label>Dienstleistungen & Preise</label>
+        <textarea name="services"></textarea>
 
-            <label>Social Media Links:
-                <textarea name="Social Media" rows="3"></textarea>
-            </label>
+        <label>Öffnungszeiten</label>
+        <textarea name="hours"></textarea>
 
-            <h2>Kommunikation</h2>
-            <label>Wie soll dein Assistent sprechen?
-                <select name="Tonalität">
-                    <option value="Du">Du – freundlich & locker</option>
-                    <option value="Sie">Sie – professionell & respektvoll</option>
-                </select>
-            </label>
+        <label>Social Media Links</label>
+        <textarea name="socials"></textarea>
 
-            <h2>Kalender</h2>
-            <label>Google / Outlook Kalenderlink:
-                <input type="url" name="Kalenderlink">
-            </label>
+        <label>Bevorzugte Tonalität</label>
+        <select name="tone">
+            <option value="Du">Du</option>
+            <option value="Sie">Sie</option>
+        </select>
 
-            <h2>Kontaktinformationen</h2>
-            <label>WhatsApp oder Telefonnummer:
-                <input type="text" name="WhatsApp / Telefon">
-            </label>
+        <label>Zielgruppe</label>
+        <textarea name="audience"></textarea>
 
-            <h2>Zielkunden</h2>
-            <label>Beschreibe deine Zielgruppe:
-                <textarea name="Zielgruppe" rows="3"></textarea>
-            </label>
+        <label>Kalenderlink</label>
+        <input type="url" name="calendar">
 
-            <h2>Weitere Hinweise</h2>
-            <label>Besondere Wünsche oder Hinweise:
-                <textarea name="Hinweise" rows="4"></textarea>
-            </label>
+        <label>Besondere Hinweise</label>
+        <textarea name="notes"></textarea>
 
-            <button type="submit" class="cta-button">Onboarding absenden</button>
+        <button type="submit">Daten absenden</button>
+    </form>
 
-            <input type="hidden" name="_captcha" value="false">
-        </form>
-
+    <div class="success-msg" id="successMessage">
+        ✔ Ihre Daten wurden erfolgreich übermittelt!  
+        Wir melden uns in Kürze.
     </div>
-</main>
+</div>
 
-<footer class="footer">
-    <div class="container footer-inner">
-        <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
-    </div>
-</footer>
+<script>
+document.getElementById("onboardingForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    console.log("Onboarding Daten:", data);
+
+    // AN DIESER STELLE WIRD SPÄTER DIE NOTION-API VERBINDUNG EINGEBAUT
+    // --> Block C2: Automatische CRM-Befüllung
+
+    document.getElementById("successMessage").style.display = "block";
+    this.reset();
+
+    // Optional: automatische Weiterleitung
+    // window.location.href = "danke.html";
+});
+</script>
 
 </body>
 </html>
