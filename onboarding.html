@@ -153,16 +153,31 @@ document.getElementById("onboardingForm").addEventListener("submit", async funct
     const formData = new FormData(this);
     const data = Object.fromEntries(formData.entries());
 
-    console.log("Onboarding Daten:", data);
+    // Make Webhook URL
+    const webhookUrl = "https://hook.eu1.make.com/7umjv7kuro6niw45pk8g8q0wv6rrkuoo";
 
-    // AN DIESER STELLE WIRD SPÄTER DIE NOTION-API VERBINDUNG EINGEBAUT
-    // --> Block C2: Automatische CRM-Befüllung
+    try {
+        const response = await fetch(webhookUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
 
-    document.getElementById("successMessage").style.display = "block";
-    this.reset();
+        if (response.ok) {
+            const msg = document.getElementById("successMessage");
+            if (msg) msg.style.display = "block";
+            this.reset();
+        } else {
+            alert("Es ist ein Fehler beim Senden passiert.");
+            console.error(await response.text());
+        }
 
-    // Optional: automatische Weiterleitung
-    // window.location.href = "danke.html";
+    } catch (err) {
+        alert("Verbindungsfehler. Bitte später erneut versuchen.");
+        console.error(err);
+    }
 });
 </script>
 
