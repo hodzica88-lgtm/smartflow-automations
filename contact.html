@@ -16,15 +16,15 @@
 
 <main class="page-section">
     <div class="container">
+
         <h1>Kontakt</h1>
 
-        <p>Du hast Fragen oder möchtest den KI-Terminservice testen?  
-        Fülle einfach das Formular aus – wir melden uns persönlich bei dir.</p>
+        <p class="contact-header-text">
+            Du hast Fragen oder möchtest den KI-Terminservice testen?
+            Fülle einfach das Formular aus – wir melden uns persönlich bei dir.
+        </p>
 
-        <!-- FORMULAR CARD -->
-        <div class="form-card">
-            <h2>Nachricht senden</h2>
-
+        <div class="contact-form-wrapper">
             <form id="smartflow-form" action="https://hook.eu1.make.com/7umjv7kuro6niw45pk8g8q0wv6rrkuoo" method="POST">
 
                 <label for="business">Geschäftsname *</label>
@@ -53,32 +53,11 @@
 
                 <button type="submit" class="btn-primary">Absenden</button>
             </form>
+
+            <p id="form-success" style="display:none; color: #4fff8f; margin-top: 15px; text-align:center;">
+                Vielen Dank! Ihre Anfrage wurde erfolgreich gesendet.
+            </p>
         </div>
-
-        <p id="form-success" style="display:none; color: green; text-align:center; font-size:18px; margin-top:20px;">
-            Vielen Dank! Deine Anfrage wurde erfolgreich gesendet.  
-            Wir melden uns in Kürze bei dir.
-        </p>
-
-        <!-- FORMULAR SCRIPT -->
-        <script>
-        document.getElementById("smartflow-form").addEventListener("submit", function(e) {
-            e.preventDefault();
-            const form = e.target;
-
-            fetch(form.action, {
-                method: "POST",
-                body: new FormData(form)
-            })
-            .then(() => {
-                form.style.display = "none";
-                document.getElementById("form-success").style.display = "block";
-            })
-            .catch(() => {
-                alert("Fehler beim Senden der Anfrage.");
-            });
-        });
-        </script>
 
     </div>
 </main>
