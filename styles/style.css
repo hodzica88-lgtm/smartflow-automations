@@ -495,3 +495,18 @@ h2 {
     font-size: 1.1rem;
     border-radius: 10px;
 }
+#smartflow-form label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9); /* Heller gemacht */
+}
+.contact-form-wrapper {
+    max-width: 600px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.15); /* vorher 0.08 → heller! */
+    padding: 30px;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 25px rgba(0,0,0,0.25);
+}
