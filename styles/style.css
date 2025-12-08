@@ -411,3 +411,45 @@ h2 {
     font-size: 18px;
     text-align: center;
 }
+/* Kontaktseite Feintuning */
+.contact-header-text {
+    max-width: 700px;
+    margin: 0 auto 40px auto;
+    text-align: center;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.contact-form-wrapper {
+    max-width: 600px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 30px;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 25px rgba(0,0,0,0.25);
+}
+
+#smartflow-form label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+}
+
+#smartflow-form input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #999;
+    background: rgba(255,255,255,0.85);
+    box-sizing: border-box;
+}
+
+#smartflow-form button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 12px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+}
