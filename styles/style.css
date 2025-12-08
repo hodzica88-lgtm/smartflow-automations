@@ -345,3 +345,8 @@ h2 {
 }
 
 .cookie-inner a { color: var(--accent); }
+#smartflow-form {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 10px 0;
+}
