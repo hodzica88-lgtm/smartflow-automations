@@ -329,5 +329,19 @@ h2 {
     font-size: 0.8rem;
     color: var(--muted);
 }
+#smartflow-form label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
+
+#smartflow-form input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
 
 .cookie-inner a { color: var(--accent); }
