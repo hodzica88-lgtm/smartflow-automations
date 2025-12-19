@@ -510,3 +510,30 @@ h2 {
     backdrop-filter: blur(8px);
     box-shadow: 0 4px 25px rgba(0,0,0,0.25);
 }
+/* === SmartFlow SaaS Primary Button === */
+.btn-primary {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-radius: 10px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.25);
+    transition: all 0.25s ease;
+}
+
+/* Hover-Effekt – ruhig & hochwertig */
+.btn-primary:hover {
+    background: linear-gradient(135deg, #4338ca, #4f46e5);
+    box-shadow: 0 12px 32px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Klick-Zustand */
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
+}
