@@ -13,11 +13,15 @@
     return;
   }
 
-  // TEMP: Simulierter Flag-Wert (kommt später aus Backend)
+  // TEMP: Simulierte Modul-Flags (kommen später aus Backend)
   const flags = {
-    core: true
+    core: true,
+    whatsapp: false,
+    reviews: false,
+    reporting: false,
+    branchenpaket: false
   };
 
   console.log("SmartFlow CLIENT_ID:", clientId);
-  console.log("SmartFlow CORE aktiv:", flags.core);
+  console.log("SmartFlow FLAGS:", flags);
 })();
