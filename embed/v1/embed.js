@@ -13,5 +13,11 @@
     return;
   }
 
-  console.log("SmartFlow Embed geladen für CLIENT_ID:", clientId);
+  // TEMP: Simulierter Flag-Wert (kommt später aus Backend)
+  const flags = {
+    core: true
+  };
+
+  console.log("SmartFlow CLIENT_ID:", clientId);
+  console.log("SmartFlow CORE aktiv:", flags.core);
 })();
