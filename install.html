@@ -2,21 +2,22 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SmartFlow Automations – Installation</title>
 
-  <!-- Gleiche Styles wie /start (damit Farben/Design identisch sind) -->
-  <link rel="stylesheet" href="styles/style.css" />
-  <link rel="stylesheet" href="styles/responsive.css" />
+  <!-- IDENTISCH ZU /start -->
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/animations.css">
+  <link rel="stylesheet" href="styles/responsive.css">
 
-  <!-- Gleiche Scripts wie /start -->
   <script defer src="js/main.js"></script>
+  <script defer src="js/scroll-animations.js"></script>
   <script defer src="js/cookie-banner.js"></script>
 </head>
 
 <body>
 
-<!-- Cookie Banner (wie auf der Hauptseite) -->
+<!-- Cookie Banner (identisch) -->
 <div id="cookie-banner" class="cookie-banner hidden">
   <div class="cookie-inner">
     <p>
@@ -27,6 +28,7 @@
   </div>
 </div>
 
+<!-- Header (identisch) -->
 <header class="header">
   <div class="container header-inner">
     <div class="logo-wrap">
@@ -38,76 +40,79 @@
 
 <main>
 
-  <!-- HERO -->
-  <section class="hero fade-in">
-    <div class="container hero-inner">
+<!-- HERO (gleicher Look wie Start) -->
+<section class="hero fade-in">
+  <div class="container hero-inner">
+    <div class="hero-text">
       <h1>SmartFlow auf deiner Website aktivieren</h1>
-      <p class="hero-sub">
-        Du hast SmartFlow erfolgreich gebucht. Kopiere jetzt deinen Code und füge ihn einmal in deine Website ein –
-        danach arbeitet SmartFlow automatisch im Hintergrund.
+      <p>
+        Du hast SmartFlow erfolgreich gebucht.
+        Binde es jetzt einmal ein – danach arbeitet das System automatisch im Hintergrund.
       </p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- INSTALL -->
-  <section class="solution fade-in">
-    <div class="container">
-      <h2>Dein persönlicher SmartFlow-Code</h2>
-      <p class="section-lead">
-        Kopiere den folgenden Code und füge ihn auf deiner Website <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
-        Der Einbau dauert in der Regel weniger als 2 Minuten.
-      </p>
+<!-- INSTALL -->
+<section class="solution fade-in">
+  <div class="container">
+    <h2>Dein persönlicher SmartFlow-Code</h2>
+    <p class="section-lead">
+      Kopiere den folgenden Code und füge ihn auf deiner Website
+      <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
+      Der Einbau dauert weniger als 2 Minuten.
+    </p>
 
-      <!-- Code-Block (inline Styles nur für sicheren Kontrast, rest kommt aus deinem Theme) -->
-      <pre style="margin-top:24px; padding:22px; border-radius:14px; overflow:auto; background:#0b1020; color:#fff;">
-<code>&lt;script
+<pre><code>&lt;script
   src="https://smartflow-automations.de/embed/v1/embed.js"
   data-client="sf_0001"
   async&gt;
 &lt;/script&gt;</code></pre>
 
-      <p style="margin-top:14px; opacity:0.9;">
-        Kein Login. Keine Konfiguration. Nach dem Einfügen ist SmartFlow aktiv.
-      </p>
-    </div>
-  </section>
+    <p class="section-lead" style="margin-top:16px;">
+      Kein Login. Keine Konfiguration.  
+      Nach dem Einfügen ist SmartFlow aktiv.
+    </p>
+  </div>
+</section>
 
-  <!-- TEST -->
-  <section class="demo-placeholder fade-in">
-    <div class="container">
-      <h2>Live-Test</h2>
-      <p class="section-lead">
-        Sobald der Code in deiner Website eingebunden ist, kannst du hier eine Testanfrage senden
-        und sehen, wie SmartFlow reagiert.
-      </p>
+<!-- TEST -->
+<section class="demo-placeholder fade-in">
+  <div class="container">
+    <h2>Live-Test</h2>
+    <p>
+      Sobald der Code in deiner Website eingebunden ist, kannst du hier
+      eine Testanfrage senden und sehen, wie SmartFlow reagiert.
+    </p>
 
-      <div id="smartflow-form" style="margin-top:28px;"></div>
-    </div>
-  </section>
+    <div id="smartflow-form" style="margin-top:40px;"></div>
+  </div>
+</section>
 
-  <!-- WAS PASSIERT -->
-  <section class="features fade-in">
-    <div class="container">
-      <h2>Was jetzt automatisch passiert</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <h3>Automatische Antworten</h3>
-          <p>Anfragen werden rund um die Uhr beantwortet – auch nachts und am Wochenende.</p>
-        </div>
-        <div class="feature-card">
-          <h3>Terminabstimmung</h3>
-          <p>SmartFlow verarbeitet Terminwünsche, schlägt Zeiten vor und bestätigt automatisch.</p>
-        </div>
-        <div class="feature-card">
-          <h3>Erinnerungen</h3>
-          <p>Kunden erhalten automatische Erinnerungen – weniger No-Shows, mehr wahrgenommene Termine.</p>
-        </div>
+<!-- INFO -->
+<section class="features fade-in">
+  <div class="container">
+    <h2>Was jetzt automatisch passiert</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>Automatische Antworten</h3>
+        <p>Anfragen werden rund um die Uhr beantwortet – auch nachts und am Wochenende.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Terminabstimmung</h3>
+        <p>SmartFlow schlägt Termine vor und bestätigt sie automatisch.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Erinnerungen</h3>
+        <p>Kunden erhalten automatische Erinnerungen und erscheinen zuverlässiger.</p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
 </main>
 
+<!-- Footer (identisch) -->
 <footer class="footer">
   <div class="container footer-inner">
     <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
@@ -119,7 +124,7 @@
   </div>
 </footer>
 
-<!-- SMARTFLOW EMBED: lädt das Formular in #smartflow-form -->
+<!-- SMARTFLOW EMBED -->
 <script
   src="/embed/v1/embed.js"
   data-client="sf_0001"
