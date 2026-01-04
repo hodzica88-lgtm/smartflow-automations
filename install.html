@@ -2,112 +2,213 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>SmartFlow Installation</title>
+  <title>SmartFlow installieren</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    :root {
+      --primary: #2563eb;
+      --dark: #0b1020;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f5f7fb;
-      color: #111;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #eef2ff 0%, #f5f7fb 100%);
+      color: var(--text);
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 60px 20px;
+      padding: 80px 24px;
     }
 
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding-bottom: 40px;
     }
 
-    p {
+    .hero h1 {
+      font-size: 42px;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* CARD */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 40px;
+      margin-top: 50px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    .card p {
+      color: var(--muted);
       font-size: 16px;
-      line-height: 1.6;
     }
 
-    .box {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 30px;
-      margin-top: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
+    /* CODE BLOCK */
     pre {
-      background: #0b1020;
-      color: #ffffff;
-      padding: 20px;
-      border-radius: 8px;
+      background: var(--dark);
+      color: #fff;
+      padding: 24px;
+      border-radius: 12px;
       overflow-x: auto;
       font-size: 14px;
+      margin-top: 24px;
     }
 
-    .step {
-      margin-top: 20px;
+    .hint {
+      margin-top: 16px;
+      background: #eef2ff;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #1e3a8a;
     }
 
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 30px;
+    }
+
+    .feature {
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .feature h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    .feature p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* TEST */
     .test-area {
       margin-top: 40px;
     }
 
-    .hint {
-      background: #eef2ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
+    footer {
+      text-align: center;
+      padding: 40px 20px;
       font-size: 14px;
+      color: var(--muted);
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <h1>SmartFlow in deine Website einbinden</h1>
-  <p>
-    Füge den folgenden Code einmal in deine Website ein.  
-    Danach arbeitet SmartFlow automatisch im Hintergrund.
-  </p>
+    <!-- HERO -->
+    <section class="hero">
+      <h1>SmartFlow auf deiner Website aktivieren</h1>
+      <p>
+        Du hast SmartFlow erfolgreich gebucht.  
+        Binde es einmal ein – ab jetzt arbeitet das System automatisch im Hintergrund.
+      </p>
+    </section>
 
-  <div class="box">
-    <h2>1. Dein SmartFlow-Code</h2>
+    <!-- INSTALL -->
+    <section class="card">
+      <h2>1. Dein persönlicher SmartFlow-Code</h2>
+      <p>
+        Kopiere den folgenden Code und füge ihn auf deiner Website
+        <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
+        Der Einbau dauert weniger als 2 Minuten.
+      </p>
 
-    <pre><code>&lt;script
+      <pre><code>&lt;script
   src="https://smartflow-automations.de/embed/v1/embed.js"
   data-client="sf_0001"
   async&gt;
 &lt;/script&gt;</code></pre>
 
-    <div class="hint">
-      👉 Den Code bitte <strong>vor &lt;/body&gt;</strong> in deine Website einfügen.
-    </div>
+      <div class="hint">
+        Kein Login. Keine Konfiguration.  
+        Nach dem Einfügen ist SmartFlow sofort aktiv.
+      </div>
+    </section>
+
+    <!-- WHAT HAPPENS -->
+    <section class="card">
+      <h2>Was jetzt automatisch passiert</h2>
+
+      <div class="grid">
+        <div class="feature">
+          <h3>Automatische Antworten</h3>
+          <p>Anfragen werden rund um die Uhr beantwortet – auch nachts und am Wochenende.</p>
+        </div>
+
+        <div class="feature">
+          <h3>Terminabstimmung</h3>
+          <p>SmartFlow schlägt Termine vor und bestätigt sie automatisch.</p>
+        </div>
+
+        <div class="feature">
+          <h3>Erinnerungen</h3>
+          <p>Kunden erhalten automatische Erinnerungen – weniger No-Shows.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEST -->
+    <section class="card">
+      <h2>2. Live-Test</h2>
+      <p>
+        Nachdem der Code eingebunden ist, kannst du hier eine Testanfrage senden
+        und live sehen, wie SmartFlow reagiert.
+      </p>
+
+      <div id="smartflow-form" class="test-area"></div>
+    </section>
+
   </div>
 
-  <div class="box step">
-    <h2>2. Test</h2>
-    <p>
-      Nachdem du den Code eingebunden hast, kannst du hier eine Testanfrage senden
-      und sehen, wie SmartFlow reagiert.
-    </p>
+  <footer>
+    © 2025 SmartFlow Automations
+  </footer>
 
-    <div id="smartflow-form" class="test-area"></div>
-  </div>
-
-</div>
-
-<!-- SMARTFLOW EMBED -->
-<script
-  src="/embed/v1/embed.js"
-  data-client="sf_0001"
-  data-target="#smartflow-form"
-  async>
-</script>
+  <!-- SMARTFLOW EMBED -->
+  <script
+    src="/embed/v1/embed.js"
+    data-client="sf_0001"
+    data-target="#smartflow-form"
+    async>
+  </script>
 
 </body>
 </html>
