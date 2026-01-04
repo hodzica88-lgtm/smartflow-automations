@@ -1,177 +1,126 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartFlow Automations – KI-Terminservice</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartFlow Automations – Automatisierte Terminprozesse</title>
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles/style.css">
-    <link rel="stylesheet" href="styles/animations.css">
-    <link rel="stylesheet" href="styles/responsive.css">
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="styles/responsive.css">
 
-    <!-- Scripts -->
-    <script defer src="js/main.js"></script>
-    <script defer src="js/scroll-animations.js"></script>
-    <script defer src="js/cookie-banner.js"></script>
+  <script defer src="js/main.js"></script>
+  <script defer src="js/cookie-banner.js"></script>
 
-    <!-- SmartFlow Embed | v1 -->
-    <script
+  <!-- SmartFlow Embed -->
+  <script
     src="/embed/v1/embed.js"
     data-client="sf_0001"
-    async
-></script>
-
+    async>
+  </script>
 </head>
 
 <body>
 
 <!-- Cookie Banner -->
 <div id="cookie-banner" class="cookie-banner hidden">
-    <div class="cookie-inner">
-        <p>
-            Wir verwenden nur technisch notwendige Cookies, um diese Website bereitzustellen.
-            Weitere Informationen findest du in unserer
-            <a href="privacy.html">Datenschutzerklärung</a>.
-        </p>
-        <button id="cookie-accept" class="btn-primary small">OK</button>
-    </div>
+  <div class="cookie-inner">
+    <p>
+      Wir verwenden ausschließlich technisch notwendige Cookies.
+      <a href="privacy.html">Datenschutzerklärung</a>
+    </p>
+    <button id="cookie-accept" class="btn-primary small">OK</button>
+  </div>
 </div>
 
-<!-- Header -->
 <header class="header">
-    <div class="container header-inner">
-        <div class="logo-wrap">
-            <div class="logo"></div>
-            <span class="logo-text">SmartFlow Automations</span>
-        </div>
-
-        <nav class="nav">
-            <ul>
-                <li><a href="#" class="active">Home</a></li>
-            </ul>
-        </nav>
-
-        <div class="lang-switch">
-            <button class="lang-btn">DE</button>
-            <button class="lang-btn inactive">EN</button>
-        </div>
+  <div class="container header-inner">
+    <div class="logo-wrap">
+      <div class="logo"></div>
+      <span class="logo-text">SmartFlow Automations</span>
     </div>
+  </div>
 </header>
 
 <main>
 
 <!-- HERO -->
-<section class="hero fade-in">
-    <div class="container hero-inner">
-        <div class="hero-text">
-            <h1>24/7 KI-Terminservice für lokale Unternehmen</h1>
-            <p>
-                SmartFlow Automations beantwortet Anfragen, bucht Termine und sendet Erinnerungen –
-                vollautomatisch, damit du dich auf dein Kerngeschäft konzentrieren kannst.
-            </p>
-            <div class="hero-buttons">
-                <a href="#" class="btn-primary glow">Kostenlose Demo ansehen</a>
-                <a href="#" class="btn-secondary">Automatisierung live erleben</a>
-            </div>
-        </div>
-    </div>
+<section class="hero">
+  <div class="container hero-inner">
+    <h1>Automatisierte Terminprozesse für lokale Unternehmen</h1>
+    <p class="hero-sub">
+      SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch –
+      ohne Login, ohne Setup, ohne laufenden Aufwand.
+    </p>
+  </div>
 </section>
 
 <!-- PROBLEM -->
-<section class="problem fade-in">
-    <div class="container">
-        <h2>Warum gehen täglich wertvolle Termine verloren?</h2>
-        <div class="problem-grid">
-            <div class="problem-item">❌ Verpasste Anfragen außerhalb der Öffnungszeiten</div>
-            <div class="problem-item">❌ Unbeantwortete WhatsApp- & Social-Anfragen</div>
-            <div class="problem-item">❌ Kein automatisiertes Follow-up</div>
-            <div class="problem-item">❌ Manuelle Kalenderpflege</div>
-            <div class="problem-item">❌ No-Shows durch fehlende Erinnerungen</div>
-            <div class="problem-item">❌ Überlastete Mitarbeiter</div>
-        </div>
-    </div>
+<section class="problem">
+  <div class="container">
+    <h2>Warum Terminprozesse oft unnötig Zeit kosten</h2>
+    <ul class="problem-list">
+      <li>Unbeantwortete Anfragen außerhalb der Öffnungszeiten</li>
+      <li>Manuelle Terminabstimmungen</li>
+      <li>Vergessene Follow-ups</li>
+      <li>No-Shows durch fehlende Erinnerungen</li>
+    </ul>
+  </div>
 </section>
 
 <!-- SOLUTION -->
-<section class="solution fade-in">
-    <div class="container">
-        <h2>Wie SmartFlow Automations hilft</h2>
-        <p class="section-lead">
-            SmartFlow Automations übernimmt Anfragen, erklärt Leistungen,
-            schlägt freie Termine vor und bestätigt diese automatisch –
-            24/7, zuverlässig und ohne manuellen Aufwand.
-        </p>
-    </div>
+<section class="solution">
+  <div class="container">
+    <h2>Die Lösung: ein automatisierter Ablauf</h2>
+    <p>
+      SmartFlow arbeitet im Hintergrund und reagiert zuverlässig auf Anfragen,
+      schlägt Termine vor und bestätigt diese automatisch.
+    </p>
+  </div>
 </section>
 
-<!-- FEATURES -->
-<section class="features fade-in">
-    <div class="container">
-        <h2>Funktionen im Überblick</h2>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <h3>24/7 automatische Antworten</h3>
-                <p>Sofortige Reaktion auf Kundenanfragen – auch nachts & am Wochenende.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Automatische Terminvergabe</h3>
-                <p>Freie Zeitfenster werden erkannt und direkt gebucht.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Website- & Messenger-Integration</h3>
-                <p>Einfach einbinden – kein Login erforderlich.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Erinnerungen & Follow-ups</h3>
-                <p>Weniger No-Shows, mehr wahrgenommene Termine.</p>
-            </div>
-            <div class="feature-card">
-                <h3>Mehrsprachig vorbereitet</h3>
-                <p>Deutsch & Englisch strukturell vorbereitet.</p>
-            </div>
-            <div class="feature-card">
-                <h3>DSGVO-Basis</h3>
-                <p>Rechtliche Grundstruktur ist integriert.</p>
-            </div>
-        </div>
+<!-- FLOW -->
+<section class="flow">
+  <div class="container flow-grid">
+    <div class="flow-step">
+      <span>1</span>
+      <p>Anfrage wird gestellt</p>
     </div>
+    <div class="flow-step">
+      <span>2</span>
+      <p>System antwortet automatisch</p>
+    </div>
+    <div class="flow-step">
+      <span>3</span>
+      <p>Termin wird bestätigt & erinnert</p>
+    </div>
+  </div>
 </section>
 
-<!-- DEMO PLACEHOLDER -->
-<section class="demo-placeholder fade-in">
-    <div class="container">
-        <h2>Live-Demo</h2>
-        <div class="demo-box">
-            <p>[SmartFlow Demo-Widget wird hier eingebunden]</p>
-        </div>
-    </div>
-</section>
+<!-- FORM -->
+<section class="form-section">
+  <div class="container">
+    <h2>SmartFlow testen</h2>
+    <p class="form-lead">
+      Trage dich ein und erlebe, wie SmartFlow Anfragen automatisch verarbeitet.
+      Keine Einrichtung, kein Login.
+    </p>
 
-<!-- CTA -->
-<section class="cta fade-in">
-    <div class="container cta-inner">
-        <h2>Bereit für automatisierte Terminbuchungen?</h2>
-        <p>Starte mit einer kostenlosen Demo – ohne Login, ohne Verpflichtung.</p>
-        <div class="cta-buttons">
-            <a href="#" class="btn-primary glow">Demo ansehen</a>
-            <a href="#" class="btn-secondary">Mehr erfahren</a>
-        </div>
-    </div>
+    <!-- HIER erscheint das Formular über das Embed -->
+    <div id="smartflow-form"></div>
+  </div>
 </section>
 
 </main>
 
-<!-- Footer -->
 <footer class="footer">
-    <div class="container footer-inner">
-        <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
-        <div class="footer-links">
-            <a href="privacy.html">Datenschutz</a>
-            <a href="impressum.html">Impressum</a>
-            <a href="terms.html">AGB</a>
-        </div>
+  <div class="container footer-inner">
+    <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
+    <div class="footer-links">
+      <a href="privacy.html">Datenschutz</a>
+      <a href="impressum.html">Impressum</a>
+      <a href="terms.html">AGB</a>
     </div>
+  </div>
 </footer>
 
 </body>
