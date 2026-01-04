@@ -2,10 +2,10 @@
   "use strict";
 
   /* ======================================================
-     SmartFlow Embed v1 – FINAL (Launch / Free-Make Version)
+     SmartFlow Embed v1 – Kundenformular (Launch)
      ====================================================== */
 
-  /* ---------- 1) Script & Attribute ---------- */
+  /* ---------- 1) Script & Target ---------- */
   const script = document.currentScript;
   if (!script) return;
 
@@ -23,13 +23,9 @@
     return;
   }
 
-  /* ---------- 2) TEMP Flags (Backend folgt später) ---------- */
+  /* ---------- 2) TEMP Flags ---------- */
   const flags = {
-    core: true,
-    whatsapp: false,
-    reviews: false,
-    reporting: false,
-    branchenpaket: false
+    core: true
   };
 
   console.log("SmartFlow CLIENT_ID:", clientId);
@@ -43,14 +39,50 @@
   /* ---------- 3) Formular rendern ---------- */
   target.innerHTML = `
     <form id="sf-form" class="sf-form">
+
       <div class="sf-field">
-        <label>Name</label>
+        <label>Ihr Name *</label>
         <input type="text" name="name" required />
       </div>
 
       <div class="sf-field">
-        <label>E-Mail</label>
+        <label>E-Mail *</label>
         <input type="email" name="email" required />
+      </div>
+
+      <div class="sf-field">
+        <label>Unternehmen / Praxis *</label>
+        <input type="text" name="company" required />
+      </div>
+
+      <div class="sf-field">
+        <label>Telefonnummer (optional)</label>
+        <input type="tel" name="phone" />
+      </div>
+
+      <div class="sf-field">
+        <label>Branche *</label>
+        <select name="industry" required>
+          <option value="">Bitte auswählen</option>
+          <option>Handwerk</option>
+          <option>Gesundheit / Praxis</option>
+          <option>Gastronomie</option>
+          <option>Coaching / Beratung</option>
+          <option>Beauty / Kosmetik</option>
+          <option>Immobilien</option>
+          <option>Sonstiges</option>
+        </select>
+      </div>
+
+      <div class="sf-field">
+        <label>Website (optional)</label>
+        <input type="url" name="website" placeholder="https://"/>
+      </div>
+
+      <div class="sf-field">
+        <label>Kurzbeschreibung / Anliegen</label>
+        <textarea name="message" rows="3"
+          placeholder="Worum geht es bei Ihren Terminanfragen?"></textarea>
       </div>
 
       <button type="submit" class="sf-submit">
@@ -75,9 +107,14 @@
 
     const payload = {
       client_id: clientId,
-      name: form.querySelector('input[name="name"]').value,
-      email: form.querySelector('input[name="email"]').value,
-      source: "smartflow-embed",
+      name: form.name.value,
+      email: form.email.value,
+      company: form.company.value,
+      phone: form.phone.value || "",
+      industry: form.industry.value,
+      website: form.website.value || "",
+      message: form.message.value || "",
+      source: "smartflow-website",
       timestamp: new Date().toISOString()
     };
 
@@ -86,9 +123,7 @@
         "https://hook.eu1.make.com/xgggr96x1b611gobwsapyp32anne3q69",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         }
       );
@@ -97,11 +132,12 @@
 
       form.innerHTML = `
         <p class="sf-success">
-          ✅ Vielen Dank! Deine Anfrage wurde erfolgreich übermittelt.
+          ✅ Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.<br>
+          Sie erhalten in Kürze eine automatische Bestätigung.
         </p>
       `;
-    } catch (error) {
-      console.error("SmartFlow Submit Error:", error);
+    } catch (err) {
+      console.error("SmartFlow Submit Error:", err);
       submitBtn.disabled = false;
       submitBtn.innerText = "Erneut versuchen";
       alert("Beim Senden ist ein Fehler aufgetreten. Bitte später erneut versuchen.");
