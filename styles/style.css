@@ -1,17 +1,45 @@
 body {
   margin: 0;
   font-family: Inter, system-ui, sans-serif;
-  background: #0b0d12;
+  background: #070a12;
   color: #f1f1f6;
 }
 
-.bg-gradient {
+.bg {
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(600px at 20% 10%, rgba(108,92,255,0.25), transparent 60%),
-    radial-gradient(600px at 80% 20%, rgba(34,211,238,0.18), transparent 60%);
   z-index: -1;
+}
+
+.orb {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  filter: blur(80px);
+  opacity: 0.4;
+  border-radius: 50%;
+}
+
+.orb-a {
+  background: #6c5cff;
+  top: -200px;
+  left: -200px;
+}
+
+.orb-b {
+  background: #22d3ee;
+  top: -200px;
+  right: -200px;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.1;
 }
 
 .container {
@@ -20,79 +48,68 @@ body {
   padding: 40px 20px;
 }
 
-.header-inner {
+.header__inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.logo {
-  font-weight: 700;
-  font-size: 20px;
-}
-
 .hero {
-  margin-top: 100px;
-  text-align: center;
+  padding: 120px 0;
 }
 
-.badge {
-  display: inline-block;
+.hero__inner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 40px;
+}
+
+.pill {
+  background: rgba(255,255,255,0.08);
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.08);
   font-size: 13px;
-  margin-bottom: 16px;
-}
-
-.hero h1 {
-  font-size: 48px;
-  line-height: 1.1;
 }
 
 .hero h1 span {
   color: #6c5cff;
 }
 
-.hero-sub {
-  max-width: 640px;
-  margin: 20px auto 32px;
-  color: #cfcfe8;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #6c5cff, #22d3ee);
-  color: white;
-  padding: 14px 28px;
+.btn {
+  padding: 14px 26px;
   border-radius: 12px;
   text-decoration: none;
   font-weight: 600;
 }
 
-.btn-primary.large {
-  font-size: 16px;
+.btn--primary {
+  background: linear-gradient(135deg, #6c5cff, #22d3ee);
+  color: white;
 }
 
-.flow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin: 100px 0;
+.btn--ghost {
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
 }
 
-.flow-card {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 24px;
-  border-radius: 16px;
+.panel {
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
-.trust {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 80px;
-  color: #bdbde6;
+.chat .bubble {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.chat .in {
+  background: rgba(255,255,255,0.1);
+}
+
+.chat .out {
+  background: rgba(108,92,255,0.25);
 }
 
 .form-page {
@@ -100,36 +117,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
 }
 
-.form-card.highend {
-  width: 100%;
+.form-card.premium {
   max-width: 520px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 20px;
   padding: 40px;
-}
-
-input, textarea, button {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 16px;
-  background: #0b0d12;
-  border: 1px solid #333;
-  border-radius: 8px;
-  color: white;
-}
-
-button {
-  background: linear-gradient(135deg, #6c5cff, #22d3ee);
-  border: none;
-  cursor: pointer;
+  background: rgba(255,255,255,0.06);
+  border-radius: 20px;
 }
 
 .footer {
   text-align: center;
-  padding: 24px;
+  padding: 30px;
   color: #aaa;
 }
