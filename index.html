@@ -3,268 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartFlow Automations – Automatisierte Terminprozesse</title>
+  <title>SmartFlow Automations</title>
 
-  <meta name="description" content="SmartFlow Automations automatisiert Anfragen, Terminabstimmungen und Erinnerungen – ohne Login, ohne Setup, ohne laufenden Aufwand." />
-
-  <!-- Fonts (Premium, clean) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="styles/style.css" />
-
-  <!-- SmartFlow Embed (render target + fallback) -->
-  <script
-    src="/embed/v1/embed.js"
-    data-client="sf_0001"
-    data-target="#smartflow-form"
-    async>
-  </script>
-
-  <!-- Main JS -->
-  <script defer src="js/main.js"></script>
 </head>
 
 <body>
-  <!-- Background decor -->
-  <div class="bg">
-    <div class="orb orb-a"></div>
-    <div class="orb orb-b"></div>
-    <div class="grid"></div>
+
+<header class="header">
+  <div class="container">
+    <h1 class="logo">SmartFlow Automations</h1>
   </div>
+</header>
 
-  <!-- Cookie Banner -->
-  <div id="cookie-banner" class="cookie hidden" role="dialog" aria-live="polite" aria-label="Cookie Hinweis">
-    <div class="cookie__inner">
-      <p class="cookie__text" data-i18n="cookie_text">
-        Wir verwenden ausschließlich technisch notwendige Cookies. Weitere Informationen findest du in der
-        <a class="link" href="privacy.html">Datenschutzerklärung</a>.
-      </p>
-      <button id="cookie-accept" class="btn btn--primary btn--sm" data-i18n="cookie_ok">OK</button>
-    </div>
-  </div>
+<main class="container">
 
-  <!-- Header -->
-  <header class="header">
-    <div class="container header__inner">
-      <div class="brand" aria-label="SmartFlow Automations">
-        <div class="brand__mark" aria-hidden="true"></div>
-        <div class="brand__text">
-          <div class="brand__name">SmartFlow</div>
-          <div class="brand__sub">Automations</div>
-        </div>
-      </div>
+  <section class="hero">
+    <h2>Automatisierte Terminprozesse für lokale Unternehmen</h2>
+    <p>
+      SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch.
+      Ruhig. Standardisiert. Ohne Setup.
+    </p>
 
-      <nav class="nav" aria-label="Navigation">
-        <a class="nav__link" href="#how" data-i18n="nav_how">So funktioniert’s</a>
-        <a class="nav__link" href="#features" data-i18n="nav_features">Funktionen</a>
-        <a class="nav__link" href="#demo" data-i18n="nav_demo">Testen</a>
-      </nav>
+    <a href="/start.html" class="btn-primary">
+      SmartFlow testen
+    </a>
+  </section>
 
-      <div class="header__actions">
-        <div class="lang">
-          <button class="lang__btn is-active" data-lang="de" aria-label="Deutsch">DE</button>
-          <button class="lang__btn" data-lang="en" aria-label="English">EN</button>
-        </div>
-        <a class="btn btn--primary btn--sm" href="#demo" data-i18n="cta_top">Demo starten</a>
-      </div>
-    </div>
-  </header>
+  <section class="info">
+    <h3>Wie es funktioniert</h3>
+    <ul>
+      <li>Anfrage kommt rein</li>
+      <li>System antwortet automatisch</li>
+      <li>Termin wird bestätigt & erinnert</li>
+    </ul>
+  </section>
 
-  <main>
-    <!-- HERO -->
-    <section class="hero">
-      <div class="container hero__inner">
-        <div class="hero__copy">
-          <div class="pill" data-i18n="pill">Für lokale Unternehmen</div>
+</main>
 
-          <h1 class="h1" data-i18n="h1">
-            Automatisierte Terminprozesse – ruhig, zuverlässig, 24/7
-          </h1>
-
-          <p class="lead" data-i18n="lead">
-            SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch.
-            Ohne Login. Ohne Setup. Ohne laufenden Aufwand.
-          </p>
-
-          <div class="hero__cta">
-            <a class="btn btn--primary" href="#demo" data-i18n="cta_primary">Kostenlos testen</a>
-            <a class="btn btn--ghost" href="#how" data-i18n="cta_secondary">Kurz erklärt</a>
-          </div>
-
-          <div class="trust">
-            <div class="trust__item" data-i18n="trust_1">✓ Natürlich wirkender Ablauf</div>
-            <div class="trust__item" data-i18n="trust_2">✓ Standardisiert & skalierbar</div>
-            <div class="trust__item" data-i18n="trust_3">✓ DSGVO-Basis integriert</div>
-          </div>
-        </div>
-
-        <div class="hero__panel" aria-label="Vorschau">
-          <div class="panel">
-            <div class="panel__top">
-              <div class="dots" aria-hidden="true">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="panel__title" data-i18n="panel_title">Beispiel-Ablauf</div>
-            </div>
-
-            <div class="panel__body">
-              <div class="chat">
-                <div class="chat__row">
-                  <div class="bubble bubble--in" data-i18n="chat_in_1">Hi, ich hätte gern einen Termin.</div>
-                </div>
-                <div class="chat__row chat__row--out">
-                  <div class="bubble bubble--out" data-i18n="chat_out_1">Gern. Welche Uhrzeit passt dir? Ich kann dir Optionen vorschlagen.</div>
-                </div>
-                <div class="chat__row">
-                  <div class="bubble bubble--in" data-i18n="chat_in_2">Morgen Nachmittag wäre gut.</div>
-                </div>
-                <div class="chat__row chat__row--out">
-                  <div class="bubble bubble--out" data-i18n="chat_out_2">Perfekt. Ich habe 15:30 oder 16:15 frei. Was passt?</div>
-                </div>
-              </div>
-
-              <div class="panel__note" data-i18n="panel_note">
-                Kunden erleben einen einfachen, natürlichen Flow – ohne “Druck”, ohne unnötige Schritte.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- HOW -->
-    <section id="how" class="section">
-      <div class="container">
-        <div class="section__head">
-          <h2 class="h2" data-i18n="how_h2">So funktioniert SmartFlow</h2>
-          <p class="section__lead" data-i18n="how_lead">
-            Ein standardisierter Ablauf – für alle Kunden gleich. Einfach, wartbar, skalierbar.
-          </p>
-        </div>
-
-        <div class="steps">
-          <div class="card step">
-            <div class="step__num">1</div>
-            <h3 class="h3" data-i18n="step_1_title">Anfrage kommt rein</h3>
-            <p class="muted" data-i18n="step_1_text">Über Website-Formular oder Messenger – Anfragen gehen nicht mehr verloren.</p>
-          </div>
-
-          <div class="card step">
-            <div class="step__num">2</div>
-            <h3 class="h3" data-i18n="step_2_title">Automatische Antwort</h3>
-            <p class="muted" data-i18n="step_2_text">SmartFlow antwortet sofort, stellt Rückfragen und führt durch den Prozess.</p>
-          </div>
-
-          <div class="card step">
-            <div class="step__num">3</div>
-            <h3 class="h3" data-i18n="step_3_title">Bestätigung & Erinnerung</h3>
-            <p class="muted" data-i18n="step_3_text">Termin wird bestätigt und Erinnerungen reduzieren No-Shows automatisch.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- FEATURES -->
-    <section id="features" class="section section--soft">
-      <div class="container">
-        <div class="section__head">
-          <h2 class="h2" data-i18n="features_h2">Funktionen</h2>
-          <p class="section__lead" data-i18n="features_lead">
-            Fokus auf das Wesentliche: Anfragen, Terminprozesse, Follow-ups – zuverlässig automatisiert.
-          </p>
-        </div>
-
-        <div class="grid3">
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f1_title">24/7 automatische Antworten</h3>
-            <p class="muted" data-i18n="f1_text">Sofortige Reaktion – auch abends, nachts und am Wochenende.</p>
-          </div>
-
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f2_title">Automatische Terminabstimmung</h3>
-            <p class="muted" data-i18n="f2_text">Klare Vorschläge, strukturierter Ablauf, weniger Hin- und Her.</p>
-          </div>
-
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f3_title">Erinnerungen & Follow-ups</h3>
-            <p class="muted" data-i18n="f3_text">Weniger No-Shows, mehr wahrgenommene Termine.</p>
-          </div>
-
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f4_title">Standardisiert & skalierbar</h3>
-            <p class="muted" data-i18n="f4_text">Kein Sonderbau pro Kunde – ein System, saubere Wartung.</p>
-          </div>
-
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f5_title">Mehrsprachig</h3>
-            <p class="muted" data-i18n="f5_text">Deutsch/Englisch vorbereitet – auf Knopfdruck.</p>
-          </div>
-
-          <div class="card feature">
-            <h3 class="h3" data-i18n="f6_title">DSGVO-Basis</h3>
-            <p class="muted" data-i18n="f6_text">Rechtliche Grundstruktur integriert (Impressum/Datenschutz/AGB).</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DEMO / FORM -->
-    <section id="demo" class="section">
-      <div class="container">
-        <div class="section__head">
-          <h2 class="h2" data-i18n="demo_h2">Kostenlos testen</h2>
-          <p class="section__lead" data-i18n="demo_lead">
-            Trage dich ein und erlebe den Ablauf. Es ist bewusst leicht – ohne Druck, ohne komplizierte Schritte.
-          </p>
-        </div>
-
-        <div class="card formcard">
-          <!-- The embed should render into this container -->
-          <div id="smartflow-form" class="embed-slot" aria-live="polite">
-            <div class="embed-fallback">
-              <div class="spinner" aria-hidden="true"></div>
-              <p class="muted" data-i18n="loading">
-                Lade Formular…
-              </p>
-              <p class="muted small" data-i18n="loading_hint">
-                Falls hier nichts erscheint: bitte kurz neu laden (Inkognito) oder später erneut versuchen.
-              </p>
-            </div>
-          </div>
-
-          <div class="formcard__foot">
-            <p class="muted small" data-i18n="privacy_hint">
-              Mit dem Absenden akzeptierst du unsere <a class="link" href="privacy.html">Datenschutzerklärung</a>.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="container footer__inner">
-      <div class="footer__left">
-        <div class="brand brand--footer">
-          <div class="brand__mark" aria-hidden="true"></div>
-          <div class="brand__text">
-            <div class="brand__name">SmartFlow</div>
-            <div class="brand__sub">Automations</div>
-          </div>
-        </div>
-        <p class="muted small">© 2025 SmartFlow Automations – Hodzic Digital Services</p>
-      </div>
-
-      <div class="footer__right">
-        <a class="footer__link" href="privacy.html" data-i18n="footer_privacy">Datenschutz</a>
-        <a class="footer__link" href="impressum.html" data-i18n="footer_imprint">Impressum</a>
-        <a class="footer__link" href="terms.html" data-i18n="footer_terms">AGB</a>
-      </div>
-    </div>
-  </footer>
+<footer class="footer">
+  <p>© 2025 SmartFlow Automations</p>
+  <a href="/privacy.html">Datenschutz</a>
+</footer>
 
 </body>
 </html>
