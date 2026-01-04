@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartFlow Automations</title>
+  <title>SmartFlow Automations – KI-Terminservice</title>
+  <meta name="description" content="SmartFlow automatisiert Anfragen, Terminabstimmungen und Erinnerungen – ruhig, zuverlässig, 24/7." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,102 +14,222 @@
 </head>
 
 <body>
-
-<div class="bg">
-  <div class="orb orb-a"></div>
-  <div class="orb orb-b"></div>
-  <div class="grid"></div>
-</div>
-
-<header class="header">
-  <div class="container header__inner">
-    <div class="brand">
-      <div class="brand__mark"></div>
-      <div>
-        <strong>SmartFlow</strong><br>
-        <small>Automations</small>
-      </div>
-    </div>
-
-    <a href="/start.html" class="btn btn--primary">
-      SmartFlow testen
-    </a>
+  <!-- Background -->
+  <div class="sf-bg">
+    <div class="sf-grid"></div>
+    <div class="sf-orb sf-orb--left"></div>
+    <div class="sf-orb sf-orb--right"></div>
+    <div class="sf-arc" aria-hidden="true"></div>
   </div>
-</header>
 
-<main>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="container hero__inner">
-
-    <div class="hero__copy">
-      <span class="pill">Für lokale Unternehmen</span>
-
-      <h1>
-        Automatisierte Terminprozesse<br>
-        <span>ruhig, zuverlässig, 24/7</span>
-      </h1>
-
-      <p class="lead">
-        SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch –
-        ohne Login, ohne Setup, ohne laufenden Aufwand.
-      </p>
-
-      <div class="hero__cta">
-        <a href="/start.html" class="btn btn--primary">
-          SmartFlow testen
-        </a>
-        <a href="#how" class="btn btn--ghost">
-          Kurz erklärt
-        </a>
-      </div>
-    </div>
-
-    <!-- CHAT PREVIEW -->
-    <div class="hero__panel">
-      <div class="panel">
-        <div class="panel__top">
-          <div class="dots"><span></span><span></span><span></span></div>
-          <small>Beispiel-Ablauf</small>
-        </div>
-
-        <div class="panel__body chat">
-          <div class="bubble in">Hi, ich hätte gern einen Termin.</div>
-          <div class="bubble out">Gerne! Welche Uhrzeit passt dir?</div>
-          <div class="bubble in">Morgen Nachmittag.</div>
-          <div class="bubble out">Perfekt. 15:30 oder 16:15?</div>
+  <header class="sf-header">
+    <div class="sf-container sf-header__inner">
+      <div class="sf-brand">
+        <div class="sf-brand__mark" aria-hidden="true"></div>
+        <div class="sf-brand__text">
+          <div class="sf-brand__name">SmartFlow</div>
+          <div class="sf-brand__sub">Automations</div>
         </div>
       </div>
+
+      <div class="sf-header__actions">
+        <a class="sf-btn sf-btn--ghost" href="#how">So funktioniert’s</a>
+        <a class="sf-btn sf-btn--primary" href="/start.html">SmartFlow testen</a>
+      </div>
     </div>
+  </header>
 
-  </div>
-</section>
+  <main>
+    <!-- HERO -->
+    <section class="sf-hero">
+      <div class="sf-container sf-hero__inner">
+        <div class="sf-hero__copy">
+          <div class="sf-pill">Für lokale Unternehmen</div>
 
-<!-- HOW -->
-<section id="how" class="section">
-  <div class="container steps">
-    <div class="card">
-      <strong>1. Anfrage</strong>
-      <p>Kunden stellen Anfragen über Website oder Formular.</p>
+          <h1 class="sf-h1">
+            Automatisierte Terminprozesse<br />
+            <span>ruhig, zuverlässig, 24/7</span>
+          </h1>
+
+          <p class="sf-lead">
+            SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch –
+            ohne Login, ohne Setup, ohne laufenden Aufwand.
+          </p>
+
+          <div class="sf-hero__cta">
+            <a class="sf-btn sf-btn--primary sf-btn--lg" href="/start.html">SmartFlow testen</a>
+            <a class="sf-btn sf-btn--ghost sf-btn--lg" href="#preview">Beispiel ansehen</a>
+          </div>
+
+          <div class="sf-trust">
+            <div class="sf-trust__item">✓ Standardisiert & skalierbar</div>
+            <div class="sf-trust__item">✓ Automatisierte Erinnerungen</div>
+            <div class="sf-trust__item">✓ DSGVO-Basis integriert</div>
+          </div>
+        </div>
+
+        <!-- Right visual card -->
+        <div class="sf-hero__panel">
+          <div class="sf-glass sf-panel">
+            <div class="sf-panel__top">
+              <div class="sf-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="sf-panel__title">Automations Preview</div>
+            </div>
+
+            <div class="sf-panel__body">
+              <div class="sf-mini-metrics">
+                <div class="sf-metric">
+                  <div class="sf-metric__label">Antwortzeit</div>
+                  <div class="sf-metric__value">Sofort</div>
+                </div>
+                <div class="sf-metric">
+                  <div class="sf-metric__label">Verfügbarkeit</div>
+                  <div class="sf-metric__value">24/7</div>
+                </div>
+                <div class="sf-metric">
+                  <div class="sf-metric__label">No-Shows</div>
+                  <div class="sf-metric__value">↓</div>
+                </div>
+              </div>
+
+              <div class="sf-divider"></div>
+
+              <div class="sf-mini-list">
+                <div class="sf-mini-row">
+                  <span class="sf-dot sf-dot--blue"></span>
+                  <span>Anfrage erfasst</span>
+                  <span class="sf-mini-tag">Instant</span>
+                </div>
+                <div class="sf-mini-row">
+                  <span class="sf-dot sf-dot--cyan"></span>
+                  <span>Automatische Antwort</span>
+                  <span class="sf-mini-tag">24/7</span>
+                </div>
+                <div class="sf-mini-row">
+                  <span class="sf-dot sf-dot--vio"></span>
+                  <span>Bestätigung + Reminder</span>
+                  <span class="sf-mini-tag">2-Step</span>
+                </div>
+              </div>
+
+              <p class="sf-note">
+                Ein ruhiger, natürlicher Ablauf – ohne „Druck“, ohne unnötige Schritte.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview section -->
+      <div id="preview" class="sf-container sf-preview">
+        <div class="sf-preview__bar">
+          <div class="sf-preview__title">Beispiel-Ablauf</div>
+          <div class="sf-preview__hint">So arbeitet SmartFlow im Hintergrund</div>
+        </div>
+
+        <div class="sf-preview__cards">
+          <div class="sf-glass sf-card">
+            <div class="sf-card__head">
+              <div class="sf-card__icon sf-card__icon--blue"></div>
+              <div>
+                <div class="sf-card__title">1) Anfrage</div>
+                <div class="sf-card__sub">Website / Kontakt</div>
+              </div>
+            </div>
+            <div class="sf-card__body">
+              SmartFlow erfasst Kontaktdaten & Anliegen – auch außerhalb der Öffnungszeiten.
+            </div>
+          </div>
+
+          <div class="sf-glass sf-card">
+            <div class="sf-card__head">
+              <div class="sf-card__icon sf-card__icon--cyan"></div>
+              <div>
+                <div class="sf-card__title">2) Automatische Antwort</div>
+                <div class="sf-card__sub">Sofort</div>
+              </div>
+            </div>
+            <div class="sf-card__body">
+              Das System stellt die richtigen Fragen und führt strukturiert durch die Terminabstimmung.
+            </div>
+          </div>
+
+          <div class="sf-glass sf-card">
+            <div class="sf-card__head">
+              <div class="sf-card__icon sf-card__icon--vio"></div>
+              <div>
+                <div class="sf-card__title">3) Bestätigung & Reminder</div>
+                <div class="sf-card__sub">24h / 2h</div>
+              </div>
+            </div>
+            <div class="sf-card__body">
+              Terminbestätigung und Erinnerungen reduzieren No-Shows – automatisch und zuverlässig.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW -->
+    <section id="how" class="sf-section">
+      <div class="sf-container">
+        <div class="sf-section__head">
+          <h2 class="sf-h2">So funktioniert SmartFlow</h2>
+          <p class="sf-section__lead">
+            Ein standardisierter Prozess für alle – wartbar, skalierbar und ohne Sonderlogik pro Kunde.
+          </p>
+        </div>
+
+        <div class="sf-steps">
+          <div class="sf-glass sf-step">
+            <div class="sf-step__num">1</div>
+            <div class="sf-step__title">Kontakt erfassen</div>
+            <div class="sf-step__text">Die Anfrage landet strukturiert im System – sauber für Automationen.</div>
+          </div>
+
+          <div class="sf-glass sf-step">
+            <div class="sf-step__num">2</div>
+            <div class="sf-step__title">Ablauf automatisieren</div>
+            <div class="sf-step__text">Antworten, Rückfragen und nächste Schritte laufen automatisch ab.</div>
+          </div>
+
+          <div class="sf-glass sf-step">
+            <div class="sf-step__num">3</div>
+            <div class="sf-step__title">Erinnerungen senden</div>
+            <div class="sf-step__text">24h/2h-Reminders reduzieren No-Shows und erhöhen die Termintreue.</div>
+          </div>
+        </div>
+
+        <div class="sf-cta">
+          <div class="sf-cta__copy">
+            <div class="sf-cta__title">SmartFlow testen</div>
+            <div class="sf-cta__text">Ein paar Angaben – der Rest läuft automatisch.</div>
+          </div>
+          <a class="sf-btn sf-btn--primary" href="/start.html">Jetzt starten</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="sf-footer">
+    <div class="sf-container sf-footer__inner">
+      <div class="sf-footer__left">
+        <div class="sf-brand sf-brand--small">
+          <div class="sf-brand__mark" aria-hidden="true"></div>
+          <div class="sf-brand__text">
+            <div class="sf-brand__name">SmartFlow</div>
+            <div class="sf-brand__sub">Automations</div>
+          </div>
+        </div>
+        <div class="sf-footer__copy">© 2025 SmartFlow Automations – Hodzic Digital Services</div>
+      </div>
+
+      <div class="sf-footer__links">
+        <a href="/privacy.html">Datenschutz</a>
+        <a href="/impressum.html">Impressum</a>
+        <a href="/terms.html">AGB</a>
+      </div>
     </div>
-    <div class="card">
-      <strong>2. Automatische Antwort</strong>
-      <p>SmartFlow reagiert sofort und führt strukturiert.</p>
-    </div>
-    <div class="card">
-      <strong>3. Bestätigung</strong>
-      <p>Termin wird bestätigt und automatisch erinnert.</p>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<footer class="footer">
-  <p>© 2025 SmartFlow Automations</p>
-  <a href="/privacy.html">Datenschutz</a>
-</footer>
-
+  </footer>
 </body>
 </html>
