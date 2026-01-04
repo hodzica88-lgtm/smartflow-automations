@@ -1,214 +1,131 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>SmartFlow installieren</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartFlow Automations – Installation</title>
 
-  <style>
-    :root {
-      --primary: #2563eb;
-      --dark: #0b1020;
-      --bg: #f5f7fb;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --radius: 16px;
-    }
+  <!-- Gleiche Styles wie /start (damit Farben/Design identisch sind) -->
+  <link rel="stylesheet" href="styles/style.css" />
+  <link rel="stylesheet" href="styles/responsive.css" />
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Inter, Arial, Helvetica, sans-serif;
-      background: linear-gradient(180deg, #eef2ff 0%, #f5f7fb 100%);
-      color: var(--text);
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 80px 24px;
-    }
-
-    /* HERO */
-    .hero {
-      text-align: center;
-      padding-bottom: 40px;
-    }
-
-    .hero h1 {
-      font-size: 42px;
-      margin-bottom: 16px;
-      line-height: 1.2;
-    }
-
-    .hero p {
-      font-size: 18px;
-      color: var(--muted);
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    /* CARD */
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 40px;
-      margin-top: 50px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 28px;
-    }
-
-    .card p {
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    /* CODE BLOCK */
-    pre {
-      background: var(--dark);
-      color: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      overflow-x: auto;
-      font-size: 14px;
-      margin-top: 24px;
-    }
-
-    .hint {
-      margin-top: 16px;
-      background: #eef2ff;
-      padding: 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      color: #1e3a8a;
-    }
-
-    /* GRID */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 24px;
-      margin-top: 30px;
-    }
-
-    .feature {
-      background: #f8fafc;
-      border-radius: 14px;
-      padding: 24px;
-    }
-
-    .feature h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
-
-    .feature p {
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    /* TEST */
-    .test-area {
-      margin-top: 40px;
-    }
-
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      font-size: 14px;
-      color: var(--muted);
-    }
-  </style>
+  <!-- Gleiche Scripts wie /start -->
+  <script defer src="js/main.js"></script>
+  <script defer src="js/cookie-banner.js"></script>
 </head>
 
 <body>
 
-  <div class="container">
+<!-- Cookie Banner (wie auf der Hauptseite) -->
+<div id="cookie-banner" class="cookie-banner hidden">
+  <div class="cookie-inner">
+    <p>
+      Wir verwenden ausschließlich technisch notwendige Cookies.
+      <a href="privacy.html">Datenschutzerklärung</a>
+    </p>
+    <button id="cookie-accept" class="btn-primary small">OK</button>
+  </div>
+</div>
 
-    <!-- HERO -->
-    <section class="hero">
+<header class="header">
+  <div class="container header-inner">
+    <div class="logo-wrap">
+      <div class="logo"></div>
+      <span class="logo-text">SmartFlow Automations</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <div class="container hero-inner">
       <h1>SmartFlow auf deiner Website aktivieren</h1>
-      <p>
-        Du hast SmartFlow erfolgreich gebucht.  
-        Binde es einmal ein – ab jetzt arbeitet das System automatisch im Hintergrund.
+      <p class="hero-sub">
+        Du hast SmartFlow erfolgreich gebucht. Kopiere jetzt deinen Code und füge ihn einmal in deine Website ein –
+        danach arbeitet SmartFlow automatisch im Hintergrund.
       </p>
-    </section>
+    </div>
+  </section>
 
-    <!-- INSTALL -->
-    <section class="card">
-      <h2>1. Dein persönlicher SmartFlow-Code</h2>
-      <p>
-        Kopiere den folgenden Code und füge ihn auf deiner Website
-        <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
-        Der Einbau dauert weniger als 2 Minuten.
+  <!-- INSTALL -->
+  <section class="solution fade-in">
+    <div class="container">
+      <h2>Dein persönlicher SmartFlow-Code</h2>
+      <p class="section-lead">
+        Kopiere den folgenden Code und füge ihn auf deiner Website <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
+        Der Einbau dauert in der Regel weniger als 2 Minuten.
       </p>
 
-      <pre><code>&lt;script
+      <!-- Code-Block (inline Styles nur für sicheren Kontrast, rest kommt aus deinem Theme) -->
+      <pre style="margin-top:24px; padding:22px; border-radius:14px; overflow:auto; background:#0b1020; color:#fff;">
+<code>&lt;script
   src="https://smartflow-automations.de/embed/v1/embed.js"
   data-client="sf_0001"
   async&gt;
 &lt;/script&gt;</code></pre>
 
-      <div class="hint">
-        Kein Login. Keine Konfiguration.  
-        Nach dem Einfügen ist SmartFlow sofort aktiv.
-      </div>
-    </section>
+      <p style="margin-top:14px; opacity:0.9;">
+        Kein Login. Keine Konfiguration. Nach dem Einfügen ist SmartFlow aktiv.
+      </p>
+    </div>
+  </section>
 
-    <!-- WHAT HAPPENS -->
-    <section class="card">
+  <!-- TEST -->
+  <section class="demo-placeholder fade-in">
+    <div class="container">
+      <h2>Live-Test</h2>
+      <p class="section-lead">
+        Sobald der Code in deiner Website eingebunden ist, kannst du hier eine Testanfrage senden
+        und sehen, wie SmartFlow reagiert.
+      </p>
+
+      <div id="smartflow-form" style="margin-top:28px;"></div>
+    </div>
+  </section>
+
+  <!-- WAS PASSIERT -->
+  <section class="features fade-in">
+    <div class="container">
       <h2>Was jetzt automatisch passiert</h2>
-
-      <div class="grid">
-        <div class="feature">
+      <div class="feature-grid">
+        <div class="feature-card">
           <h3>Automatische Antworten</h3>
           <p>Anfragen werden rund um die Uhr beantwortet – auch nachts und am Wochenende.</p>
         </div>
-
-        <div class="feature">
+        <div class="feature-card">
           <h3>Terminabstimmung</h3>
-          <p>SmartFlow schlägt Termine vor und bestätigt sie automatisch.</p>
+          <p>SmartFlow verarbeitet Terminwünsche, schlägt Zeiten vor und bestätigt automatisch.</p>
         </div>
-
-        <div class="feature">
+        <div class="feature-card">
           <h3>Erinnerungen</h3>
-          <p>Kunden erhalten automatische Erinnerungen – weniger No-Shows.</p>
+          <p>Kunden erhalten automatische Erinnerungen – weniger No-Shows, mehr wahrgenommene Termine.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- TEST -->
-    <section class="card">
-      <h2>2. Live-Test</h2>
-      <p>
-        Nachdem der Code eingebunden ist, kannst du hier eine Testanfrage senden
-        und live sehen, wie SmartFlow reagiert.
-      </p>
+</main>
 
-      <div id="smartflow-form" class="test-area"></div>
-    </section>
-
+<footer class="footer">
+  <div class="container footer-inner">
+    <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
+    <div class="footer-links">
+      <a href="privacy.html">Datenschutz</a>
+      <a href="impressum.html">Impressum</a>
+      <a href="terms.html">AGB</a>
+    </div>
   </div>
+</footer>
 
-  <footer>
-    © 2025 SmartFlow Automations
-  </footer>
-
-  <!-- SMARTFLOW EMBED -->
-  <script
-    src="/embed/v1/embed.js"
-    data-client="sf_0001"
-    data-target="#smartflow-form"
-    async>
-  </script>
+<!-- SMARTFLOW EMBED: lädt das Formular in #smartflow-form -->
+<script
+  src="/embed/v1/embed.js"
+  data-client="sf_0001"
+  data-target="#smartflow-form"
+  async>
+</script>
 
 </body>
 </html>
