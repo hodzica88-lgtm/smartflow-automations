@@ -5,61 +5,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SmartFlow Automations</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="styles/style.css" />
 </head>
 
 <body>
 
-<div class="bg-gradient"></div>
+<div class="bg">
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="grid"></div>
+</div>
 
 <header class="header">
-  <div class="container header-inner">
-    <div class="logo">SmartFlow</div>
-    <a href="/start.html" class="btn-primary">SmartFlow testen</a>
+  <div class="container header__inner">
+    <div class="brand">
+      <div class="brand__mark"></div>
+      <div>
+        <strong>SmartFlow</strong><br>
+        <small>Automations</small>
+      </div>
+    </div>
+
+    <a href="/start.html" class="btn btn--primary">
+      SmartFlow testen
+    </a>
   </div>
 </header>
 
-<main class="container">
+<main>
 
-  <!-- HERO -->
-  <section class="hero">
-    <span class="badge">Für lokale Unternehmen</span>
-    <h1>
-      Automatisierte Terminprozesse<br>
-      <span>ruhig, zuverlässig, 24/7</span>
-    </h1>
-    <p class="hero-sub">
-      SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch –
-      ohne Login, ohne Setup, ohne laufenden Aufwand.
-    </p>
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero__inner">
 
-    <a href="/start.html" class="btn-primary large">
-      SmartFlow testen
-    </a>
-  </section>
+    <div class="hero__copy">
+      <span class="pill">Für lokale Unternehmen</span>
 
-  <!-- FLOW -->
-  <section class="flow">
-    <div class="flow-card">
-      <h3>1. Anfrage</h3>
-      <p>Kunden stellen Anfragen über Website oder Kontaktformular.</p>
+      <h1>
+        Automatisierte Terminprozesse<br>
+        <span>ruhig, zuverlässig, 24/7</span>
+      </h1>
+
+      <p class="lead">
+        SmartFlow übernimmt Anfragen, Terminabstimmungen und Erinnerungen automatisch –
+        ohne Login, ohne Setup, ohne laufenden Aufwand.
+      </p>
+
+      <div class="hero__cta">
+        <a href="/start.html" class="btn btn--primary">
+          SmartFlow testen
+        </a>
+        <a href="#how" class="btn btn--ghost">
+          Kurz erklärt
+        </a>
+      </div>
     </div>
-    <div class="flow-card">
-      <h3>2. Automatische Antwort</h3>
-      <p>SmartFlow reagiert sofort und führt strukturiert durch den Prozess.</p>
-    </div>
-    <div class="flow-card">
-      <h3>3. Bestätigung & Erinnerung</h3>
-      <p>Termine werden bestätigt und automatisch erinnert.</p>
-    </div>
-  </section>
 
-  <!-- TRUST -->
-  <section class="trust">
-    <div>✓ Natürlich wirkender Ablauf</div>
-    <div>✓ Standardisiert & skalierbar</div>
-    <div>✓ DSGVO-Basis integriert</div>
-  </section>
+    <!-- CHAT PREVIEW -->
+    <div class="hero__panel">
+      <div class="panel">
+        <div class="panel__top">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <small>Beispiel-Ablauf</small>
+        </div>
+
+        <div class="panel__body chat">
+          <div class="bubble in">Hi, ich hätte gern einen Termin.</div>
+          <div class="bubble out">Gerne! Welche Uhrzeit passt dir?</div>
+          <div class="bubble in">Morgen Nachmittag.</div>
+          <div class="bubble out">Perfekt. 15:30 oder 16:15?</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how" class="section">
+  <div class="container steps">
+    <div class="card">
+      <strong>1. Anfrage</strong>
+      <p>Kunden stellen Anfragen über Website oder Formular.</p>
+    </div>
+    <div class="card">
+      <strong>2. Automatische Antwort</strong>
+      <p>SmartFlow reagiert sofort und führt strukturiert.</p>
+    </div>
+    <div class="card">
+      <strong>3. Bestätigung</strong>
+      <p>Termin wird bestätigt und automatisch erinnert.</p>
+    </div>
+  </div>
+</section>
 
 </main>
 
