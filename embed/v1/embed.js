@@ -1,147 +1,68 @@
 (function () {
   "use strict";
 
-  /* ======================================================
-     SmartFlow Embed v1 – Kundenformular (Launch)
-     ====================================================== */
-
-  /* ---------- 1) Script & Target ---------- */
   const script = document.currentScript;
   if (!script) return;
 
   const clientId = script.getAttribute("data-client");
-  const targetSelector = script.getAttribute("data-target") || "#smartflow-form";
-
-  if (!clientId) {
-    console.error("SmartFlow ERROR: CLIENT_ID fehlt");
-    return;
-  }
+  const targetSelector = script.getAttribute("data-target");
 
   const target = document.querySelector(targetSelector);
-  if (!target) {
-    console.error("SmartFlow ERROR: Target nicht gefunden:", targetSelector);
-    return;
-  }
+  if (!clientId || !target) return;
 
-  /* ---------- 2) TEMP Flags ---------- */
-  const flags = {
-    core: true
-  };
-
-  console.log("SmartFlow CLIENT_ID:", clientId);
-  console.log("SmartFlow FLAGS:", flags);
-
-  if (!flags.core) {
-    target.innerHTML = "<p>SmartFlow ist für diesen Kunden nicht aktiv.</p>";
-    return;
-  }
-
-  /* ---------- 3) Formular rendern ---------- */
   target.innerHTML = `
-    <form id="sf-form" class="sf-form">
+    <form id="sf-form">
+      <h2>SmartFlow starten</h2>
+      <p class="muted">Ein paar Angaben – der Rest läuft automatisch.</p>
 
-      <div class="sf-field">
-        <label>Ihr Name *</label>
-        <input type="text" name="name" required />
-      </div>
+      <label>Name *</label>
+      <input type="text" name="name" required />
 
-      <div class="sf-field">
-        <label>E-Mail *</label>
-        <input type="email" name="email" required />
-      </div>
+      <label>E-Mail *</label>
+      <input type="email" name="email" required />
 
-      <div class="sf-field">
-        <label>Unternehmen / Praxis *</label>
-        <input type="text" name="company" required />
-      </div>
+      <label>Unternehmen *</label>
+      <input type="text" name="company" required />
 
-      <div class="sf-field">
-        <label>Telefonnummer (optional)</label>
-        <input type="tel" name="phone" />
-      </div>
+      <label>Branche *</label>
+      <input type="text" name="industry" required />
 
-      <div class="sf-field">
-        <label>Branche *</label>
-        <select name="industry" required>
-          <option value="">Bitte auswählen</option>
-          <option>Handwerk</option>
-          <option>Gesundheit / Praxis</option>
-          <option>Gastronomie</option>
-          <option>Coaching / Beratung</option>
-          <option>Beauty / Kosmetik</option>
-          <option>Immobilien</option>
-          <option>Sonstiges</option>
-        </select>
-      </div>
+      <label>Website (optional)</label>
+      <input type="url" name="website" />
 
-      <div class="sf-field">
-        <label>Website (optional)</label>
-        <input type="url" name="website" placeholder="https://"/>
-      </div>
+      <label>Kurzbeschreibung (optional)</label>
+      <textarea name="message" rows="3"></textarea>
 
-      <div class="sf-field">
-        <label>Kurzbeschreibung / Anliegen</label>
-        <textarea name="message" rows="3"
-          placeholder="Worum geht es bei Ihren Terminanfragen?"></textarea>
-      </div>
-
-      <button type="submit" class="sf-submit">
-        Anfrage senden
-      </button>
-
-      <p class="sf-hint">
-        Keine Einrichtung · Kein Login · Vollautomatischer Ablauf
-      </p>
+      <button type="submit">Anfrage senden</button>
+      <p class="hint">Kein Login · Kein Setup · Standardisiert</p>
     </form>
   `;
 
-  /* ---------- 4) Submit → Make Webhook ---------- */
   const form = document.getElementById("sf-form");
-  const submitBtn = form.querySelector(".sf-submit");
 
-  form.addEventListener("submit", async function (e) {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Wird gesendet…";
 
     const payload = {
       client_id: clientId,
       name: form.name.value,
       email: form.email.value,
       company: form.company.value,
-      phone: form.phone.value || "",
       industry: form.industry.value,
       website: form.website.value || "",
       message: form.message.value || "",
-      source: "smartflow-website",
       timestamp: new Date().toISOString()
     };
 
-    try {
-      const response = await fetch(
-        "https://hook.eu1.make.com/xgggr96x1b611gobwsapyp32anne3q69",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }
-      );
+    await fetch(
+      "https://hook.eu1.make.com/xgggr96x1b611gobwsapyp32anne3q69",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
 
-      if (!response.ok) throw new Error("Webhook Error");
-
-      form.innerHTML = `
-        <p class="sf-success">
-          ✅ Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt.<br>
-          Sie erhalten in Kürze eine automatische Bestätigung.
-        </p>
-      `;
-    } catch (err) {
-      console.error("SmartFlow Submit Error:", err);
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Erneut versuchen";
-      alert("Beim Senden ist ein Fehler aufgetreten. Bitte später erneut versuchen.");
-    }
+    form.innerHTML = `<p>✅ Anfrage erfolgreich gesendet.</p>`;
   });
-
 })();
