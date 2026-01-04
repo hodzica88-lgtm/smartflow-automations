@@ -5,16 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SmartFlow installieren</title>
 
+  <!-- Fonts & Styles – IDENTISCH zu /start -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="styles/style.css" />
+
+  <!-- Mini-Scoped Highlight (NUR für diese Seite, macht nichts kaputt) -->
+  <style>
+    .sf-install-highlight {
+      position: relative;
+      border-radius: 16px;
+      border: 1px solid rgba(59,130,246,0.35);
+      box-shadow:
+        0 0 0 1px rgba(59,130,246,0.15),
+        0 30px 60px rgba(0,0,0,0.35),
+        inset 0 0 60px rgba(59,130,246,0.08);
+    }
+
+    .sf-install-highlight::after {
+      content: "Installation";
+      position: absolute;
+      top: -12px;
+      left: 24px;
+      background: #0b1020;
+      color: #93c5fd;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- GLEICHER BACKGROUND WIE /start -->
+<!-- Background – IDENTISCH zu /start -->
 <div class="sf-bg">
   <div class="sf-grid"></div>
   <div class="sf-orb sf-orb--left"></div>
@@ -22,7 +48,7 @@
   <div class="sf-arc sf-arc--soft"></div>
 </div>
 
-<!-- HEADER IDENTISCH -->
+<!-- Header – IDENTISCH -->
 <header class="sf-header sf-header--lite">
   <div class="sf-container sf-header__inner">
     <a href="/" class="sf-brand sf-brand--link">
@@ -56,9 +82,9 @@
       </div>
     </section>
 
-    <!-- CODE – GLEICHE CARD-GRÖSSE WIE FORM AUF /start -->
+    <!-- INSTALLATION – HERVORGEHOBEN -->
     <section class="sf-onboarding__form">
-     <div class="sf-card sf-card--highlight">
+      <div class="sf-card sf-install-highlight">
 
         <h2 class="sf-h2">Dein persönlicher SmartFlow-Code</h2>
         <p class="sf-text">
@@ -82,7 +108,7 @@
   </div>
 </main>
 
-<!-- FOOTER IDENTISCH -->
+<!-- Footer – IDENTISCH -->
 <footer class="sf-footer sf-footer--lite">
   <div class="sf-container sf-footer__inner">
     <div class="sf-footer__copy">© 2025 SmartFlow Automations</div>
