@@ -11,29 +11,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/style.css" />
 
-  <!-- Mini-Scoped Highlight (NUR für diese Seite, macht nichts kaputt) -->
+  <!-- EINMALIGES, SICHER SICHTBARES HIGHLIGHT (nur für diese Seite) -->
   <style>
     .sf-install-highlight {
       position: relative;
       border-radius: 16px;
-      border: 1px solid rgba(59,130,246,0.35);
+      padding-top: 36px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(59,130,246,0.14),
+          rgba(11,16,32,0.92)
+        );
       box-shadow:
-        0 0 0 1px rgba(59,130,246,0.15),
-        0 30px 60px rgba(0,0,0,0.35),
-        inset 0 0 60px rgba(59,130,246,0.08);
+        0 40px 80px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .sf-install-highlight::before {
+      content: "INSTALLATION";
+      position: absolute;
+      top: 10px;
+      left: 24px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      color: #93c5fd;
+      text-transform: uppercase;
     }
 
     .sf-install-highlight::after {
-      content: "Installation";
+      content: "";
       position: absolute;
-      top: -12px;
-      left: 24px;
-      background: #0b1020;
-      color: #93c5fd;
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      letter-spacing: 0.04em;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      border-radius: 16px 16px 0 0;
+      background: linear-gradient(
+        90deg,
+        #3b82f6,
+        #60a5fa,
+        #3b82f6
+      );
     }
   </style>
 </head>
@@ -82,7 +102,7 @@
       </div>
     </section>
 
-    <!-- INSTALLATION – HERVORGEHOBEN -->
+    <!-- INSTALLATION – KLAR HERVORGEHOBEN -->
     <section class="sf-onboarding__form">
       <div class="sf-card sf-install-highlight">
 
