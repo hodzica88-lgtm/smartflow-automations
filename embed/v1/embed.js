@@ -8,110 +8,128 @@
   const targetSelector = script.getAttribute("data-target") || "#smartflow-form";
   const target = document.querySelector(targetSelector);
 
-  if (!clientId) {
-    console.error("SmartFlow ERROR: CLIENT_ID fehlt");
-    return;
-  }
-  if (!target) {
-    console.error("SmartFlow ERROR: Target nicht gefunden:", targetSelector);
-    return;
-  }
-
-  // TEMP Flags (später aus Backend)
-  const flags = { core: true };
-  if (!flags.core) {
-    target.innerHTML = `<p style="color:#fff;opacity:.75">SmartFlow ist aktuell nicht aktiv.</p>`;
-    return;
-  }
+  if (!clientId || !target) return;
 
   target.innerHTML = `
-    <form id="sf-form" class="sf-embed-form">
-      <div class="sf-embed-head">
-        <div class="sf-embed-title">Kurze Angaben</div>
-        <div class="sf-embed-sub">Der Rest läuft automatisch.</div>
+    <form id="sf-form" class="sf-wide-form">
+
+      <div class="sf-wide-group">
+        <label>Name *</label>
+        <input type="text" name="name" required />
       </div>
 
-      <label class="sf-embed-label">Name *</label>
-      <input class="sf-embed-input" type="text" name="name" required />
+      <div class="sf-wide-group">
+        <label>E-Mail *</label>
+        <input type="email" name="email" required />
+      </div>
 
-      <label class="sf-embed-label">E-Mail *</label>
-      <input class="sf-embed-input" type="email" name="email" required />
+      <div class="sf-wide-group">
+        <label>Unternehmen *</label>
+        <input type="text" name="company" required />
+      </div>
 
-      <label class="sf-embed-label">Unternehmen *</label>
-      <input class="sf-embed-input" type="text" name="company" required />
+      <div class="sf-wide-group">
+        <label>Branche *</label>
+        <input type="text" name="industry" placeholder="z. B. Praxis, Handwerk, Beratung" required />
+      </div>
 
-      <label class="sf-embed-label">Branche *</label>
-      <input class="sf-embed-input" type="text" name="industry" placeholder="z. B. Praxis, Handwerk, Beratung" required />
+      <div class="sf-wide-group">
+        <label>Telefon (optional)</label>
+        <input type="tel" name="phone" />
+      </div>
 
-      <label class="sf-embed-label">Telefon (optional)</label>
-      <input class="sf-embed-input" type="tel" name="phone" placeholder="+49 …" />
+      <div class="sf-wide-group">
+        <label>Website (optional)</label>
+        <input type="url" name="website" placeholder="https://" />
+      </div>
 
-      <label class="sf-embed-label">Website (optional)</label>
-      <input class="sf-embed-input" type="url" name="website" placeholder="https://" />
+      <div class="sf-wide-group">
+        <label>Kurzbeschreibung (optional)</label>
+        <textarea name="message" rows="4"></textarea>
+      </div>
 
-      <label class="sf-embed-label">Kurzbeschreibung (optional)</label>
-      <textarea class="sf-embed-textarea" name="message" rows="3" placeholder="Worum geht es bei Ihren Terminanfragen?"></textarea>
+      <button type="submit" class="sf-wide-submit">
+        Anfrage senden
+      </button>
 
-      <button id="sf-submit" class="sf-embed-btn" type="submit">Anfrage senden</button>
-
-      <div class="sf-embed-hint">Kein Login · Keine Einrichtung · Standardisiert</div>
+      <p class="sf-wide-hint">
+        Deine Angaben werden ausschließlich für die automatische Verarbeitung genutzt.
+      </p>
     </form>
 
     <style>
-      .sf-embed-form{ display:block; }
-      .sf-embed-head{ margin-bottom:12px; }
-      .sf-embed-title{ font-weight:800; letter-spacing:.2px; }
-      .sf-embed-sub{ margin-top:4px; color: rgba(255,255,255,.62); font-size: 13px; line-height:1.5; }
-
-      .sf-embed-label{ display:block; margin-top:10px; margin-bottom:6px; color: rgba(255,255,255,.72); font-size: 13px; }
-      .sf-embed-input, .sf-embed-textarea{
+      .sf-wide-form{
         width:100%;
-        padding: 12px 12px;
-        border-radius: 14px;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 48px;
+        border-radius: 26px;
+        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
         border: 1px solid rgba(255,255,255,.14);
-        background: rgba(255,255,255,.04);
-        color: rgba(255,255,255,.92);
-        outline: none;
+        box-shadow: 0 40px 120px rgba(0,0,0,.55);
+        backdrop-filter: blur(16px);
       }
-      .sf-embed-input:focus, .sf-embed-textarea:focus{
-        border-color: rgba(58,160,255,.45);
-        box-shadow: 0 0 0 4px rgba(31,107,255,.18);
-      }
-      .sf-embed-textarea{ resize: vertical; min-height: 90px; }
 
-      .sf-embed-btn{
+      .sf-wide-group{
+        margin-bottom: 22px;
+      }
+
+      .sf-wide-group label{
+        display:block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: rgba(255,255,255,.85);
+      }
+
+      .sf-wide-group input,
+      .sf-wide-group textarea{
         width:100%;
-        margin-top: 14px;
-        padding: 12px 14px;
+        padding: 16px 18px;
+        font-size: 15px;
         border-radius: 14px;
         border: 1px solid rgba(255,255,255,.18);
-        background: linear-gradient(135deg, rgba(31,107,255,.95), rgba(58,160,255,.85));
-        color: #fff;
-        font-weight: 800;
-        cursor: pointer;
-        transition: transform .15s ease, box-shadow .15s ease;
-        box-shadow: 0 18px 70px rgba(31,107,255,.18);
+        background: rgba(255,255,255,.05);
+        color: white;
       }
-      .sf-embed-btn:hover{ transform: translateY(-1px); box-shadow: 0 24px 90px rgba(31,107,255,.24); }
-      .sf-embed-btn:disabled{ opacity:.65; cursor:not-allowed; transform:none; box-shadow:none; }
 
-      .sf-embed-hint{
+      .sf-wide-group input:focus,
+      .sf-wide-group textarea:focus{
+        outline:none;
+        border-color: rgba(58,160,255,.6);
+        box-shadow: 0 0 0 4px rgba(31,107,255,.2);
+      }
+
+      .sf-wide-submit{
+        width:100%;
         margin-top: 10px;
-        font-size: 12.5px;
-        color: rgba(255,255,255,.56);
-        text-align:center;
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 16px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(135deg, #1F6BFF, #3AA0FF);
+        color: white;
+        box-shadow: 0 24px 80px rgba(31,107,255,.3);
+      }
+
+      .sf-wide-submit:hover{
+        transform: translateY(-1px);
+      }
+
+      .sf-wide-hint{
+        margin-top: 16px;
+        text-align: center;
+        font-size: 13px;
+        color: rgba(255,255,255,.6);
       }
     </style>
   `;
 
   const form = target.querySelector("#sf-form");
-  const submitBtn = target.querySelector("#sf-submit");
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Wird gesendet…";
 
     const payload = {
       client_id: clientId,
@@ -122,38 +140,26 @@
       phone: form.phone.value || "",
       website: form.website.value || "",
       message: form.message.value || "",
-      source: "smartflow-start",
       timestamp: new Date().toISOString()
     };
 
-    try {
-      const res = await fetch("https://hook.eu1.make.com/xgggr96x1b611gobwsapyp32anne3q69", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    await fetch("https://hook.eu1.make.com/xgggr96x1b611gobwsapyp32anne3q69", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-      if (!res.ok) throw new Error("Webhook failed");
-
-      form.innerHTML = `
-        <div style="
-          padding:14px;
-          border-radius:16px;
-          border:1px solid rgba(255,255,255,.12);
-          background: rgba(255,255,255,.04);
-          color: rgba(255,255,255,.9);
-          line-height:1.6;
-        ">
-          ✅ Vielen Dank! Deine Anfrage wurde erfolgreich übermittelt.<br/>
-          Du erhältst in Kürze eine automatische Bestätigung.
-        </div>
-      `;
-    } catch (err) {
-      console.error("SmartFlow Submit Error:", err);
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Erneut versuchen";
-      alert("Fehler beim Senden. Bitte später erneut versuchen.");
-    }
+    form.innerHTML = `
+      <div style="
+        padding:24px;
+        border-radius:20px;
+        background: rgba(255,255,255,.06);
+        border:1px solid rgba(255,255,255,.14);
+        text-align:center;
+        font-size:16px;
+      ">
+        ✅ Vielen Dank! Deine Anfrage wurde erfolgreich übermittelt.
+      </div>
+    `;
   });
-
 })();
