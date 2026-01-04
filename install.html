@@ -2,135 +2,118 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartFlow Automations – Installation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartFlow installieren</title>
 
-  <!-- IDENTISCH ZU /start -->
-  <link rel="stylesheet" href="styles/style.css">
-  <link rel="stylesheet" href="styles/animations.css">
-  <link rel="stylesheet" href="styles/responsive.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <script defer src="js/main.js"></script>
-  <script defer src="js/scroll-animations.js"></script>
-  <script defer src="js/cookie-banner.js"></script>
+  <link rel="stylesheet" href="styles/style.css" />
+
+  <!-- SmartFlow Embed -->
+  <script
+    src="/embed/v1/embed.js"
+    data-client="sf_0001"
+    data-target="#smartflow-form"
+    async>
+  </script>
 </head>
 
 <body>
 
-<!-- Cookie Banner (identisch) -->
-<div id="cookie-banner" class="cookie-banner hidden">
-  <div class="cookie-inner">
-    <p>
-      Wir verwenden ausschließlich technisch notwendige Cookies.
-      <a href="privacy.html">Datenschutzerklärung</a>
-    </p>
-    <button id="cookie-accept" class="btn-primary small">OK</button>
-  </div>
+<!-- GLEICHER BACKGROUND WIE /start -->
+<div class="sf-bg">
+  <div class="sf-grid"></div>
+  <div class="sf-orb sf-orb--left"></div>
+  <div class="sf-orb sf-orb--right"></div>
+  <div class="sf-arc sf-arc--soft"></div>
 </div>
 
-<!-- Header (identisch) -->
-<header class="header">
-  <div class="container header-inner">
-    <div class="logo-wrap">
-      <div class="logo"></div>
-      <span class="logo-text">SmartFlow Automations</span>
-    </div>
+<!-- HEADER (gleiches Layout) -->
+<header class="sf-header sf-header--lite">
+  <div class="sf-container sf-header__inner">
+    <a href="/" class="sf-brand sf-brand--link">
+      <div class="sf-brand__mark"></div>
+      <div class="sf-brand__text">
+        <div class="sf-brand__name">SmartFlow</div>
+        <div class="sf-brand__sub">Automations</div>
+      </div>
+    </a>
+    <a href="/" class="sf-btn sf-btn--ghost">Zurück</a>
   </div>
 </header>
 
-<main>
+<main class="sf-onboarding">
+  <div class="sf-container sf-onboarding__inner">
 
-<!-- HERO (gleicher Look wie Start) -->
-<section class="hero fade-in">
-  <div class="container hero-inner">
-    <div class="hero-text">
-      <h1>SmartFlow auf deiner Website aktivieren</h1>
-      <p>
-        Du hast SmartFlow erfolgreich gebucht.
-        Binde es jetzt einmal ein – danach arbeitet das System automatisch im Hintergrund.
+    <!-- INTRO -->
+    <section class="sf-onboarding__intro">
+      <h1 class="sf-h1 sf-h1--lg">
+        SmartFlow auf deiner Website aktivieren
+      </h1>
+      <p class="sf-lead sf-lead--wide">
+        Binde SmartFlow einmal ein – danach arbeitet das System automatisch im Hintergrund.
       </p>
-    </div>
-  </div>
-</section>
 
-<!-- INSTALL -->
-<section class="solution fade-in">
-  <div class="container">
-    <h2>Dein persönlicher SmartFlow-Code</h2>
-    <p class="section-lead">
-      Kopiere den folgenden Code und füge ihn auf deiner Website
-      <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
-      Der Einbau dauert weniger als 2 Minuten.
-    </p>
+      <div class="sf-trust sf-trust--wide">
+        <div class="sf-trust__item">✓ Einmaliger Einbau</div>
+        <div class="sf-trust__item">✓ Kein Login</div>
+        <div class="sf-trust__item">✓ Keine Konfiguration</div>
+      </div>
+    </section>
 
-<pre><code>&lt;script
+    <!-- INSTALL CODE -->
+    <section class="sf-onboarding__form">
+
+      <div class="sf-card">
+        <h2 class="sf-h2">Dein persönlicher SmartFlow-Code</h2>
+        <p class="sf-text">
+          Kopiere den folgenden Code und füge ihn auf deiner Website
+          <strong>direkt vor <code>&lt;/body&gt;</code></strong> ein.
+          Der Einbau dauert weniger als 2 Minuten.
+        </p>
+
+<pre class="sf-code"><code>&lt;script
   src="https://smartflow-automations.de/embed/v1/embed.js"
   data-client="sf_0001"
   async&gt;
 &lt;/script&gt;</code></pre>
 
-    <p class="section-lead" style="margin-top:16px;">
-      Kein Login. Keine Konfiguration.  
-      Nach dem Einfügen ist SmartFlow aktiv.
-    </p>
-  </div>
-</section>
-
-<!-- TEST -->
-<section class="demo-placeholder fade-in">
-  <div class="container">
-    <h2>Live-Test</h2>
-    <p>
-      Sobald der Code in deiner Website eingebunden ist, kannst du hier
-      eine Testanfrage senden und sehen, wie SmartFlow reagiert.
-    </p>
-
-    <div id="smartflow-form" style="margin-top:40px;"></div>
-  </div>
-</section>
-
-<!-- INFO -->
-<section class="features fade-in">
-  <div class="container">
-    <h2>Was jetzt automatisch passiert</h2>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <h3>Automatische Antworten</h3>
-        <p>Anfragen werden rund um die Uhr beantwortet – auch nachts und am Wochenende.</p>
+        <p class="sf-text sf-text--muted">
+          Nach dem Einfügen ist SmartFlow sofort aktiv.
+        </p>
       </div>
-      <div class="feature-card">
-        <h3>Terminabstimmung</h3>
-        <p>SmartFlow schlägt Termine vor und bestätigt sie automatisch.</p>
-      </div>
-      <div class="feature-card">
-        <h3>Erinnerungen</h3>
-        <p>Kunden erhalten automatische Erinnerungen und erscheinen zuverlässiger.</p>
-      </div>
-    </div>
-  </div>
-</section>
 
+    </section>
+
+    <!-- TEST -->
+    <section class="sf-onboarding__form" style="margin-top:40px;">
+      <div class="sf-card">
+        <h2 class="sf-h2">Live-Test</h2>
+        <p class="sf-text">
+          Sobald der Code eingebunden ist, kannst du hier eine Testanfrage senden
+          und sehen, wie SmartFlow reagiert.
+        </p>
+
+        <div id="smartflow-form"></div>
+      </div>
+    </section>
+
+  </div>
 </main>
 
-<!-- Footer (identisch) -->
-<footer class="footer">
-  <div class="container footer-inner">
-    <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
-    <div class="footer-links">
-      <a href="privacy.html">Datenschutz</a>
-      <a href="impressum.html">Impressum</a>
-      <a href="terms.html">AGB</a>
+<!-- FOOTER (gleich wie /start) -->
+<footer class="sf-footer sf-footer--lite">
+  <div class="sf-container sf-footer__inner">
+    <div class="sf-footer__copy">© 2025 SmartFlow Automations</div>
+    <div class="sf-footer__links">
+      <a href="/privacy.html">Datenschutz</a>
+      <a href="/impressum.html">Impressum</a>
+      <a href="/terms.html">AGB</a>
     </div>
   </div>
 </footer>
-
-<!-- SMARTFLOW EMBED -->
-<script
-  src="/embed/v1/embed.js"
-  data-client="sf_0001"
-  data-target="#smartflow-form"
-  async>
-</script>
 
 </body>
 </html>
