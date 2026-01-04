@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartFlow testen</title>
+  <title>SmartFlow starten</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,64 +20,65 @@
 </head>
 
 <body>
-  <div class="sf-bg">
-    <div class="sf-grid"></div>
-    <div class="sf-orb sf-orb--left"></div>
-    <div class="sf-orb sf-orb--right"></div>
-    <div class="sf-arc sf-arc--soft" aria-hidden="true"></div>
+
+<!-- Background bleibt wie auf der Website -->
+<div class="sf-bg">
+  <div class="sf-grid"></div>
+  <div class="sf-orb sf-orb--left"></div>
+  <div class="sf-orb sf-orb--right"></div>
+  <div class="sf-arc sf-arc--soft"></div>
+</div>
+
+<header class="sf-header sf-header--lite">
+  <div class="sf-container sf-header__inner">
+    <a href="/" class="sf-brand sf-brand--link">
+      <div class="sf-brand__mark"></div>
+      <div class="sf-brand__text">
+        <div class="sf-brand__name">SmartFlow</div>
+        <div class="sf-brand__sub">Automations</div>
+      </div>
+    </a>
+    <a href="/" class="sf-btn sf-btn--ghost">Zurück</a>
   </div>
+</header>
 
-  <header class="sf-header sf-header--lite">
-    <div class="sf-container sf-header__inner">
-      <a class="sf-brand sf-brand--link" href="/">
-        <div class="sf-brand__mark" aria-hidden="true"></div>
-        <div class="sf-brand__text">
-          <div class="sf-brand__name">SmartFlow</div>
-          <div class="sf-brand__sub">Automations</div>
-        </div>
-      </a>
+<main class="sf-onboarding">
+  <div class="sf-container sf-onboarding__inner">
 
-      <a class="sf-btn sf-btn--ghost" href="/">Zurück</a>
-    </div>
-  </header>
+    <!-- INTRO -->
+    <section class="sf-onboarding__intro">
+      <h1 class="sf-h1 sf-h1--lg">
+        SmartFlow starten
+      </h1>
+      <p class="sf-lead sf-lead--wide">
+        Trage ein paar Angaben ein – der Rest läuft automatisch im Hintergrund.
+      </p>
 
-  <main class="sf-start">
-    <div class="sf-container">
-      <div class="sf-start__grid">
-        <div class="sf-start__copy">
-          <h1 class="sf-h1 sf-h1--sm">
-            SmartFlow testen<br />
-            <span>in weniger als 1 Minute</span>
-          </h1>
-          <p class="sf-lead">
-            Ein paar kurze Angaben – der Rest läuft automatisch.
-          </p>
-          <div class="sf-trust sf-trust--stack">
-            <div class="sf-trust__item">✓ Kein Login</div>
-            <div class="sf-trust__item">✓ Keine Einrichtung</div>
-            <div class="sf-trust__item">✓ Standardisierter Ablauf</div>
-          </div>
-        </div>
-
-        <div class="sf-glass sf-formcard">
-          <div id="smartflow-form"></div>
-          <div class="sf-formhint">
-            Mit dem Absenden akzeptierst du die <a href="/privacy.html">Datenschutzerklärung</a>.
-          </div>
-        </div>
+      <div class="sf-trust sf-trust--wide">
+        <div class="sf-trust__item">✓ Kein Login</div>
+        <div class="sf-trust__item">✓ Keine Einrichtung</div>
+        <div class="sf-trust__item">✓ Standardisierter Ablauf</div>
       </div>
-    </div>
-  </main>
+    </section>
 
-  <footer class="sf-footer sf-footer--lite">
-    <div class="sf-container sf-footer__inner">
-      <div class="sf-footer__copy">© 2025 SmartFlow Automations</div>
-      <div class="sf-footer__links">
-        <a href="/privacy.html">Datenschutz</a>
-        <a href="/impressum.html">Impressum</a>
-        <a href="/terms.html">AGB</a>
-      </div>
+    <!-- FORM -->
+    <section class="sf-onboarding__form">
+      <div id="smartflow-form"></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="sf-footer sf-footer--lite">
+  <div class="sf-container sf-footer__inner">
+    <div class="sf-footer__copy">© 2025 SmartFlow Automations</div>
+    <div class="sf-footer__links">
+      <a href="/privacy.html">Datenschutz</a>
+      <a href="/impressum.html">Impressum</a>
+      <a href="/terms.html">AGB</a>
     </div>
-  </footer>
+  </div>
+</footer>
+
 </body>
 </html>
