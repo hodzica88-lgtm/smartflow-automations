@@ -1,68 +1,227 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGB – SmartFlow Automations</title>
-    <link rel="stylesheet" href="styles/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AGB – SmartFlow Automations</title>
+  <meta name="description" content="Allgemeine Geschäftsbedingungen (B2B) für SmartFlow Automations." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles/style.css" />
 </head>
+
 <body>
+  <!-- Background -->
+  <div class="sf-bg">
+    <div class="sf-grid"></div>
+    <div class="sf-orb sf-orb--left"></div>
+    <div class="sf-orb sf-orb--right"></div>
+    <div class="sf-arc" aria-hidden="true"></div>
+  </div>
 
-<header class="header">
-    <div class="container header-inner">
-        <a href="index.html" class="logo-text">SmartFlow Automations</a>
-    </div>
-</header>
-
-<main class="page-section">
-    <div class="container">
-        <h1>Allgemeine Geschäftsbedingungen (AGB)</h1>
-
-        <p><strong>Anbieter:</strong><br>
-        Hodzic Digital Services – Almir Hodzic<br>
-        Im Sämann 61<br>
-        71334 Waiblingen<br>
-        Deutschland</p>
-
-        <h2>1. Geltungsbereich</h2>
-        <p>Diese AGB gelten für alle Verträge zwischen dem Anbieter und Kunden über digitale Dienstleistungen, insbesondere den KI-basierten Terminservice „SmartFlow Automations“.</p>
-
-        <h2>2. Vertragsgegenstand</h2>
-        <p>Der Anbieter stellt ein automatisiertes System zur Terminannahme, Kalenderverwaltung und Kommunikation zur Verfügung. Der Leistungsumfang richtet sich nach dem gewählten Paket (Basic, Pro, Premium).</p>
-
-        <h2>3. Vertragsabschluss</h2>
-        <p>Der Vertrag kommt durch Bestellung über die Website oder schriftliche Bestätigung per E-Mail zustande.</p>
-
-        <h2>4. Preise und Zahlungsbedingungen</h2>
-        <p>Alle Preise verstehen sich als monatliche Gebühren. Die Zahlung erfolgt monatlich im Voraus. Es können zusätzliche Einrichtungsgebühren anfallen.</p>
-
-        <h2>5. Kündigung</h2>
-        <p>Der Vertrag kann monatlich gekündigt werden. Die Kündigung muss mindestens 3 Tage vor dem neuen Abrechnungszeitraum erfolgen.</p>
-
-        <h2>6. Haftung</h2>
-        <p>Der Anbieter haftet nur für vorsätzliche und grob fahrlässige Pflichtverletzungen. Für Ausfälle durch externe Dienste (z. B. WhatsApp, Netlify, Google Calendar) wird keine Garantie übernommen.</p>
-
-        <h2>7. Datenschutz</h2>
-        <p>Die Verarbeitung personenbezogener Daten erfolgt gemäß unserer <a href="privacy.html">Datenschutzerklärung</a>.</p>
-
-        <h2>8. Leistungsunterbrechungen</h2>
-        <p>Wartungen oder technische Änderungen können zu zeitweisen Unterbrechungen führen. Der Anbieter bemüht sich, Störungen schnellstmöglich zu beheben.</p>
-
-        <h2>9. Schlussbestimmungen</h2>
-        <p>Es gilt deutsches Recht. Gerichtstand ist Waiblingen, sofern gesetzlich zulässig.</p>
-    </div>
-</main>
-
-<footer class="footer">
-    <div class="container footer-inner">
-        <p>© 2025 SmartFlow Automations – Hodzic Digital Services</p>
-        <div class="footer-links">
-            <a href="privacy.html">Datenschutz</a>
-            <a href="impressum.html">Impressum</a>
-            <a href="index.html">Home</a>
+  <header class="sf-header">
+    <div class="sf-container sf-header__inner">
+      <a class="sf-brand" href="/" style="text-decoration:none; color:inherit;">
+        <div class="sf-brand__mark" aria-hidden="true"></div>
+        <div class="sf-brand__text">
+          <div class="sf-brand__name">SmartFlow</div>
+          <div class="sf-brand__sub">Automations</div>
         </div>
-    </div>
-</footer>
+      </a>
 
+      <div class="sf-header__actions">
+        <a class="sf-btn sf-btn--ghost" href="/#how">So funktioniert’s</a>
+        <a class="sf-btn sf-btn--primary" href="/start.html">SmartFlow testen</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="sf-section" style="padding-top: 110px;">
+      <div class="sf-container">
+        <div class="sf-section__head">
+          <h1 class="sf-h2" style="font-size: 34px; line-height: 1.2;">Allgemeine Geschäftsbedingungen (AGB)</h1>
+          <p class="sf-section__lead" style="max-width: 900px;">
+            Anbieter: <strong>Hodzic Digital Services – Almir Hodzic</strong>, Im Sämann 61, 71334 Waiblingen, Deutschland.<br />
+            Diese AGB gelten <strong>ausschließlich für Unternehmer (B2B)</strong> im Sinne des § 14 BGB.
+          </p>
+        </div>
+
+        <div class="sf-glass sf-card" style="padding: 26px;">
+          <div class="sf-note" style="margin-bottom: 18px;">
+            <strong>Wichtiger Hinweis:</strong> Das Angebot richtet sich nicht an Verbraucher (§ 13 BGB). Ein Vertragsschluss mit Verbrauchern ist ausgeschlossen.
+          </div>
+
+          <div style="display:grid; gap:18px;">
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">1. Geltungsbereich</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>1.1 Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Verträge zwischen dem Anbieter und seinen Kunden über digitale Dienstleistungen, insbesondere das automatisierte Termin- und Kommunikationssystem „SmartFlow Automations“.</p>
+                <p>1.2 Das Angebot richtet sich ausschließlich an Unternehmer im Sinne des § 14 BGB. Ein Vertragsschluss mit Verbrauchern (§ 13 BGB) ist ausgeschlossen.</p>
+                <p>1.3 Entgegenstehende oder abweichende Bedingungen des Kunden gelten nur, wenn der Anbieter deren Geltung ausdrücklich schriftlich bestätigt.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">2. Vertragsgegenstand</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>2.1 Gegenstand des Vertrags ist die Bereitstellung eines standardisierten, cloudbasierten Automationssystems, das insbesondere folgende Funktionen umfassen kann: automatisierte Erfassung von Anfragen, Terminbestätigungen und Erinnerungen sowie automatisierte Kommunikationsabläufe.</p>
+                <p>2.2 Der konkrete Leistungsumfang ergibt sich aus dem jeweils gebuchten Paket (z. B. Basic, Pro, Ultimate) sowie der Leistungsbeschreibung auf der Website des Anbieters.</p>
+                <p>2.3 Der Anbieter schuldet die Bereitstellung des Systems, nicht jedoch einen bestimmten wirtschaftlichen Erfolg, eine bestimmte Anzahl an Anfragen, Terminen oder Abschlüssen.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">3. Vertragsschluss</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>3.1 Der Vertrag kommt durch Buchung über die Website des Anbieters, über einen Zahlungsdienstleister (z. B. Stripe) oder durch schriftliche Bestätigung per E-Mail zustande.</p>
+                <p>3.2 Mit Abschluss der Buchung bestätigt der Kunde, als Unternehmer zu handeln und diese AGB zur Kenntnis genommen zu haben.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">4. Preise und Zahlungsbedingungen</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>4.1 Alle Preise verstehen sich zuzüglich der gesetzlichen Umsatzsteuer, sofern diese anfällt.</p>
+                <p>4.2 Die Abrechnung erfolgt – sofern nicht anders vereinbart – monatlich im Voraus.</p>
+                <p>4.3 Zusätzlich zur monatlichen Gebühr können einmalige Einrichtungs- oder Aktivierungsgebühren anfallen.</p>
+                <p>4.4 Zahlungen erfolgen über die vom Anbieter angebotenen Zahlungsarten. Der Kunde ist für die Aktualität seiner Zahlungsdaten verantwortlich.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">5. Laufzeit und Kündigung</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>5.1 Der Vertrag wird auf unbestimmte Zeit geschlossen, sofern keine abweichende Laufzeit vereinbart wurde.</p>
+                <p>5.2 Der Vertrag kann von beiden Parteien monatlich gekündigt werden. Die Kündigung muss spätestens 3 Tage vor Beginn des nächsten Abrechnungszeitraums erfolgen.</p>
+                <p>5.3 Das Recht beider Parteien zur außerordentlichen Kündigung aus wichtigem Grund gemäß § 314 BGB bleibt unberührt.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">6. Mitwirkungspflichten des Kunden</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>6.1 Der Kunde ist verantwortlich für die technische Einbindung des Systems (z. B. auf der eigenen Website) sowie für die inhaltliche Richtigkeit der verwendeten Texte, Formulare und Daten.</p>
+                <p>6.2 Der Kunde ist außerdem verantwortlich für die rechtliche Zulässigkeit der Nutzung, insbesondere im Bereich Datenschutz, Einwilligungen, Impressumspflichten und die Einbindung in bestehende Prozesse.</p>
+                <p>6.3 Der Anbieter übernimmt keine Prüfung der rechtlichen Konformität der Nutzung beim Kunden.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">7. Drittanbieter und externe Dienste</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>7.1 SmartFlow kann auf Dienste Dritter zurückgreifen (z. B. Hosting, E-Mail-Dienste, Messaging-Dienste, Kalender- oder Zahlungsanbieter).</p>
+                <p>7.2 Für Ausfälle, Einschränkungen oder Änderungen dieser Drittanbieter übernimmt der Anbieter keine Haftung.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">8. Haftung</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>8.1 Der Anbieter haftet unbeschränkt bei Vorsatz und grober Fahrlässigkeit.</p>
+                <p>8.2 Bei einfacher Fahrlässigkeit haftet der Anbieter nur bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten), begrenzt auf den vertragstypischen, vorhersehbaren Schaden.</p>
+                <p>8.3 Soweit gesetzlich zulässig, ist die Haftung des Anbieters auf die vom Kunden in den letzten 12 Monaten gezahlten Entgelte begrenzt.</p>
+                <p>8.4 Eine Haftung für entgangenen Gewinn, Datenverlust oder mittelbare Schäden ist ausgeschlossen, soweit gesetzlich zulässig.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">9. Leistungsunterbrechungen</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>9.1 Der Anbieter ist berechtigt, Wartungsarbeiten durchzuführen, die zu vorübergehenden Einschränkungen führen können.</p>
+                <p>9.2 Der Anbieter bemüht sich, Unterbrechungen möglichst gering zu halten.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">10. Standardisiertes System / Keine Individualentwicklung</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>10.1 SmartFlow ist ein standardisiertes System.</p>
+                <p>10.2 Individuelle Sonderentwicklungen, kundenspezifische Anpassungen oder Abweichungen vom vorgesehenen Funktionsumfang sind nicht Bestandteil des Vertrags, sofern sie nicht ausdrücklich schriftlich vereinbart wurden.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">11. Datenschutz</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>11.1 Die Verarbeitung personenbezogener Daten erfolgt gemäß der jeweils aktuellen Datenschutzerklärung des Anbieters.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div>
+              <h2 class="sf-card__title" style="font-size:18px;">12. Schlussbestimmungen</h2>
+              <div class="sf-card__body" style="display:grid; gap:10px;">
+                <p>12.1 Es gilt das Recht der Bundesrepublik Deutschland.</p>
+                <p>12.2 Gerichtsstand ist – soweit gesetzlich zulässig – Waiblingen.</p>
+                <p>12.3 Sollte eine Bestimmung dieser AGB unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</p>
+              </div>
+            </div>
+
+            <div class="sf-divider"></div>
+
+            <div class="sf-note">
+              © 2026 SmartFlow Automations – Hodzic Digital Services
+            </div>
+
+          </div>
+        </div>
+
+        <div class="sf-cta" style="margin-top: 18px;">
+          <div class="sf-cta__copy">
+            <div class="sf-cta__title">Zurück zur Startseite</div>
+            <div class="sf-cta__text">Wenn du bereit bist, kannst du SmartFlow direkt testen.</div>
+          </div>
+          <a class="sf-btn sf-btn--primary" href="/start.html">SmartFlow testen</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="sf-footer">
+    <div class="sf-container sf-footer__inner">
+      <div class="sf-footer__left">
+        <div class="sf-brand sf-brand--small">
+          <div class="sf-brand__mark" aria-hidden="true"></div>
+          <div class="sf-brand__text">
+            <div class="sf-brand__name">SmartFlow</div>
+            <div class="sf-brand__sub">Automations</div>
+          </div>
+        </div>
+        <div class="sf-footer__copy">© 2026 SmartFlow Automations – Hodzic Digital Services</div>
+      </div>
+
+      <div class="sf-footer__links">
+        <a href="/privacy.html">Datenschutz</a>
+        <a href="/impressum.html">Impressum</a>
+        <a href="/terms.html">AGB</a>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
