@@ -26,17 +26,21 @@
             Jede Anfrage wird automatisch verarbeitet.
         </p>
 
-        <!-- 🔽 HIER IST JETZT DAS ECHTE SMARTFLOW-FORMULAR 🔽 -->
+        <!-- 🔽 SMARTFLOW FORMULAR (FINAL & FUNKTIONIERT) 🔽 -->
         <div class="demo-box" style="margin-top: 2.5rem; padding: 2rem; background:#0f1624; border-radius:16px;">
             
+            <!-- ZIEL-CONTAINER -->
+            <div id="smartflow-embed"></div>
+
+            <!-- EMBED SCRIPT -->
             <script
-                src="https://smartflow-automations.de/embed/v1/embed.js"
+                src="/embed/v1/embed.js"
                 data-client="demo_sf"
-                async>
+                data-target="#smartflow-embed">
             </script>
 
         </div>
-        <!-- 🔼 ENDE EMBED 🔼 -->
+        <!-- 🔼 ENDE SMARTFLOW FORMULAR 🔼 -->
 
         <p style="margin-top:2rem; color:var(--muted); font-size:0.9rem;">
             Dies ist ein Live-Test. Jede Anfrage läuft durch das echte SmartFlow-System.
