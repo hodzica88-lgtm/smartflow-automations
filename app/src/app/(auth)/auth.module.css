@@ -1,0 +1,116 @@
+.shell {
+  display: grid;
+  min-height: 100vh;
+  align-content: center;
+  padding: 2rem 1rem;
+}
+
+.panel {
+  display: grid;
+  width: min(100%, 28rem);
+  gap: 1.5rem;
+  margin-inline: auto;
+}
+
+.header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.label {
+  font-weight: 700;
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  padding: 0.875rem 1rem;
+}
+
+.button {
+  min-height: 3rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.button:hover {
+  background: var(--accent-strong);
+}
+
+.message {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 0;
+  padding: 0.875rem 1rem;
+  color: var(--foreground);
+  line-height: 1.5;
+}
+
+.error {
+  border-color: #fca5a5;
+  background: #fff1f2;
+}
+
+.success {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--muted);
+}
+
+.link {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+@media (min-width: 48rem) {
+  .shell {
+    padding: 4rem 2rem;
+  }
+
+  .title {
+    font-size: 3.25rem;
+  }
+}
