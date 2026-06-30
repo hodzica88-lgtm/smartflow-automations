@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { getUserCompanyState } from "@/features/onboarding/company";
 import { publicEnv } from "@/shared/config/env";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
@@ -45,6 +46,12 @@ export const loginAction = async (formData: FormData) => {
   } catch {
     await supabase.auth.signOut();
     redirectWithError("/login", "Your profile could not be prepared.");
+  }
+
+  const companyState = await getUserCompanyState(user.id);
+
+  if (!companyState.companyId) {
+    redirect("/onboarding");
   }
 
   redirect("/dashboard");

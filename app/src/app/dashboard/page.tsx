@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { logoutAction } from "@/features/auth/actions";
+import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./dashboard.module.css";
@@ -13,6 +14,12 @@ export default async function DashboardPage() {
 
   if (!user) {
     redirect("/login");
+  }
+
+  const companyState = await getUserCompanyState(user.id);
+
+  if (!companyState.companyId) {
+    redirect("/onboarding");
   }
 
   return (

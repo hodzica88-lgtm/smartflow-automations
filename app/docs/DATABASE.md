@@ -64,10 +64,13 @@ Stores tenant accounts and company-level business identity.
 | `id` | `uuid` | Yes | Primary key. |
 | `owner_user_id` | `uuid` | Yes | User who owns the company. |
 | `name` | `text` | Yes | Company name. |
+| `contact_person` | `text` | Yes | Primary contact person. |
+| `email` | `text` | Yes | Primary company contact email. |
 | `website_url` | `text` | No | Company website. |
 | `phone` | `text` | No | Primary phone number. |
 | `industry` | `text` | No | Optional business category. |
 | `timezone` | `text` | Yes | Default `America/New_York`. |
+| `business_hours` | `text` | No | Human-readable business hours for V1 onboarding. |
 | `created_at` | `timestamptz` | Yes | Creation timestamp. |
 | `updated_at` | `timestamptz` | Yes | Last update timestamp. |
 
@@ -80,10 +83,13 @@ Stores tenant accounts and company-level business identity.
 
 - Index on `owner_user_id`
 - Index on `name`
+- Index on `email`
 
 ### Constraints
 
 - `name` must not be empty.
+- `contact_person` must not be empty.
+- `email` must not be empty.
 - `timezone` must not be empty.
 
 ### RLS Notes

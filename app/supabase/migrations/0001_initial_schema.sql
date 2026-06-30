@@ -27,10 +27,13 @@ create table public.companies (
   id uuid primary key default gen_random_uuid(),
   owner_user_id uuid not null,
   name text not null,
+  contact_person text not null,
+  email text not null,
   website_url text,
   phone text,
   industry text,
   timezone text not null default 'America/New_York',
+  business_hours text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
@@ -39,6 +42,8 @@ create table public.companies (
     references public.users (id)
     on delete restrict,
   constraint companies_name_not_empty check (btrim(name) <> ''),
+  constraint companies_contact_person_not_empty check (btrim(contact_person) <> ''),
+  constraint companies_email_not_empty check (btrim(email) <> ''),
   constraint companies_timezone_not_empty check (btrim(timezone) <> '')
 );
 
@@ -210,6 +215,7 @@ create index users_default_company_id_idx on public.users (default_company_id);
 
 create index companies_owner_user_id_idx on public.companies (owner_user_id);
 create index companies_name_idx on public.companies (name);
+create index companies_email_idx on public.companies (email);
 
 create index leads_company_id_idx on public.leads (company_id);
 create index leads_assigned_user_id_idx on public.leads (assigned_user_id);

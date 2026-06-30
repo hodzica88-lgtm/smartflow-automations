@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseMiddlewareClient } from "@/shared/lib/supabase/middleware";
 
-const protectedRoutePrefixes = ["/dashboard"];
+const protectedRoutePrefixes = ["/dashboard", "/onboarding"];
 
 const isProtectedRoute = (pathname: string) =>
   protectedRoutePrefixes.some((prefix) => pathname.startsWith(prefix));
@@ -34,5 +34,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/login"],
 };
