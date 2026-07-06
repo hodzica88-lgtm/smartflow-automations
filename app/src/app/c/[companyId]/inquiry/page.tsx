@@ -9,14 +9,15 @@ const getString = (form: FormData, key: string) => {
 };
 
 type PageProps = {
-  params: { companyId: string };
-  searchParams?: { [key: string]: string | undefined };
+  params: Promise<{ companyId: string }>;
+  searchParams?: Promise<{ success?: string; error?: string }>;
 };
 
 export default async function Page({ params, searchParams }: PageProps) {
-  const { companyId } = params;
-  const success = searchParams?.success === "1";
-  const error = searchParams?.error || null;
+  const { companyId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const success = resolvedSearchParams?.success === "1";
+  const error = resolvedSearchParams?.error ?? null;
 
   return (
     <div style={{maxWidth: 720, margin: '0 auto', padding: 24}}>
@@ -41,15 +42,15 @@ export default async function Page({ params, searchParams }: PageProps) {
           const description = getString(formData, 'description');
 
           if (!companyIdValue) {
-            redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Ungültige Firma.')}`);
+            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Ungültige Firma.')}`);
           }
 
           if (!first_name || !last_name || !address || !phone || !email || !inquiry_type) {
-            redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Bitte alle Pflichtfelder ausfüllen.')}`);
+            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Bitte alle Pflichtfelder ausfüllen.')}`);
           }
 
           if (!isValidEmail(email)) {
-            redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Bitte gültige E-Mail-Adresse angeben.')}`);
+            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Bitte gültige E-Mail-Adresse angeben.')}`);
           }
 
           const supabase = createSupabaseServiceRoleClient();
@@ -62,31 +63,39 @@ export default async function Page({ params, searchParams }: PageProps) {
             .maybeSingle();
 
           if (companyError || !company || company.deleted_at) {
-            redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
+            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
           }
 
             try {
-            const { error: insertError } = await supabase.from('leads').insert({
-              company_id: companyIdValue,
-              first_name,
-              last_name,
-              address,
-              phone,
-              email,
-              inquiry_type,
-              source: 'public_form',
-              status: 'new',
-              notes: description || null,
-            });
+              const { error: insertError } = await supabase.from('leads').insert({
+                company_id: companyIdValue,
+                first_name,
+                last_name,
+                address,
+                phone,
+                email,
+                inquiry_type,
+                source: 'public_form',
+                status: 'new',
+                notes: description || null,
+              });
 
-            if (insertError) {
-              redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.')}`);
+              if (insertError) {
+                redirect(
+                  `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+                    'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
+                  )}`
+                );
+              }
+
+              redirect(`/c/${companyIdValue || companyId}/inquiry?success=1`);
+            } catch {
+              redirect(
+                `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+                  'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
+                )}`
+              );
             }
-
-            redirect(`/c/${companyId}/inquiry?success=1`);
-          } catch {
-            redirect(`/c/${companyId}/inquiry?error=${encodeURIComponent('Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.')}`);
-          }
         }} method="post">
           <input type="hidden" name="companyId" value={companyId} />
 
