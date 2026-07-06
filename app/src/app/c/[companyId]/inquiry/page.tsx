@@ -66,37 +66,29 @@ export default async function Page({ params, searchParams }: PageProps) {
             redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
           }
 
-            try {
-              const { error: insertError } = await supabase.from('leads').insert({
-                company_id: companyIdValue,
-                first_name,
-                last_name,
-                address,
-                phone,
-                email,
-                inquiry_type,
-                source: 'public_form',
-                status: 'new',
-                notes: description || null,
-              });
+            const { error: insertError } = await supabase.from('leads').insert({
+              company_id: companyIdValue,
+              first_name,
+              last_name,
+              address,
+              phone,
+              email,
+              inquiry_type,
+              source: 'public_form',
+              status: 'new',
+              notes: description || null,
+            });
 
-              if (insertError) {
-                redirect(
-                  `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
-                    'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
-                  )}`
-                );
-              }
-
-              redirect(`/c/${companyIdValue || companyId}/inquiry?success=1`);
-            } catch {
+            if (insertError) {
               redirect(
                 `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
                   'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
                 )}`
               );
             }
-        }} method="post">
+
+            redirect(`/c/${companyIdValue || companyId}/inquiry?success=1`);
+        }}>
           <input type="hidden" name="companyId" value={companyId} />
 
           <div style={{display:'grid', gap:12}}>
