@@ -26,6 +26,13 @@ Align SmartFlow product and platform priorities for long-term SaaS growth.
 - Add robust lead and reminder workflows.
 - Validate core product fit with sample use cases.
 
+### Foundational specifications
+- `docs/SPECS/SPEC-001-Lead-Intake.md`
+- `docs/SPECS/SPEC-002-Lead-Management.md`
+- `docs/SPECS/SPEC-003-Company-Settings.md`
+- `docs/SPECS/SPEC-004-Automation-Rules.md`
+- `docs/SPECS/SPEC-005-Dashboard.md`
+
 ## Phase 2: Automation and Integrations
 
 ### Focus
