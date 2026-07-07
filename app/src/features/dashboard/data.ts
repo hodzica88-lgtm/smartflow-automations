@@ -1,21 +1,10 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
-type LastLead = {
-  company_name: string | null;
-  created_at: string;
-  email: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  status: string;
-};
-
 export type DashboardMetrics = {
-  leadsContacted: number;
-  leadsReceived: number;
-  lastLead: LastLead | null;
-  openLeads: number;
-  reminders: number;
+  newLeads: number;
+  contactedLeads: number;
+  successfulLeads: number;
+  unsuccessfulLeads: number;
 };
 
 const getCount = async (
@@ -39,17 +28,17 @@ export const getDashboardMetrics = async (
   const supabase = createSupabaseServiceRoleClient();
 
   const [
-    leadsReceived,
-    leadsContacted,
-    reminders,
-    openLeads,
-    lastLeadResult,
+    newLeads,
+    contactedLeads,
+    successfulLeads,
+    unsuccessfulLeads,
   ] = await Promise.all([
     getCount(
       supabase
         .from("leads")
         .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId),
+        .eq("company_id", companyId)
+        .eq("status", "new"),
     ),
     getCount(
       supabase
@@ -60,36 +49,24 @@ export const getDashboardMetrics = async (
     ),
     getCount(
       supabase
-        .from("reminders")
+        .from("leads")
         .select("id", { count: "exact", head: true })
         .eq("company_id", companyId)
-        .in("status", ["pending", "snoozed"]),
+        .eq("status", "successful"),
     ),
     getCount(
       supabase
         .from("leads")
         .select("id", { count: "exact", head: true })
         .eq("company_id", companyId)
-        .in("status", ["new", "contacted", "qualified", "proposal"]),
+        .eq("status", "unsuccessful"),
     ),
-    supabase
-      .from("leads")
-      .select("company_name, created_at, email, first_name, last_name, phone, status")
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
   ]);
 
-  if (lastLeadResult.error) {
-    throw lastLeadResult.error;
-  }
-
   return {
-    leadsContacted,
-    leadsReceived,
-    lastLead: lastLeadResult.data,
-    openLeads,
-    reminders,
+    newLeads,
+    contactedLeads,
+    successfulLeads,
+    unsuccessfulLeads,
   };
 };
