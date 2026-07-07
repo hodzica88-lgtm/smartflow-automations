@@ -57,6 +57,9 @@ export default async function DashboardPage() {
           <a className={styles.button} href="/dashboard/leads">
             Leads verwalten
           </a>
+          <a className={styles.button} href="/dashboard/settings" style={{ marginTop: 12 }}>
+            Firmen­einstellungen
+          </a>
         </section>
       ) : null}
 
