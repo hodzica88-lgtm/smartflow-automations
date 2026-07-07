@@ -76,6 +76,37 @@ const getLeads = async (companyId: string) => {
   return data ?? [];
 };
 
+type LeadHistoryEntry = {
+  id: string;
+  lead_id: string;
+  from_status: string | null;
+  to_status: string;
+  created_at: string;
+};
+
+const getStatusLabel = (status: string | null | undefined) =>
+  status ? STATUS_LABELS[status] ?? status : "Initialer Status";
+
+const getLeadHistory = async (companyId: string, leadIds: string[]) => {
+  if (leadIds.length === 0) {
+    return [] as LeadHistoryEntry[];
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("lead_status_history")
+    .select("id, lead_id, from_status, to_status, created_at")
+    .eq("company_id", companyId)
+    .in("lead_id", leadIds)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as LeadHistoryEntry[];
+};
+
 const validateStatus = (status: string) => LEAD_STATUSES.includes(status);
 
 export async function updateLeadAction(formData: FormData) {
@@ -112,6 +143,26 @@ export async function updateLeadAction(formData: FormData) {
     updates.unsuccessful_outcome = null;
   }
 
+  const { data: existingLead, error: existingLeadError } = await supabase
+    .from("leads")
+    .select("status, successful_outcome, unsuccessful_outcome")
+    .eq("id", leadId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+
+  if (existingLeadError || !existingLead) {
+    redirect("/dashboard/leads?error=Lead+nicht+gefunden");
+  }
+
+  const statusChanged = existingLead.status !== status;
+  const outcomeChanged =
+    existingLead.successful_outcome !== successfulOutcome ||
+    existingLead.unsuccessful_outcome !== unsuccessfulOutcome;
+
+  if (!statusChanged && !outcomeChanged) {
+    redirect("/dashboard/leads?success=1");
+  }
+
   const { error } = await supabase
     .from("leads")
     .update(updates)
@@ -120,6 +171,24 @@ export async function updateLeadAction(formData: FormData) {
 
   if (error) {
     redirect("/dashboard/leads?error=Aktualisierung+fehlgeschlagen");
+  }
+
+  // Only write status-change history for the current schema.
+  // Outcome-only updates do not create a lead_status_history row yet because
+  // the existing schema does not support outcome history columns.
+  if (statusChanged) {
+    const { error: historyError } = await supabase.from("lead_status_history").insert([
+      {
+        company_id: companyId,
+        lead_id: leadId,
+        from_status: existingLead.status,
+        to_status: status,
+      },
+    ]);
+
+    if (historyError) {
+      redirect("/dashboard/leads?error=Historie+konnte+nicht+gespeichert+werden");
+    }
   }
 
   redirect("/dashboard/leads?success=1");
@@ -131,6 +200,14 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
   const success = resolvedSearchParams?.success === "1";
   const error = resolvedSearchParams?.error ?? null;
   const leads = await getLeads(companyId);
+  const historyEntries = await getLeadHistory(companyId, leads.map((lead) => lead.id));
+  const historyByLeadId = historyEntries.reduce<Record<string, LeadHistoryEntry[]>>((acc, entry) => {
+    if (!acc[entry.lead_id]) {
+      acc[entry.lead_id] = [];
+    }
+    acc[entry.lead_id].push(entry);
+    return acc;
+  }, {});
 
   return (
     <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
@@ -279,6 +356,21 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
                         Aktualisieren
                       </button>
                     </form>
+
+                    {historyByLeadId[lead.id]?.length ? (
+                      <div style={{ display: "grid", gap: 8, marginTop: 18 }}>
+                        <p style={{ margin: 0, fontSize: 13, color: "#4a5568", fontWeight: 700 }}>
+                          Verlauf
+                        </p>
+                        <ul style={{ margin: 0, paddingLeft: 16, color: "#4a5568" }}>
+                          {historyByLeadId[lead.id].map((entry) => (
+                            <li key={entry.id} style={{ marginBottom: 4 }}>
+                              {formatCreatedAt(entry.created_at)}: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                   </div>
                 </article>
               );
