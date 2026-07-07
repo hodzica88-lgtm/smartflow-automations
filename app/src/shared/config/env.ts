@@ -14,6 +14,7 @@ type ServerEnv = PublicEnv & {
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   supabaseServiceRoleKey: string;
+  internalApiSecret?: string;
 };
 
 type RequiredEnvKey =
@@ -59,6 +60,7 @@ export const loadServerEnv = (): ServerEnv => {
     stripeSecretKey: getOptionalEnv("STRIPE_SECRET_KEY"),
     stripeWebhookSecret: getOptionalEnv("STRIPE_WEBHOOK_SECRET"),
     supabaseServiceRoleKey: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    internalApiSecret: getOptionalEnv("INTERNAL_API_SECRET"),
   };
 };
 

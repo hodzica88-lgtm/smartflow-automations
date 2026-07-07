@@ -50,6 +50,7 @@ Required environment variables for API functionality:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `INTERNAL_API_SECRET`
 - `BREVO_API_KEY` (optional)
 - `BREVO_SENDER_EMAIL` (optional)
 - `BREVO_SENDER_NAME` (optional)
@@ -58,6 +59,11 @@ Required environment variables for API functionality:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (optional)
 - `STRIPE_SECRET_KEY` (optional)
 - `STRIPE_WEBHOOK_SECRET` (optional)
+
+## Internal Service Endpoints
+
+- `POST /api/internal/notifications/process` - processes pending internal notification queue items.
+- This endpoint is protected by `X-Internal-API-Secret` and requires `INTERNAL_API_SECRET` to be configured.
 
 ## Naming Conventions
 
