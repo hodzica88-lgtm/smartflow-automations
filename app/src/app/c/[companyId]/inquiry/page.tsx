@@ -66,7 +66,7 @@ export default async function Page({ params, searchParams }: PageProps) {
             redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
           }
 
-            const { error: insertError } = await supabase.from('leads').insert({
+            const { data: leadData, error: insertError } = await supabase.from('leads').insert({
               company_id: companyIdValue,
               first_name,
               last_name,
@@ -77,12 +77,31 @@ export default async function Page({ params, searchParams }: PageProps) {
               source: 'public_form',
               status: 'new',
               notes: description || null,
-            });
+            }).select('id').single();
 
-            if (insertError) {
+            if (insertError || !leadData?.id) {
               redirect(
                 `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
                   'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
+                )}`
+              );
+            }
+
+            const scheduledFor = new Date().toISOString();
+            // TODO: Use company timezone and business_hours parsing to delay notifications
+            // until the next open business window once a parser is available.
+            const { error: queueError } = await supabase.from('notification_queue').insert({
+              company_id: companyIdValue,
+              lead_id: leadData.id,
+              notification_type: 'owner_new_lead',
+              status: 'pending',
+              scheduled_for: scheduledFor,
+            });
+
+            if (queueError) {
+              redirect(
+                `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+                  'Beim Speichern der Benachrichtigung ist ein Fehler aufgetreten.'
                 )}`
               );
             }
