@@ -90,18 +90,27 @@ export default async function Page({ params, searchParams }: PageProps) {
             const scheduledFor = new Date().toISOString();
             // TODO: Use company timezone and business_hours parsing to delay notifications
             // until the next open business window once a parser is available.
-            const { error: queueError } = await supabase.from('notification_queue').insert({
-              company_id: companyIdValue,
-              lead_id: leadData.id,
-              notification_type: 'owner_new_lead',
-              status: 'pending',
-              scheduled_for: scheduledFor,
-            });
+            const { error: queueError } = await supabase.from('notification_queue').insert([
+              {
+                company_id: companyIdValue,
+                lead_id: leadData.id,
+                notification_type: 'owner_new_lead',
+                status: 'pending',
+                scheduled_for: scheduledFor,
+              },
+              {
+                company_id: companyIdValue,
+                lead_id: leadData.id,
+                notification_type: 'customer_confirmation',
+                status: 'pending',
+                scheduled_for: scheduledFor,
+              },
+            ]);
 
             if (queueError) {
               redirect(
                 `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
-                  'Beim Speichern der Benachrichtigung ist ein Fehler aufgetreten.'
+                  'Beim Planen der Benachrichtigungen ist ein Fehler aufgetreten.'
                 )}`
               );
             }
