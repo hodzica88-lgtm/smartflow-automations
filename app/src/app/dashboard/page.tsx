@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
 import { getUserCompanyState } from "@/features/onboarding/company";
@@ -54,9 +55,7 @@ export default async function DashboardPage() {
           <p>
             Sobald neue Anfragen eingehen, sehen Sie hier die wichtigsten Lead-Zahlen.
           </p>
-          <a className={styles.button} href="/dashboard/leads">
-            Leads verwalten
-          </a>
+          <Link className={styles.button} href="/dashboard/leads">Leads verwalten</Link>
           <a className={styles.button} href="/dashboard/settings" style={{ marginTop: 12 }}>
             Firmen­einstellungen
           </a>
@@ -89,11 +88,11 @@ export default async function DashboardPage() {
         <section className={styles.empty} aria-label="Leads verwalten">
           <h2>Lead-Übersicht</h2>
           <p>Gehen Sie zur Lead-Verwaltung, um Status und Ergebnisse zu aktualisieren.</p>
-          <a className={styles.button} href="/dashboard/leads">
-            Zu Leads
-          </a>
+          <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
         </section>
       ) : null}
     </main>
   );
 }
+
+

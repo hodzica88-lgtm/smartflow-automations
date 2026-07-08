@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getUserCompanyState } from "@/features/onboarding/company";
@@ -258,7 +259,11 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
                       <p style={{ margin: 0, fontSize: 14, color: "#718096" }}>Lead</p>
-                      <h2 style={{ margin: "4px 0 0", fontSize: 20 }}>{leadName}</h2>
+                      <h2 style={{ margin: "4px 0 0", fontSize: 20 }}>
+                        <Link href={`/dashboard/leads/${lead.id}`} style={{ color: "inherit", textDecoration: "none" }}>
+                          {leadName}
+                        </Link>
+                      </h2>
                       <p style={{ margin: "8px 0 0", color: "#4a5568" }}>
                         {(lead.email ?? lead.phone) || "Keine Kontaktdaten"}
                       </p>
