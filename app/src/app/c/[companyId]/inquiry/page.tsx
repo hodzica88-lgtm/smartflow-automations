@@ -1,4 +1,5 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
 import { redirect } from "next/navigation";
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
@@ -58,7 +59,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           // Verify company exists and is not deleted
           const { data: company, error: companyError } = await supabase
             .from('companies')
-            .select('id, deleted_at')
+            .select('id, deleted_at, timezone, business_hours')
             .eq('id', companyIdValue)
             .maybeSingle();
 
@@ -87,23 +88,26 @@ export default async function Page({ params, searchParams }: PageProps) {
               );
             }
 
-            const scheduledFor = new Date().toISOString();
-            // TODO: Use company timezone and business_hours parsing to delay notifications
-            // until the next open business window once a parser is available.
+            const customerConfirmationScheduledFor = new Date().toISOString();
+            const ownerNewLeadScheduledFor = getOwnerNotificationScheduledFor(
+              company.timezone,
+              company.business_hours,
+            );
+
             const { error: queueError } = await supabase.from('notification_queue').insert([
               {
                 company_id: companyIdValue,
                 lead_id: leadData.id,
                 notification_type: 'owner_new_lead',
                 status: 'pending',
-                scheduled_for: scheduledFor,
+                scheduled_for: ownerNewLeadScheduledFor,
               },
               {
                 company_id: companyIdValue,
                 lead_id: leadData.id,
                 notification_type: 'customer_confirmation',
                 status: 'pending',
-                scheduled_for: scheduledFor,
+                scheduled_for: customerConfirmationScheduledFor,
               },
             ]);
 
