@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
-const DEV_FALLBACK_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
-
 const timeZones = [
   "Europe/Berlin",
   "Europe/Vienna",
@@ -32,11 +30,15 @@ const getCompanyId = async () => {
   } = await authClient.auth.getUser();
 
   if (!user) {
-    return DEV_FALLBACK_COMPANY_ID;
+    redirect("/login");
   }
 
   const companyState = await getUserCompanyState(user.id);
-  return companyState.companyId ?? DEV_FALLBACK_COMPANY_ID;
+  if (!companyState.companyId) {
+    redirect("/onboarding");
+  }
+
+  return companyState.companyId;
 };
 
 const getCompany = async (companyId: string) => {

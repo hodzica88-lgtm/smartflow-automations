@@ -1,12 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./dashboard.module.css";
-
-const DEV_FALLBACK_COMPANY_ID = "11111111-1111-1111-1111-111111111111";
 
 const getCompanyId = async () => {
   const authClient = await createSupabaseServerClient();
@@ -15,11 +14,15 @@ const getCompanyId = async () => {
   } = await authClient.auth.getUser();
 
   if (!user) {
-    return DEV_FALLBACK_COMPANY_ID;
+    redirect("/login");
   }
 
   const companyState = await getUserCompanyState(user.id);
-  return companyState.companyId ?? DEV_FALLBACK_COMPANY_ID;
+  if (!companyState.companyId) {
+    redirect("/onboarding");
+  }
+
+  return companyState.companyId;
 };
 
 export default async function DashboardPage() {
@@ -94,5 +97,6 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
 
 
