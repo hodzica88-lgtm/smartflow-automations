@@ -6,6 +6,14 @@ const MAX_QUEUE_BATCH = 25;
 const BREVO_SMTP_EMAIL_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 const BLOCKED_OWNER_NOTIFICATION_RECIPIENT = "test@smartflow.local";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_TOTAL_ATTEMPTS = 5;
+const RETRY_DELAY_MINUTES_BY_ATTEMPT: Record<number, number> = {
+  1: 1,
+  2: 3,
+  3: 10,
+  4: 15,
+};
+const TEMPORARY_HTTP_STATUSES = new Set([408, 425, 429]);
 
 type NotificationQueueItem = {
   id: string;
@@ -14,6 +22,9 @@ type NotificationQueueItem = {
   notification_type: string;
   status: string;
   scheduled_for: string;
+  attempt_count: number;
+  last_attempt_at: string | null;
+  processing_started_at: string | null;
 };
 
 type CompanyData = {
@@ -60,6 +71,11 @@ type ProcessedNotificationSummary = {
   notification_type: string;
   status: "sent" | "failed";
   error_message?: string | null;
+};
+
+type BrevoErrorDetails = {
+  message: string | null;
+  code: string | null;
 };
 
 export const runtime = "nodejs";
@@ -190,11 +206,11 @@ const buildOwnerNewLeadHtml = (companyName: string, lead: LeadData, dashboardUrl
 `.trim();
 };
 
-const extractBrevoErrorMessage = async (response: Response) => {
+const extractBrevoErrorDetails = async (response: Response): Promise<BrevoErrorDetails> => {
   try {
     const raw = await response.text();
     if (!raw) {
-      return null;
+      return { message: null, code: null };
     }
 
     try {
@@ -208,18 +224,46 @@ const extractBrevoErrorMessage = async (response: Response) => {
           ? parsed.code.trim()
           : null;
 
-      if (message && code) {
-        return `${message} (${code})`;
-      }
-
-      return message ?? code;
+      return { message, code };
     } catch {
-      return raw.slice(0, 240).trim();
+      const fallback = raw.slice(0, 240).trim();
+      return { message: fallback.length > 0 ? fallback : null, code: null };
     }
   } catch {
-    return null;
+    return { message: null, code: null };
   }
 };
+
+const formatBrevoErrorMessage = (status: number, details: BrevoErrorDetails) => {
+  if (details.message && details.code) {
+    return `Brevo API error (${status}): ${details.message} (${details.code}).`;
+  }
+
+  if (details.message) {
+    return `Brevo API error (${status}): ${details.message}.`;
+  }
+
+  if (details.code) {
+    return `Brevo API error (${status}): ${details.code}.`;
+  }
+
+  return `Brevo API error (${status}).`;
+};
+
+const getRetryDelayMinutes = (attemptCount: number) =>
+  RETRY_DELAY_MINUTES_BY_ATTEMPT[attemptCount] ?? null;
+
+const getRetryScheduledFor = (attemptCount: number) => {
+  const delayMinutes = getRetryDelayMinutes(attemptCount);
+  if (!delayMinutes) {
+    return null;
+  }
+
+  return new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
+};
+
+const isTemporaryBrevoHttpFailure = (status: number) =>
+  TEMPORARY_HTTP_STATUSES.has(status) || status >= 500;
 
 export async function POST(request: Request) {
   const serverEnv = loadServerEnv();
@@ -260,13 +304,10 @@ export async function POST(request: Request) {
   const supabase = createSupabaseServiceRoleClient();
   const now = new Date().toISOString();
 
-  const { data: queueItems, error: queueError } = await supabase
-    .from("notification_queue")
-    .select("id, company_id, lead_id, notification_type, status, scheduled_for")
-    .eq("status", "pending")
-    .lte("scheduled_for", now)
-    .order("scheduled_for", { ascending: true })
-    .limit(MAX_QUEUE_BATCH);
+  const { data: queueItems, error: queueError } = await supabase.rpc(
+    "claim_notification_queue_items",
+    { p_batch_size: MAX_QUEUE_BATCH },
+  );
 
   if (queueError) {
     return jsonResponse(
@@ -317,6 +358,8 @@ export async function POST(request: Request) {
   for (const item of items) {
     try {
       let errorMessage: string | null = null;
+      const attemptCount = item.attempt_count;
+      const canRetry = attemptCount < MAX_TOTAL_ATTEMPTS;
 
       if (missingBrevoEnv.length > 0) {
         throw new Error(
@@ -456,41 +499,43 @@ export async function POST(request: Request) {
           accept: "application/json",
           "content-type": "application/json",
           "api-key": serverEnv.brevoApiKey as string,
+          idempotencyKey: item.id,
         },
         body: JSON.stringify(brevoPayload),
       });
 
-      if (!brevoResponse.ok) {
-        const brevoError = await extractBrevoErrorMessage(brevoResponse);
-        errorMessage = brevoError
-          ? `Brevo API error (${brevoResponse.status}): ${brevoError}`
-          : `Brevo API error (${brevoResponse.status}).`;
-      }
-
       const updateNow = new Date().toISOString();
-      const { error: updateError } = await supabase
-        .from("notification_queue")
-        .update({
-          status: errorMessage ? "failed" : "sent",
-          sent_at: errorMessage ? null : updateNow,
-          updated_at: updateNow,
-          error_message: errorMessage,
-        })
-        .eq("id", item.id);
 
-      if (updateError) {
-        throw updateError;
-      }
+      if (brevoResponse.ok) {
+        let providerMessageId: string | null = null;
 
-      if (errorMessage) {
-        failedCount += 1;
-        results.push({
-          id: item.id,
-          notification_type: item.notification_type,
-          status: "failed",
-          error_message: errorMessage,
-        });
-      } else {
+        try {
+          const parsed = (await brevoResponse.json()) as { messageId?: unknown };
+          providerMessageId =
+            typeof parsed.messageId === "string" && parsed.messageId.trim().length > 0
+              ? parsed.messageId.trim()
+              : null;
+        } catch {
+          providerMessageId = null;
+        }
+
+        const { error: updateError } = await supabase
+          .from("notification_queue")
+          .update({
+            status: "sent",
+            sent_at: updateNow,
+            updated_at: updateNow,
+            processing_started_at: null,
+            error_message: null,
+            provider_message_id: providerMessageId,
+          })
+          .eq("id", item.id)
+          .eq("status", "processing");
+
+        if (updateError) {
+          throw updateError;
+        }
+
         processedCount += 1;
         processedIds.push(item.id);
         results.push({
@@ -498,25 +543,142 @@ export async function POST(request: Request) {
           notification_type: item.notification_type,
           status: "sent",
         });
+        continue;
       }
-    } catch (error) {
-      failedCount += 1;
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
-      await supabase
+      const brevoErrorDetails = await extractBrevoErrorDetails(brevoResponse);
+      const brevoCode = brevoErrorDetails.code?.toLowerCase() ?? null;
+
+      if (brevoCode === "duplicate_parameter") {
+        const { error: updateError } = await supabase
+          .from("notification_queue")
+          .update({
+            status: "sent",
+            sent_at: updateNow,
+            updated_at: updateNow,
+            processing_started_at: null,
+            error_message: null,
+          })
+          .eq("id", item.id)
+          .eq("status", "processing");
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        processedCount += 1;
+        processedIds.push(item.id);
+        results.push({
+          id: item.id,
+          notification_type: item.notification_type,
+          status: "sent",
+        });
+        continue;
+      }
+
+      errorMessage = formatBrevoErrorMessage(brevoResponse.status, brevoErrorDetails);
+
+      if (isTemporaryBrevoHttpFailure(brevoResponse.status) && canRetry) {
+        const retryScheduledFor = getRetryScheduledFor(attemptCount);
+
+        const { error: updateError } = await supabase
+          .from("notification_queue")
+          .update({
+            status: "pending",
+            scheduled_for: retryScheduledFor,
+            updated_at: updateNow,
+            processing_started_at: null,
+            error_message: errorMessage,
+          })
+          .eq("id", item.id)
+          .eq("status", "processing");
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        failedCount += 1;
+        results.push({
+          id: item.id,
+          notification_type: item.notification_type,
+          status: "failed",
+          error_message: errorMessage,
+        });
+        continue;
+      }
+
+      const { error: updateError } = await supabase
         .from("notification_queue")
         .update({
           status: "failed",
-          updated_at: now,
+          updated_at: updateNow,
+          processing_started_at: null,
           error_message: errorMessage,
         })
-        .eq("id", item.id);
+        .eq("id", item.id)
+        .eq("status", "processing");
 
+      if (updateError) {
+        throw updateError;
+      }
+
+      failedCount += 1;
       results.push({
         id: item.id,
         notification_type: item.notification_type,
         status: "failed",
         error_message: errorMessage,
+      });
+    } catch (error) {
+      const caughtMessage = error instanceof Error ? error.message : "Unknown error";
+      const updateNow = new Date().toISOString();
+
+      const attemptCount = item.attempt_count;
+      const canRetry = attemptCount < MAX_TOTAL_ATTEMPTS;
+      const isTemporaryNetworkError = error instanceof TypeError;
+
+      if (isTemporaryNetworkError && canRetry) {
+        const retryScheduledFor = getRetryScheduledFor(attemptCount);
+
+        await supabase
+          .from("notification_queue")
+          .update({
+            status: "pending",
+            scheduled_for: retryScheduledFor,
+            updated_at: updateNow,
+            processing_started_at: null,
+            error_message: `Temporary delivery error: ${caughtMessage}`,
+          })
+          .eq("id", item.id)
+          .eq("status", "processing");
+
+        failedCount += 1;
+        results.push({
+          id: item.id,
+          notification_type: item.notification_type,
+          status: "failed",
+          error_message: `Temporary delivery error: ${caughtMessage}`,
+        });
+        continue;
+      }
+
+      await supabase
+        .from("notification_queue")
+        .update({
+          status: "failed",
+          updated_at: updateNow,
+          processing_started_at: null,
+          error_message: caughtMessage,
+        })
+        .eq("id", item.id)
+        .eq("status", "processing");
+
+      failedCount += 1;
+      results.push({
+        id: item.id,
+        notification_type: item.notification_type,
+        status: "failed",
+        error_message: caughtMessage,
       });
     }
   }
