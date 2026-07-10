@@ -3,10 +3,29 @@ import { redirect } from "next/navigation";
 import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/shared/lib/supabase/server";
 import InquiryShareSection from "./InquiryShareSection";
 
 import styles from "./dashboard.module.css";
+
+const OPEN_LEAD_STATUSES = ["new", "contacted"] as const;
+const STATUS_LABELS: Record<(typeof OPEN_LEAD_STATUSES)[number], string> = {
+  new: "Neue Anfrage",
+  contacted: "Kontaktiert",
+};
+
+type OpenLead = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  inquiry_type: string | null;
+  status: (typeof OPEN_LEAD_STATUSES)[number];
+  created_at: string;
+};
 
 const getCompanyId = async () => {
   const authClient = await createSupabaseServerClient();
@@ -26,9 +45,38 @@ const getCompanyId = async () => {
   return companyState.companyId;
 };
 
+const getOpenLeads = async (companyId: string) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id, first_name, last_name, phone, inquiry_type, status, created_at")
+    .eq("company_id", companyId)
+    .in("status", [...OPEN_LEAD_STATUSES])
+    .order("created_at", { ascending: true })
+    .limit(5);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as OpenLead[];
+};
+
+const formatCreatedAt = (createdAt: string) => {
+  try {
+    return new Date(createdAt).toLocaleString("de-DE", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  } catch {
+    return createdAt;
+  }
+};
+
 export default async function DashboardPage() {
   const companyId = await getCompanyId();
   const metrics = await getDashboardMetrics(companyId);
+  const openLeads = await getOpenLeads(companyId);
   const totalLeads =
     metrics.newLeads +
     metrics.contactedLeads +
@@ -95,6 +143,49 @@ export default async function DashboardPage() {
           <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
         </section>
       ) : null}
+
+      <section className={styles.empty} aria-label="Offene Anfragen">
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2>Offene Anfragen</h2>
+            <p>Hier sehen Sie die ältesten offenen Anfragen zuerst.</p>
+          </div>
+          <Link className={styles.sectionLink} href="/dashboard/leads">
+            Alle Anfragen anzeigen
+          </Link>
+        </div>
+
+        {openLeads.length === 0 ? (
+          <p>Aktuell sind keine offenen Anfragen vorhanden.</p>
+        ) : (
+          <div className={styles.openLeadList}>
+            {openLeads.map((lead) => {
+              const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt";
+              const isNewLead = lead.status === "new";
+
+              return (
+                <Link
+                  key={lead.id}
+                  href={`/dashboard/leads/${lead.id}`}
+                  className={`${styles.openLeadCard} ${isNewLead ? styles.openLeadCardNew : styles.openLeadCardContacted}`}
+                >
+                  <div className={styles.openLeadTopRow}>
+                    <strong className={styles.openLeadName}>{leadName}</strong>
+                    <span className={`${styles.openLeadStatus} ${isNewLead ? styles.openLeadStatusNew : styles.openLeadStatusContacted}`}>
+                      {STATUS_LABELS[lead.status]}
+                    </span>
+                  </div>
+                  <div className={styles.openLeadMeta}>
+                    {lead.phone ? <span>{lead.phone}</span> : null}
+                    <span>{lead.inquiry_type ?? "Nicht angegeben"}</span>
+                    <span>{formatCreatedAt(lead.created_at)}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <InquiryShareSection companyId={companyId} />
     </main>
