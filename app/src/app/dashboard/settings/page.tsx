@@ -23,6 +23,21 @@ const getStringValue = (formData: FormData, key: string) => {
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
+const primaryActionStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "2.75rem",
+  width: "fit-content",
+  padding: "12px 18px",
+  borderRadius: 8,
+  background: "#3182ce",
+  color: "#fff",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 700,
+} as const;
+
 const getCompanyId = async () => {
   const authClient = await createSupabaseServerClient();
   const {
@@ -124,7 +139,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const company = await getCompany(companyId);
 
   return (
-    <main style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
+    <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
       <section style={{ marginBottom: 24 }}>
         <p style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
           Einstellungen
@@ -136,13 +151,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       </section>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           Einstellungen wurden gespeichert.
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
@@ -252,18 +267,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           />
         </label>
 
-        <button
-          type="submit"
-          style={{
-            padding: "12px 18px",
-            borderRadius: 8,
-            background: "#3182ce",
-            color: "#fff",
-            border: "none",
-            cursor: "pointer",
-            width: "fit-content",
-          }}
-        >
+        <button type="submit" style={primaryActionStyle}>
           Speichern
         </button>
       </form>

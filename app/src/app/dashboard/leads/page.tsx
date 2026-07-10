@@ -28,6 +28,21 @@ const UNSUCCESSFUL_OUTCOMES = [
 
 const LEAD_STATUSES = ["new", "contacted", "successful", "unsuccessful"];
 
+const primaryActionStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "2.75rem",
+  padding: "12px 18px",
+  borderRadius: 8,
+  background: "#3182ce",
+  color: "#fff",
+  textDecoration: "none",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 700,
+} as const;
+
 const getString = (formData: FormData, key: string) => {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -213,7 +228,7 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
   }, {});
 
   return (
-    <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
+    <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto", display: "grid", gap: 24 }}>
       <section style={{ marginBottom: 24 }}>
         <p style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
           Lead-Verwaltung
@@ -225,15 +240,7 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
         <div style={{ marginTop: 16 }}>
           <Link
             href="/dashboard/leads/new"
-            style={{
-              display: "inline-block",
-              padding: "12px 18px",
-              borderRadius: 8,
-              background: "#3182ce",
-              color: "#fff",
-              textDecoration: "none",
-              fontWeight: 700,
-            }}
+            style={primaryActionStyle}
           >
             Telefonanfrage erfassen
           </Link>
@@ -241,18 +248,18 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
       </section>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           Lead wurde erfolgreich aktualisiert.
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
 
-      <section style={{ marginBottom: 24 }}>
+      <section>
         <div style={{ display: "grid", gap: 16 }}>
           {leads.length === 0 ? (
             <div style={{ padding: 24, border: "1px solid #ddd", borderRadius: 8 }}>
@@ -282,7 +289,7 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
                           {leadName}
                         </Link>
                       </h2>
-                      <p style={{ margin: "8px 0 0", color: "#4a5568" }}>
+                      <p style={{ margin: "8px 0 0", color: "#4a5568", overflowWrap: "anywhere" }}>
                         {(lead.email ?? lead.phone) || "Keine Kontaktdaten"}
                       </p>
                     </div>
@@ -309,13 +316,13 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
                   <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
                     <div style={{ display: "grid", gap: 6 }}>
                       <span style={{ fontSize: 13, color: "#4a5568", fontWeight: 600 }}>Anfrage-Typ</span>
-                      <span>{lead.inquiry_type ?? "Nicht angegeben"}</span>
+                      <span style={{ overflowWrap: "anywhere" }}>{lead.inquiry_type ?? "Nicht angegeben"}</span>
                     </div>
 
                     {lead.notes ? (
                       <div style={{ display: "grid", gap: 6 }}>
                         <span style={{ fontSize: 13, color: "#4a5568", fontWeight: 600 }}>Beschreibung</span>
-                        <span>{lead.notes}</span>
+                        <span style={{ overflowWrap: "anywhere" }}>{lead.notes}</span>
                       </div>
                     ) : null}
 
@@ -366,15 +373,7 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
 
                       <button
                         type="submit"
-                        style={{
-                          alignSelf: "flex-start",
-                          padding: "12px 18px",
-                          borderRadius: 8,
-                          background: "#3182ce",
-                          color: "#fff",
-                          border: "none",
-                          cursor: "pointer",
-                        }}
+                        style={{ ...primaryActionStyle, alignSelf: "flex-start" }}
                       >
                         Aktualisieren
                       </button>
@@ -387,7 +386,7 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
                         </p>
                         <ul style={{ margin: 0, paddingLeft: 16, color: "#4a5568" }}>
                           {historyByLeadId[lead.id].map((entry) => (
-                            <li key={entry.id} style={{ marginBottom: 4 }}>
+                            <li key={entry.id} style={{ marginBottom: 4, overflowWrap: "anywhere" }}>
                               {formatCreatedAt(entry.created_at)}: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)}
                             </li>
                           ))}

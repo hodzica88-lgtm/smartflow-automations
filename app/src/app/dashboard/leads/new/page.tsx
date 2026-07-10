@@ -16,6 +16,21 @@ const INQUIRY_TYPES = [
   "Sonstiges",
 ] as const;
 
+const primaryActionStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "2.75rem",
+  width: "fit-content",
+  padding: "12px 18px",
+  borderRadius: 8,
+  background: "#3182ce",
+  color: "#fff",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 700,
+} as const;
+
 const getString = (formData: FormData, key: string) => {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -101,7 +116,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
   const error = resolvedSearchParams?.error ?? null;
 
   return (
-    <main style={{ padding: 24, maxWidth: 760, margin: "0 auto" }}>
+    <main style={{ padding: 24, maxWidth: 760, margin: "0 auto", display: "grid", gap: 20 }}>
       <div style={{ marginBottom: 24 }}>
         <Link href="/dashboard/leads" style={{ color: "#3182ce", textDecoration: "none" }}>
           ← Zurück zur Übersicht
@@ -113,7 +128,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
       </div>
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
@@ -177,18 +192,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
             />
           </label>
 
-          <button
-            type="submit"
-            style={{
-              width: "fit-content",
-              padding: "12px 18px",
-              borderRadius: 8,
-              background: "#3182ce",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
+          <button type="submit" style={primaryActionStyle}>
             Lead anlegen
           </button>
         </form>

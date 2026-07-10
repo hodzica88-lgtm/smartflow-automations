@@ -168,10 +168,12 @@ export default async function DashboardPage() {
           <p>
             Sobald neue Anfragen eingehen, sehen Sie hier die wichtigsten Lead-Zahlen.
           </p>
-          <Link className={styles.button} href="/dashboard/leads">Leads verwalten</Link>
-          <a className={styles.button} href="/dashboard/settings" style={{ marginTop: 12 }}>
-            Firmen­einstellungen
-          </a>
+          <div className={styles.sectionActions}>
+            <Link className={styles.button} href="/dashboard/leads">Leads verwalten</Link>
+            <a className={styles.buttonSecondary} href="/dashboard/settings">
+              Firmen­einstellungen
+            </a>
+          </div>
         </section>
       ) : null}
 
@@ -243,7 +245,9 @@ export default async function DashboardPage() {
         <section className={styles.empty} aria-label="Leads verwalten">
           <h2>Lead-Übersicht</h2>
           <p>Gehen Sie zur Lead-Verwaltung, um Status und Ergebnisse zu aktualisieren.</p>
-          <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
+          <div className={styles.sectionActions}>
+            <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
+          </div>
         </section>
       ) : null}
 

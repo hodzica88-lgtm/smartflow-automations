@@ -31,6 +31,21 @@ const SOURCE_LABELS: Record<string, string> = {
   manual_phone: "Telefonisch erfasst",
 };
 
+const primaryActionStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "2.75rem",
+  padding: "12px 18px",
+  borderRadius: 8,
+  background: "#3182ce",
+  color: "#fff",
+  textDecoration: "none",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 700,
+} as const;
+
 type LeadDetail = {
   id: string;
   company_id: string;
@@ -247,7 +262,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
   const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt";
 
   return (
-    <main style={{ padding: 24, maxWidth: 1000, margin: "0 auto" }}>
+    <main style={{ padding: 24, maxWidth: 1000, margin: "0 auto", display: "grid", gap: 24 }}>
       <div style={{ marginBottom: 24 }}>
         <Link href="/dashboard/leads" style={{ color: "#3182ce", textDecoration: "none" }}>
           ← Zurück zur Übersicht
@@ -259,19 +274,19 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
       </div>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           Lead wurde erfolgreich aktualisiert.
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", marginBottom: 16 }}>
+        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
 
-      <div style={{ display: "grid", gap: 24 }}>
-        <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff" }}>
+      <div style={{ display: "grid", gap: 20 }}>
+        <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", overflowWrap: "anywhere" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
               <p style={{ margin: 0, fontSize: 13, color: "#718096", textTransform: "uppercase", letterSpacing: "0.08em" }}>
@@ -288,58 +303,58 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
               <div>
                 <strong>Vorname</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.first_name ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.first_name ?? "—"}</p>
               </div>
               <div>
                 <strong>Nachname</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.last_name ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.last_name ?? "—"}</p>
               </div>
               <div>
                 <strong>Adresse</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.address ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.address ?? "—"}</p>
               </div>
               <div>
                 <strong>Telefon</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.phone ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.phone ?? "—"}</p>
               </div>
               <div>
                 <strong>E-Mail</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.email ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.email ?? "—"}</p>
               </div>
               <div>
                 <strong>Anfrage-Typ</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.inquiry_type ?? "—"}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.inquiry_type ?? "—"}</p>
               </div>
               <div>
                 <strong>Quelle</strong>
-                <p style={{ margin: "4px 0 0" }}>{getSourceLabel(lead.source)}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{getSourceLabel(lead.source)}</p>
               </div>
               <div>
                 <strong>Status</strong>
-                <p style={{ margin: "4px 0 0" }}>{STATUS_LABELS[lead.status] ?? lead.status}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{STATUS_LABELS[lead.status] ?? lead.status}</p>
               </div>
               <div>
                 <strong>Erfolgs-Outcome</strong>
-                <p style={{ margin: "4px 0 0" }}>{getOutcomeLabel(lead.successful_outcome, "successful")}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{getOutcomeLabel(lead.successful_outcome, "successful")}</p>
               </div>
               <div>
                 <strong>Nicht-erfolgs-Outcome</strong>
-                <p style={{ margin: "4px 0 0" }}>{getOutcomeLabel(lead.unsuccessful_outcome, "unsuccessful")}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{getOutcomeLabel(lead.unsuccessful_outcome, "unsuccessful")}</p>
               </div>
               <div>
                 <strong>Erstellt</strong>
-                <p style={{ margin: "4px 0 0" }}>{formatTimestamp(lead.created_at)}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{formatTimestamp(lead.created_at)}</p>
               </div>
               <div>
                 <strong>Aktualisiert</strong>
-                <p style={{ margin: "4px 0 0" }}>{formatTimestamp(lead.updated_at)}</p>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{formatTimestamp(lead.updated_at)}</p>
               </div>
             </div>
 
             {lead.notes ? (
               <div>
                 <strong>Beschreibung</strong>
-                <p style={{ margin: "4px 0 0", whiteSpace: "pre-wrap" }}>{lead.notes}</p>
+                <p style={{ margin: "4px 0 0", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{lead.notes}</p>
               </div>
             ) : null}
           </div>
@@ -387,7 +402,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
               </label>
             </div>
 
-            <button type="submit" style={{ alignSelf: "flex-start", padding: "12px 18px", borderRadius: 8, background: "#3182ce", color: "#fff", border: "none", cursor: "pointer" }}>
+            <button type="submit" style={{ ...primaryActionStyle, alignSelf: "flex-start" }}>
               Aktualisieren
             </button>
           </form>
@@ -398,7 +413,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
           {history.length === 0 ? (
             <p style={{ margin: 0, color: "#555" }}>Noch kein Verlauf vorhanden.</p>
           ) : (
-            <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
+            <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8, overflowWrap: "anywhere" }}>
               {history.map((entry) => (
                 <li key={entry.id}>
                   <strong>{formatTimestamp(entry.created_at)}</strong>: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)}
