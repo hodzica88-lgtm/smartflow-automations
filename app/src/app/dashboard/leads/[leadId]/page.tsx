@@ -27,6 +27,9 @@ const UNSUCCESSFUL_OUTCOMES = [
 ];
 
 const LEAD_STATUSES = ["new", "contacted", "successful", "unsuccessful"];
+const SOURCE_LABELS: Record<string, string> = {
+  manual_phone: "Telefonisch erfasst",
+};
 
 type LeadDetail = {
   id: string;
@@ -134,6 +137,9 @@ const getOutcomeLabel = (value: string | null | undefined, kind: "successful" | 
   const options = kind === "successful" ? SUCCESSFUL_OUTCOMES : UNSUCCESSFUL_OUTCOMES;
   return options.find((option) => option.value === value)?.label ?? value ?? "—";
 };
+
+const getSourceLabel = (source: string | null | undefined) =>
+  source ? SOURCE_LABELS[source] ?? source : "—";
 
 const validateStatus = (status: string) => LEAD_STATUSES.includes(status);
 
@@ -306,7 +312,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
               </div>
               <div>
                 <strong>Quelle</strong>
-                <p style={{ margin: "4px 0 0" }}>{lead.source ?? "—"}</p>
+                <p style={{ margin: "4px 0 0" }}>{getSourceLabel(lead.source)}</p>
               </div>
               <div>
                 <strong>Status</strong>

@@ -222,6 +222,22 @@ export default async function LeadsPage({ searchParams }: { searchParams?: Promi
         <p style={{ marginTop: 8, color: "#555" }}>
           Übersicht über aktuelle Anfragen und schneller Wechsel des Lead-Status.
         </p>
+        <div style={{ marginTop: 16 }}>
+          <Link
+            href="/dashboard/leads/new"
+            style={{
+              display: "inline-block",
+              padding: "12px 18px",
+              borderRadius: 8,
+              background: "#3182ce",
+              color: "#fff",
+              textDecoration: "none",
+              fontWeight: 700,
+            }}
+          >
+            Telefonanfrage erfassen
+          </Link>
+        </div>
       </section>
 
       {success ? (
