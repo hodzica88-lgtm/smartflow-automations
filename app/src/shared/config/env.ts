@@ -9,8 +9,6 @@ type ServerEnv = PublicEnv & {
   brevoApiKey?: string;
   brevoSenderEmail?: string;
   brevoSenderName?: string;
-  makeApiKey?: string;
-  makeWebhookUrl?: string;
   stripeSecretKey?: string;
   stripeWebhookSecret?: string;
   supabaseServiceRoleKey: string;
@@ -55,8 +53,6 @@ export const loadServerEnv = (): ServerEnv => {
     brevoApiKey: getOptionalEnv("BREVO_API_KEY"),
     brevoSenderEmail: getOptionalEnv("BREVO_SENDER_EMAIL"),
     brevoSenderName: getOptionalEnv("BREVO_SENDER_NAME"),
-    makeApiKey: getOptionalEnv("MAKE_API_KEY"),
-    makeWebhookUrl: getOptionalEnv("MAKE_NOTIFICATION_WEBHOOK_URL"),
     stripeSecretKey: getOptionalEnv("STRIPE_SECRET_KEY"),
     stripeWebhookSecret: getOptionalEnv("STRIPE_WEBHOOK_SECRET"),
     supabaseServiceRoleKey: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
@@ -69,7 +65,6 @@ export const getIntegrationStatus = () => {
 
   return {
     brevo: Boolean(serverEnv.brevoApiKey && serverEnv.brevoSenderEmail),
-    make: Boolean(serverEnv.makeWebhookUrl),
     stripe: Boolean(
       publicEnv.stripePublishableKey && serverEnv.stripeSecretKey,
     ),
