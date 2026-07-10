@@ -57,3 +57,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/internal/notifications/process
 
 - Die Produktionsbereitstellung ist noch offen.
 - Die automatische Worker-Ausführung per Scheduler ist noch offen.
+
+## Betrieb
+
+- Betriebs- und Backup-Runbook: `docs/OPERATIONS.md`
