@@ -46,7 +46,7 @@ const getCompany = async (companyId: string) => {
   const { data, error } = await supabase
     .from("companies")
     .select(
-      "id, name, contact_person, email, phone, website_url, industry, timezone, business_hours",
+      "id, name, contact_person, email, notification_email, phone, website_url, industry, timezone, business_hours",
     )
     .eq("id", companyId)
     .maybeSingle();
@@ -64,6 +64,7 @@ export async function updateCompanyAction(formData: FormData) {
   const name = getStringValue(formData, "name");
   const contactPerson = getStringValue(formData, "contact_person");
   const email = getStringValue(formData, "email");
+  const notificationEmail = getStringValue(formData, "notification_email");
   const phone = getStringValue(formData, "phone");
   const websiteUrl = getStringValue(formData, "website_url");
   const industry = getStringValue(formData, "industry");
@@ -76,6 +77,10 @@ export async function updateCompanyAction(formData: FormData) {
 
   if (!isValidEmail(email)) {
     redirect("/dashboard/settings?error=Bitte+geben+Sie+eine+gültige+E-Mail-Adresse+ein");
+  }
+
+  if (notificationEmail && !isValidEmail(notificationEmail)) {
+    redirect("/dashboard/settings?error=Bitte+geben+Sie+eine+gültige+Benachrichtigungs-E-Mail-Adresse+ein");
   }
 
   if (!timeZones.includes(timezone as (typeof timeZones)[number])) {
@@ -91,6 +96,7 @@ export async function updateCompanyAction(formData: FormData) {
       name,
       contact_person: contactPerson,
       email,
+      notification_email: notificationEmail || null,
       phone: phone || null,
       website_url: websiteUrl || null,
       industry: industry || null,
@@ -173,6 +179,19 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
             required
           />
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          Benachrichtigungs-E-Mail
+          <input
+            name="notification_email"
+            type="email"
+            defaultValue={company?.notification_email ?? ""}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+          />
+          <small style={{ color: "#555" }}>
+            An diese Adresse senden wir neue Kundenanfragen.
+          </small>
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>

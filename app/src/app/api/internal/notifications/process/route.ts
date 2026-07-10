@@ -21,6 +21,7 @@ type CompanyData = {
   name: string;
   owner_user_id: string;
   email: string;
+  notification_email: string | null;
   contact_person: string | null;
 };
 
@@ -84,6 +85,24 @@ const isValidEmail = (value: string | null | undefined) => {
   }
 
   return value.length <= 320 && EMAIL_REGEX.test(value);
+};
+
+const isBlockedOwnerRecipientEmail = (value: string | null | undefined) => {
+  if (!value) {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (!isValidEmail(normalized)) {
+    return false;
+  }
+
+  const [, domain] = normalized.split("@");
+  if (!domain) {
+    return false;
+  }
+
+  return normalized === BLOCKED_OWNER_NOTIFICATION_RECIPIENT || domain.endsWith(".local");
 };
 
 const escapeHtml = (value: string) =>
@@ -311,7 +330,7 @@ export async function POST(request: Request) {
 
       const { data: company, error: companyError } = await supabase
         .from("companies")
-        .select("id, name, owner_user_id, email, contact_person")
+        .select("id, name, owner_user_id, email, notification_email, contact_person")
         .eq("id", item.company_id)
         .single();
 
@@ -359,6 +378,7 @@ export async function POST(request: Request) {
       };
 
       const companyEmail = normalizeEmail(companyData.email);
+      const companyNotificationEmail = normalizeEmail(companyData.notification_email);
       const ownerEmail = normalizeEmail(ownerData.email);
       const leadEmail = normalizeEmail(leadData.email);
 
@@ -396,21 +416,22 @@ export async function POST(request: Request) {
             : {}),
         };
       } else if (item.notification_type === "owner_new_lead") {
-        if (!companyEmail || !isValidEmail(companyEmail)) {
-          throw new Error(
-            "Missing or invalid recipient email for owner_new_lead (companies.email).",
-          );
-        }
+        const ownerRecipientEmail =
+          (companyNotificationEmail && isValidEmail(companyNotificationEmail) && !isBlockedOwnerRecipientEmail(companyNotificationEmail) && companyNotificationEmail) ||
+          (companyEmail && isValidEmail(companyEmail) && !isBlockedOwnerRecipientEmail(companyEmail) && companyEmail) ||
+          null;
 
-        if (companyEmail.toLowerCase() === BLOCKED_OWNER_NOTIFICATION_RECIPIENT) {
-          throw new Error("Blocked recipient for owner_new_lead: test@smartflow.local");
+        if (!ownerRecipientEmail) {
+          throw new Error(
+            "Missing or invalid recipient email for owner_new_lead. Please set a valid Benachrichtigungs-E-Mail or company email (non-.local).",
+          );
         }
 
         brevoPayload = {
           sender,
           to: [
             {
-              email: companyEmail,
+              email: ownerRecipientEmail,
               name: companyData.contact_person ?? ownerData.full_name ?? undefined,
             },
           ],
