@@ -162,6 +162,35 @@
   gap: 0.625rem;
 }
 
+.qrPreview {
+  display: grid;
+  place-items: start;
+}
+
+.qrImage,
+.qrPlaceholder {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.qrImage {
+  display: block;
+  width: 100%;
+  max-width: 16rem;
+  height: auto;
+}
+
+.qrPlaceholder {
+  display: grid;
+  place-items: center;
+  width: min(100%, 16rem);
+  min-height: 16rem;
+  padding: 1rem;
+  color: var(--muted);
+  text-align: center;
+}
+
 .copySuccess {
   color: #1f7a3d;
   font-size: 0.875rem;
