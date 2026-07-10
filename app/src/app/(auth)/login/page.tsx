@@ -28,12 +28,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="login-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>SmartFlow</p>
+          <p className={styles.eyebrow}>AnfragePilot</p>
           <h1 className={styles.title} id="login-title">
-            Log in
+            Anmelden
           </h1>
           <p className={styles.copy}>
-            Access your dashboard with your SmartFlow email and password.
+            Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an.
           </p>
         </header>
 
@@ -43,7 +43,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <form action={loginAction} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>Email</span>
+            <span className={styles.label}>E-Mail</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -54,7 +54,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Password</span>
+            <span className={styles.label}>Passwort</span>
             <input
               autoComplete="current-password"
               className={styles.input}
@@ -65,13 +65,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </label>
 
           <button className={styles.button} type="submit">
-            Log in
+            Anmelden
           </button>
         </form>
 
-        <nav className={styles.links} aria-label="Login help">
+        <nav className={styles.links} aria-label="Anmeldehilfe">
           <Link className={styles.link} href="/forgot-password">
-            Forgot password?
+            Passwort vergessen?
           </Link>
         </nav>
       </section>

@@ -22,7 +22,7 @@ export const loginAction = async (formData: FormData) => {
   const password = getStringValue(formData, "password");
 
   if (!email || !password) {
-    redirectWithError("/login", "Email and password are required.");
+    redirectWithError("/login", "Bitte geben Sie E-Mail-Adresse und Passwort ein.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -32,11 +32,11 @@ export const loginAction = async (formData: FormData) => {
   });
 
   if (error) {
-    redirectWithError("/login", "Invalid email or password.");
+    redirectWithError("/login", "Ungültige E-Mail-Adresse oder ungültiges Passwort.");
   }
 
   if (!data.user) {
-    redirectWithError("/login", "Invalid email or password.");
+    redirectWithError("/login", "Ungültige E-Mail-Adresse oder ungültiges Passwort.");
   }
 
   const user = data.user!;
@@ -45,7 +45,7 @@ export const loginAction = async (formData: FormData) => {
     await ensureUserProfile(user);
   } catch {
     await supabase.auth.signOut();
-    redirectWithError("/login", "Your profile could not be prepared.");
+    redirectWithError("/login", "Ihr Profil konnte nicht vorbereitet werden.");
   }
 
   const companyState = await getUserCompanyState(user.id);
@@ -68,7 +68,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   const email = getStringValue(formData, "email");
 
   if (!email) {
-    redirectWithError("/forgot-password", "Email is required.");
+    redirectWithError("/forgot-password", "Bitte geben Sie Ihre E-Mail-Adresse ein.");
   }
 
   const supabase = await createSupabaseServerClient();

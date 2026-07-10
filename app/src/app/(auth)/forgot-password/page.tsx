@@ -20,13 +20,13 @@ export default async function ForgotPasswordPage({
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="forgot-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>SmartFlow</p>
+          <p className={styles.eyebrow}>AnfragePilot</p>
           <h1 className={styles.title} id="forgot-title">
-            Reset password
+            Passwort zurücksetzen
           </h1>
           <p className={styles.copy}>
-            Enter your email and we will send password reset instructions if the
-            account exists.
+            Geben Sie Ihre E-Mail-Adresse ein. Falls ein Konto existiert,
+            senden wir Ihnen Anweisungen zum Zurücksetzen des Passworts.
           </p>
         </header>
 
@@ -36,13 +36,13 @@ export default async function ForgotPasswordPage({
 
         {sent ? (
           <p className={`${styles.message} ${styles.success}`}>
-            Check your email for password reset instructions.
+            Prüfen Sie Ihr E-Mail-Postfach auf Anweisungen zum Zurücksetzen des Passworts.
           </p>
         ) : null}
 
         <form action={forgotPasswordAction} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>Email</span>
+            <span className={styles.label}>E-Mail</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -53,13 +53,13 @@ export default async function ForgotPasswordPage({
           </label>
 
           <button className={styles.button} type="submit">
-            Send reset email
+            E-Mail zum Zurücksetzen senden
           </button>
         </form>
 
-        <nav className={styles.links} aria-label="Password reset help">
+        <nav className={styles.links} aria-label="Hilfe zum Zurücksetzen des Passworts">
           <Link className={styles.link} href="/login">
-            Back to login
+            Zurück zur Anmeldung
           </Link>
         </nav>
       </section>

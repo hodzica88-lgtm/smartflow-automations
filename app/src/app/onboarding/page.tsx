@@ -7,13 +7,9 @@ import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 import styles from "./onboarding.module.css";
 
 const timeZones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Anchorage",
-  "Pacific/Honolulu",
+  { value: "Europe/Berlin", label: "Europe/Berlin — Deutschland" },
+  { value: "Europe/Vienna", label: "Europe/Vienna — Österreich" },
+  { value: "Europe/Zurich", label: "Europe/Zurich — Schweiz" },
 ];
 
 type OnboardingPageProps = {
@@ -46,12 +42,12 @@ export default async function OnboardingPage({
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="onboarding-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>SmartFlow setup</p>
+          <p className={styles.eyebrow}>AnfragePilot Einrichtung</p>
           <h1 className={styles.title} id="onboarding-title">
-            Add your company
+            Unternehmen anlegen
           </h1>
           <p className={styles.copy}>
-            Tell us the basics so SmartFlow can prepare your workspace.
+            Geben Sie die wichtigsten Daten ein, damit AnfragePilot Ihren Arbeitsbereich vorbereiten kann.
           </p>
         </header>
 
@@ -59,7 +55,7 @@ export default async function OnboardingPage({
 
         <form action={completeOnboardingAction} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>Company Name</span>
+            <span className={styles.label}>Firmenname</span>
             <input
               className={styles.input}
               name="companyName"
@@ -69,7 +65,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Contact Person</span>
+            <span className={styles.label}>Ansprechpartner</span>
             <input
               autoComplete="name"
               className={styles.input}
@@ -81,7 +77,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Email</span>
+            <span className={styles.label}>E-Mail</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -93,7 +89,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Phone</span>
+            <span className={styles.label}>Telefon</span>
             <input
               autoComplete="tel"
               className={styles.input}
@@ -115,32 +111,32 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Time Zone</span>
+            <span className={styles.label}>Zeitzone</span>
             <select
               className={styles.select}
-              defaultValue="America/New_York"
+              defaultValue="Europe/Berlin"
               name="timezone"
               required
             >
               {timeZones.map((timezone) => (
-                <option key={timezone} value={timezone}>
-                  {timezone}
+                <option key={timezone.value} value={timezone.value}>
+                  {timezone.label}
                 </option>
               ))}
             </select>
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Business Hours</span>
+            <span className={styles.label}>Geschäftszeiten</span>
             <textarea
               className={styles.textarea}
               name="businessHours"
-              placeholder="Monday-Friday, 9:00 AM-5:00 PM"
+              placeholder="Montag-Freitag, 9:00-17:00"
             />
           </label>
 
           <button className={styles.button} type="submit">
-            Complete setup
+            Einrichtung abschließen
           </button>
         </form>
       </section>

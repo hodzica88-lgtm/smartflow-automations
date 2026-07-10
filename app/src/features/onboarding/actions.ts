@@ -10,13 +10,9 @@ import {
 } from "@/shared/lib/supabase/server";
 
 const timeZones = [
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "America/Phoenix",
-  "America/Anchorage",
-  "Pacific/Honolulu",
+  "Europe/Berlin",
+  "Europe/Vienna",
+  "Europe/Zurich",
 ] as const;
 
 const getStringValue = (formData: FormData, key: string) => {
@@ -55,19 +51,19 @@ export const completeOnboardingAction = async (formData: FormData) => {
   const businessHours = getStringValue(formData, "businessHours");
 
   if (!companyName || !contactPerson || !email || !phone || !timezone) {
-    redirectWithError("Please complete all required fields.");
+    redirectWithError("Bitte füllen Sie alle Pflichtfelder aus.");
   }
 
   if (!isValidEmail(email)) {
-    redirectWithError("Please enter a valid email address.");
+    redirectWithError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
   }
 
   if (!timeZones.includes(timezone as (typeof timeZones)[number])) {
-    redirectWithError("Please choose a supported time zone.");
+    redirectWithError("Bitte wählen Sie eine gültige Zeitzone.");
   }
 
   if (!isValidWebsite(website)) {
-    redirectWithError("Website must start with http:// or https://.");
+    redirectWithError("Die Website muss mit http:// oder https:// beginnen.");
   }
 
   const authClient = await createSupabaseServerClient();
@@ -82,7 +78,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
   try {
     await ensureUserProfile(user);
   } catch {
-    redirectWithError("Your profile could not be prepared.");
+    redirectWithError("Ihr Profil konnte nicht vorbereitet werden.");
   }
 
   const existingCompany = await getUserCompanyState(user.id);
@@ -152,7 +148,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
       await supabase.from("companies").delete().eq("id", createdCompanyId);
     }
 
-    redirectWithError("Onboarding could not be completed. Please try again.");
+    redirectWithError("Die Einrichtung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.");
   }
 
   redirect("/dashboard");
