@@ -35,6 +35,24 @@ type RecentLeadEvaluation = {
   resultRate: number | null;
 };
 
+const getRecentFailedNotificationCount = async (companyId: string) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { count, error } = await supabase
+    .from("notification_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("status", "failed")
+    .gte("updated_at", since);
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
+};
+
 const getCompanyId = async () => {
   const authClient = await createSupabaseServerClient();
   const {
@@ -119,6 +137,7 @@ export default async function DashboardPage() {
   const metrics = await getDashboardMetrics(companyId);
   const openLeads = await getOpenLeads(companyId);
   const recentLeadEvaluation = await getRecentLeadEvaluation(companyId);
+  const recentFailedNotificationCount = await getRecentFailedNotificationCount(companyId);
   const totalLeads =
     metrics.newLeads +
     metrics.contactedLeads +
@@ -177,6 +196,18 @@ export default async function DashboardPage() {
           <strong className={styles.cardValue}>{metrics.unsuccessfulLeads}</strong>
         </article>
       </section>
+
+      {recentFailedNotificationCount > 0 ? (
+        <section className={`${styles.empty} ${styles.warningSection}`} aria-label="E-Mail-Versand prüfen">
+          <h2>E-Mail-Versand prüfen</h2>
+          <p>Mindestens eine Benachrichtigung konnte nicht versendet werden.</p>
+          <p>{recentFailedNotificationCount} fehlgeschlagene Benachrichtigungen in den letzten 7 Tagen.</p>
+          <p>Bitte prüfen Sie die Benachrichtigungs-E-Mail in den Einstellungen.</p>
+          <Link className={styles.sectionLink} href="/dashboard/settings">
+            Einstellungen öffnen
+          </Link>
+        </section>
+      ) : null}
 
       <section className={styles.empty} aria-label="Auswertung der letzten 30 Tage">
         <h2>Auswertung der letzten 30 Tage</h2>

@@ -115,6 +115,11 @@
   line-height: 1.6;
 }
 
+.warningSection {
+  border-color: #f4d9a6;
+  background: #fffaf0;
+}
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;
