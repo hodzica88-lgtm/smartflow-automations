@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { completeOnboardingAction } from "@/features/onboarding/actions";
+import { INDUSTRY_OPTIONS } from "@/shared/config/inquiryTypes";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./onboarding.module.css";
@@ -121,6 +122,25 @@ export default async function OnboardingPage({
               {timeZones.map((timezone) => (
                 <option key={timezone.value} value={timezone.value}>
                   {timezone.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Branche</span>
+            <select
+              className={styles.select}
+              defaultValue=""
+              name="industry"
+              required
+            >
+              <option value="" disabled>
+                Bitte wählen
+              </option>
+              {INDUSTRY_OPTIONS.map((industry) => (
+                <option key={industry} value={industry}>
+                  {industry}
                 </option>
               ))}
             </select>

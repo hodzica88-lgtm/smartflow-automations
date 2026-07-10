@@ -2,19 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 
-const INQUIRY_TYPES = [
-  "Reparatur",
-  "Wartung",
-  "Installation",
-  "Reinigung",
-  "Beratung",
-  "Sonstiges",
-] as const;
+const FALLBACK_INQUIRY_TYPE = "Allgemeine Anfrage";
 
 const primaryActionStyle = {
   display: "inline-flex",
@@ -71,16 +65,26 @@ export async function createPhoneLeadAction(formData: FormData) {
     );
   }
 
-  if (!INQUIRY_TYPES.includes(inquiryType as (typeof INQUIRY_TYPES)[number])) {
-    redirect("/dashboard/leads/new?error=Bitte+wählen+Sie+einen+gültigen+Anfrage-Typ");
-  }
-
   if (email && !isValidEmail(email)) {
     redirect("/dashboard/leads/new?error=Bitte+geben+Sie+eine+gültige+E-Mail-Adresse+ein");
   }
 
   const companyId = await getCompanyId();
   const supabase = createSupabaseServiceRoleClient();
+
+  const activeInquiryTypes = await getActiveCompanyInquiryTypes({
+    supabase,
+    companyId,
+  });
+
+  const isValidInquiryType =
+    activeInquiryTypes.length === 0
+      ? inquiryType === FALLBACK_INQUIRY_TYPE
+      : activeInquiryTypes.some((entry) => entry.name === inquiryType);
+
+  if (!isValidInquiryType) {
+    redirect("/dashboard/leads/new?error=Bitte+wählen+Sie+einen+gültigen+Anfrage-Typ");
+  }
 
   const { data: lead, error } = await supabase
     .from("leads")
@@ -114,6 +118,16 @@ type NewLeadPageProps = {
 export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
   const resolvedSearchParams = await searchParams;
   const error = resolvedSearchParams?.error ?? null;
+  const companyId = await getCompanyId();
+  const supabase = createSupabaseServiceRoleClient();
+  const activeInquiryTypes = await getActiveCompanyInquiryTypes({
+    supabase,
+    companyId,
+  });
+  const inquiryTypeOptions =
+    activeInquiryTypes.length > 0
+      ? activeInquiryTypes.map((entry) => entry.name)
+      : [FALLBACK_INQUIRY_TYPE];
 
   return (
     <main style={{ padding: 24, maxWidth: 760, margin: "0 auto", display: "grid", gap: 20 }}>
@@ -175,7 +189,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
               <option value="" disabled>
                 Bitte wählen
               </option>
-              {INQUIRY_TYPES.map((option) => (
+              {inquiryTypeOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>

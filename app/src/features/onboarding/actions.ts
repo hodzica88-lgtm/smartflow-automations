@@ -3,7 +3,9 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { INDUSTRY_OPTIONS, isSupportedIndustry } from "@/shared/config/inquiryTypes";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -14,7 +16,7 @@ const timeZones = [
   "Europe/Vienna",
   "Europe/Zurich",
 ] as const;
-
+const industryOptions = INDUSTRY_OPTIONS;
 const getStringValue = (formData: FormData, key: string) => {
   const value = formData.get(key);
 
@@ -47,10 +49,11 @@ export const completeOnboardingAction = async (formData: FormData) => {
   const email = getStringValue(formData, "email");
   const phone = getStringValue(formData, "phone");
   const website = getStringValue(formData, "website");
+  const industry = getStringValue(formData, "industry");
   const timezone = getStringValue(formData, "timezone");
   const businessHours = getStringValue(formData, "businessHours");
 
-  if (!companyName || !contactPerson || !email || !phone || !timezone) {
+  if (!companyName || !contactPerson || !email || !phone || !timezone || !industry) {
     redirectWithError("Bitte füllen Sie alle Pflichtfelder aus.");
   }
 
@@ -60,6 +63,10 @@ export const completeOnboardingAction = async (formData: FormData) => {
 
   if (!timeZones.includes(timezone as (typeof timeZones)[number])) {
     redirectWithError("Bitte wählen Sie eine gültige Zeitzone.");
+  }
+
+  if (!industryOptions.includes(industry as (typeof industryOptions)[number]) || !isSupportedIndustry(industry)) {
+    redirectWithError("Bitte wählen Sie eine gültige Branche.");
   }
 
   if (!isValidWebsite(website)) {
@@ -97,6 +104,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
         business_hours: businessHours || null,
         contact_person: contactPerson,
         email,
+        industry,
         name: companyName,
         owner_user_id: user.id,
         phone,
@@ -130,6 +138,12 @@ export const completeOnboardingAction = async (formData: FormData) => {
     if (subscriptionError) {
       throw subscriptionError;
     }
+
+    await addMissingIndustryTemplateInquiryTypes({
+      supabase,
+      companyId,
+      industry,
+    });
 
     const { error: profileError } = await supabase
       .from("users")

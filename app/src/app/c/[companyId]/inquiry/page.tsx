@@ -1,9 +1,11 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
+const FALLBACK_INQUIRY_TYPE = "Allgemeine Anfrage";
 const RATE_LIMIT_MAX_SUBMISSIONS = 5;
 const RATE_LIMIT_WINDOW_MINUTES = 10;
 const RATE_LIMIT_MESSAGE =
@@ -64,6 +66,15 @@ type PageProps = {
 
 export default async function Page({ params, searchParams }: PageProps) {
   const { companyId } = await params;
+  const supabase = createSupabaseServiceRoleClient();
+  const activeInquiryTypes = await getActiveCompanyInquiryTypes({
+    supabase,
+    companyId,
+  });
+  const inquiryTypeOptions =
+    activeInquiryTypes.length > 0
+      ? activeInquiryTypes.map((entry) => entry.name)
+      : [FALLBACK_INQUIRY_TYPE];
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const success = resolvedSearchParams?.success === "1";
   const error = resolvedSearchParams?.error ?? null;
@@ -113,6 +124,24 @@ export default async function Page({ params, searchParams }: PageProps) {
           }
 
           const supabase = createSupabaseServiceRoleClient();
+
+          const activeInquiryTypes = await getActiveCompanyInquiryTypes({
+            supabase,
+            companyId: targetCompanyId,
+          });
+
+          const isValidInquiryType =
+            activeInquiryTypes.length === 0
+              ? inquiry_type === FALLBACK_INQUIRY_TYPE
+              : activeInquiryTypes.some((entry) => entry.name === inquiry_type);
+
+          if (!isValidInquiryType) {
+            redirect(
+              `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
+                'Bitte gültige Anfrageart auswählen.'
+              )}`
+            );
+          }
 
           // Verify company exists and is not deleted
           const { data: company, error: companyError } = await supabase
@@ -260,12 +289,9 @@ export default async function Page({ params, searchParams }: PageProps) {
               Anfrage-Typ (Pflicht)
               <select name="inquiry_type" required defaultValue="">
                 <option value="" disabled>Bitte wählen</option>
-                <option value="Reparatur">Reparatur</option>
-                <option value="Wartung">Wartung</option>
-                <option value="Installation">Installation</option>
-                <option value="Reinigung">Reinigung</option>
-                <option value="Beratung">Beratung</option>
-                <option value="Sonstiges">Sonstiges</option>
+                {inquiryTypeOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
               </select>
             </label>
 
