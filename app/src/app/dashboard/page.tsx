@@ -27,6 +27,14 @@ type OpenLead = {
   created_at: string;
 };
 
+type RecentLeadEvaluation = {
+  total: number;
+  successful: number;
+  unsuccessful: number;
+  open: number;
+  resultRate: number | null;
+};
+
 const getCompanyId = async () => {
   const authClient = await createSupabaseServerClient();
   const {
@@ -62,6 +70,39 @@ const getOpenLeads = async (companyId: string) => {
   return (data ?? []) as OpenLead[];
 };
 
+const getRecentLeadEvaluation = async (
+  companyId: string,
+): Promise<RecentLeadEvaluation> => {
+  const supabase = createSupabaseServiceRoleClient();
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("leads")
+    .select("status")
+    .eq("company_id", companyId)
+    .gte("created_at", since);
+
+  if (error) {
+    throw error;
+  }
+
+  const leads = data ?? [];
+  const successful = leads.filter((lead) => lead.status === "successful").length;
+  const unsuccessful = leads.filter((lead) => lead.status === "unsuccessful").length;
+  const open = leads.filter(
+    (lead) => lead.status === "new" || lead.status === "contacted",
+  ).length;
+  const completed = successful + unsuccessful;
+
+  return {
+    total: leads.length,
+    successful,
+    unsuccessful,
+    open,
+    resultRate: completed > 0 ? successful / completed : null,
+  };
+};
+
 const formatCreatedAt = (createdAt: string) => {
   try {
     return new Date(createdAt).toLocaleString("de-DE", {
@@ -77,6 +118,7 @@ export default async function DashboardPage() {
   const companyId = await getCompanyId();
   const metrics = await getDashboardMetrics(companyId);
   const openLeads = await getOpenLeads(companyId);
+  const recentLeadEvaluation = await getRecentLeadEvaluation(companyId);
   const totalLeads =
     metrics.newLeads +
     metrics.contactedLeads +
@@ -134,6 +176,36 @@ export default async function DashboardPage() {
           <p className={styles.cardLabel}>Nicht erfolgreich</p>
           <strong className={styles.cardValue}>{metrics.unsuccessfulLeads}</strong>
         </article>
+      </section>
+
+      <section className={styles.empty} aria-label="Auswertung der letzten 30 Tage">
+        <h2>Auswertung der letzten 30 Tage</h2>
+        <div className={styles.grid}>
+          <article className={styles.card}>
+            <p className={styles.cardLabel}>Anfragen insgesamt</p>
+            <strong className={styles.cardValue}>{recentLeadEvaluation.total}</strong>
+          </article>
+
+          <article className={styles.card}>
+            <p className={styles.cardLabel}>Erfolgreich</p>
+            <strong className={styles.cardValue}>{recentLeadEvaluation.successful}</strong>
+          </article>
+
+          <article className={styles.card}>
+            <p className={styles.cardLabel}>Nicht erfolgreich</p>
+            <strong className={styles.cardValue}>{recentLeadEvaluation.unsuccessful}</strong>
+          </article>
+
+          <article className={styles.card}>
+            <p className={styles.cardLabel}>Noch offen</p>
+            <strong className={styles.cardValue}>{recentLeadEvaluation.open}</strong>
+          </article>
+        </div>
+        <p>
+          {recentLeadEvaluation.resultRate === null
+            ? "Noch keine abgeschlossenen Anfragen"
+            : `Erfolgsquote: ${Math.round(recentLeadEvaluation.resultRate * 100)} %`}
+        </p>
       </section>
 
       {totalLeads > 0 ? (
