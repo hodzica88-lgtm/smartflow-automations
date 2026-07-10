@@ -115,6 +115,70 @@
   line-height: 1.6;
 }
 
+.shareBlock {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.shareBlock:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.shareBlock h3,
+.shareBlock p {
+  margin: 0;
+}
+
+.shareValue {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.625rem 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.embedCode {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.copyRow {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.copySuccess {
+  color: #1f7a3d;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.copyError {
+  color: #b42318;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
 @media (min-width: 48rem) {
   .shell {
     padding: 4rem 2rem;

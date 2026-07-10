@@ -4,6 +4,7 @@ import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
+import InquiryShareSection from "./InquiryShareSection";
 
 import styles from "./dashboard.module.css";
 
@@ -94,6 +95,8 @@ export default async function DashboardPage() {
           <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
         </section>
       ) : null}
+
+      <InquiryShareSection companyId={companyId} />
     </main>
   );
 }
