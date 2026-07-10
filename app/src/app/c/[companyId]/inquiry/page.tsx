@@ -82,6 +82,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           "use server";
 
           const companyIdValue = getString(formData, 'companyId');
+          const targetCompanyId = companyId;
           const first_name = getString(formData, 'first_name');
           const last_name = getString(formData, 'last_name');
           const address = getString(formData, 'address');
@@ -91,24 +92,24 @@ export default async function Page({ params, searchParams }: PageProps) {
           const description = getString(formData, 'description');
           const website = getString(formData, 'website');
 
-          if (!companyIdValue) {
-            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Ungültige Firma.')}`);
+          if (!companyIdValue || companyIdValue !== targetCompanyId) {
+            redirect(`/c/${targetCompanyId}/inquiry?error=${encodeURIComponent('Ungültige Firma.')}`);
           }
 
           if (website) {
             redirect(
-              `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+              `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                 'Anfrage konnte nicht gesendet werden.'
               )}`
             );
           }
 
           if (!first_name || !last_name || !address || !phone || !email || !inquiry_type) {
-            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Bitte alle Pflichtfelder ausfüllen.')}`);
+            redirect(`/c/${targetCompanyId}/inquiry?error=${encodeURIComponent('Bitte alle Pflichtfelder ausfüllen.')}`);
           }
 
           if (!isValidEmail(email)) {
-            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Bitte gültige E-Mail-Adresse angeben.')}`);
+            redirect(`/c/${targetCompanyId}/inquiry?error=${encodeURIComponent('Bitte gültige E-Mail-Adresse angeben.')}`);
           }
 
           const supabase = createSupabaseServiceRoleClient();
@@ -117,18 +118,18 @@ export default async function Page({ params, searchParams }: PageProps) {
           const { data: company, error: companyError } = await supabase
             .from('companies')
             .select('id, deleted_at, timezone, business_hours')
-            .eq('id', companyIdValue)
+            .eq('id', targetCompanyId)
             .maybeSingle();
 
           if (companyError || !company || company.deleted_at) {
-            redirect(`/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
+            redirect(`/c/${targetCompanyId}/inquiry?error=${encodeURIComponent('Firma nicht gefunden.')}`);
           }
 
           const clientIp = await getClientIpForRateLimit();
 
           if (!clientIp) {
             redirect(
-              `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+              `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                 'Anfrage konnte nicht gesendet werden.'
               )}`
             );
@@ -137,7 +138,7 @@ export default async function Page({ params, searchParams }: PageProps) {
           const { data: rateLimitData, error: rateLimitError } = await supabase.rpc(
             'check_and_record_inquiry_rate_limit',
             {
-              p_company_id: companyIdValue,
+              p_company_id: targetCompanyId,
               p_client_ip: clientIp,
               p_max_submissions: RATE_LIMIT_MAX_SUBMISSIONS,
               p_window_minutes: RATE_LIMIT_WINDOW_MINUTES,
@@ -146,7 +147,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
           if (rateLimitError) {
             redirect(
-              `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+              `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                 'Anfrage konnte nicht gesendet werden.'
               )}`
             );
@@ -159,14 +160,14 @@ export default async function Page({ params, searchParams }: PageProps) {
 
           if (!rateLimitAllowed) {
             redirect(
-              `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+              `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                 RATE_LIMIT_MESSAGE
               )}`
             );
           }
 
             const { data: leadData, error: insertError } = await supabase.from('leads').insert({
-              company_id: companyIdValue,
+              company_id: targetCompanyId,
               first_name,
               last_name,
               address,
@@ -180,7 +181,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
             if (insertError || !leadData?.id) {
               redirect(
-                `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+                `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                   'Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten.'
                 )}`
               );
@@ -194,14 +195,14 @@ export default async function Page({ params, searchParams }: PageProps) {
 
             const { error: queueError } = await supabase.from('notification_queue').insert([
               {
-                company_id: companyIdValue,
+                company_id: targetCompanyId,
                 lead_id: leadData.id,
                 notification_type: 'owner_new_lead',
                 status: 'pending',
                 scheduled_for: ownerNewLeadScheduledFor,
               },
               {
-                company_id: companyIdValue,
+                company_id: targetCompanyId,
                 lead_id: leadData.id,
                 notification_type: 'customer_confirmation',
                 status: 'pending',
@@ -211,13 +212,13 @@ export default async function Page({ params, searchParams }: PageProps) {
 
             if (queueError) {
               redirect(
-                `/c/${companyIdValue || companyId}/inquiry?error=${encodeURIComponent(
+                `/c/${targetCompanyId}/inquiry?error=${encodeURIComponent(
                   'Beim Planen der Benachrichtigungen ist ein Fehler aufgetreten.'
                 )}`
               );
             }
 
-            redirect(`/c/${companyIdValue || companyId}/inquiry?success=1`);
+            redirect(`/c/${targetCompanyId}/inquiry?success=1`);
         }}>
           <input type="hidden" name="companyId" value={companyId} />
           <input
