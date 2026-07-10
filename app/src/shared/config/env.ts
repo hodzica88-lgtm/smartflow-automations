@@ -56,7 +56,7 @@ export const loadServerEnv = (): ServerEnv => {
     brevoSenderEmail: getOptionalEnv("BREVO_SENDER_EMAIL"),
     brevoSenderName: getOptionalEnv("BREVO_SENDER_NAME"),
     makeApiKey: getOptionalEnv("MAKE_API_KEY"),
-    makeWebhookUrl: getOptionalEnv("MAKE_WEBHOOK_URL"),
+    makeWebhookUrl: getOptionalEnv("MAKE_NOTIFICATION_WEBHOOK_URL"),
     stripeSecretKey: getOptionalEnv("STRIPE_SECRET_KEY"),
     stripeWebhookSecret: getOptionalEnv("STRIPE_WEBHOOK_SECRET"),
     supabaseServiceRoleKey: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
