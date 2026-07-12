@@ -9,31 +9,37 @@ const successRate = new Rate("lead_success_rate");
 const leadDuration = new Trend("lead_request_duration", true);
 
 const profiles = {
+  smoke: {
+    executor: "per-vu-iterations",
+    vus: 1,
+    iterations: 1,
+    maxDuration: "1m",
+  },
   "100": {
-    executor: "shared-iterations",
-    vus: 20,
-    iterations: 100,
+    executor: "per-vu-iterations",
+    vus: 100,
+    iterations: 1,
     maxDuration: "2m",
   },
   "500": {
-    executor: "shared-iterations",
-    vus: 75,
-    iterations: 500,
+    executor: "per-vu-iterations",
+    vus: 500,
+    iterations: 1,
     maxDuration: "5m",
   },
   "1000": {
-    executor: "shared-iterations",
-    vus: 150,
-    iterations: 1000,
+    executor: "per-vu-iterations",
+    vus: 1000,
+    iterations: 1,
     maxDuration: "10m",
   },
 };
 
-const profileName = __ENV.PROFILE || "100";
+const profileName = __ENV.PROFILE || "smoke";
 const selectedProfile = profiles[profileName];
 
 if (!selectedProfile) {
-  fail(`Unknown PROFILE '${profileName}'. Use 100, 500, or 1000.`);
+  fail(`Unknown PROFILE '${profileName}'. Use smoke, 100, 500, or 1000.`);
 }
 
 export const options = {
@@ -48,18 +54,24 @@ export const options = {
   discardResponseBodies: false,
 };
 
-const required = ["BASE_URL", "COMPANY_ID", "INTERNAL_API_SECRET"];
+const required = ["BASE_URL", "COMPANY_ID", "INTERNAL_API_SECRET", "RUN_ID"];
 for (const key of required) {
   if (!__ENV[key]) {
     fail(`Missing required environment variable: ${key}`);
   }
 }
 
-const runId = (__ENV.RUN_ID || `k6-${profileName}-${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 64);
+const runId = __ENV.RUN_ID.trim();
+if (!/^[a-zA-Z0-9_-]{1,64}$/.test(runId)) {
+  fail("RUN_ID must contain only letters, numbers, underscores, and hyphens (maximum 64 characters).");
+}
+
 const includeQueue = (__ENV.INCLUDE_QUEUE || "false").toLowerCase() === "true";
 
 export function setup() {
-  console.log(`Starting Varnito load test: profile=${profileName}, runId=${runId}, includeQueue=${includeQueue}`);
+  console.log(
+    `Starting Varnito load test: profile=${profileName}, runId=${runId}, includeQueue=${includeQueue}`,
+  );
   return { runId };
 }
 
