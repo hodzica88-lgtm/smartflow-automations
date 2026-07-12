@@ -51,6 +51,7 @@ export const options = {
     lead_success_rate: ["rate>0.99"],
     http_req_duration: ["p(95)<1500", "p(99)<3000"],
   },
+  summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   discardResponseBodies: false,
 };
 
@@ -127,21 +128,43 @@ export function handleSummary(data) {
   };
 }
 
+function metricValue(metrics, name, field = "value", fallback = "n/a") {
+  return metrics[name]?.values?.[field] ?? fallback;
+}
+
+function metricNumber(metrics, name, field = "value", fallback = 0) {
+  const value = metricValue(metrics, name, field, fallback);
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function allThresholdsPassed(metrics) {
+  return Object.values(metrics).every((metric) =>
+    Object.values(metric.thresholds ?? {}).every((threshold) => threshold.ok !== false),
+  );
+}
+
 function textSummary(data) {
   const metrics = data.metrics;
-  const value = (name, field = "value") => metrics[name]?.values?.[field] ?? "n/a";
+  const createdCount = metricNumber(metrics, "created_leads", "count");
+  const failedCount = metricNumber(metrics, "failed_leads", "count");
+  const successRateValue = metricNumber(metrics, "lead_success_rate", "rate");
+  const functionalResult = createdCount > 0 && failedCount === 0 && successRateValue > 0.99 ? "PASS" : "FAIL";
+  const thresholdResult = allThresholdsPassed(metrics) ? "PASS" : "FAIL";
 
   return [
     "",
     "Varnito load test summary",
     `Run ID: ${runId}`,
     `Profile: ${profileName}`,
-    `Created leads: ${value("created_leads", "count")}`,
-    `Failed leads: ${value("failed_leads", "count")}`,
-    `Success rate: ${value("lead_success_rate", "rate")}`,
-    `Average duration: ${value("http_req_duration", "avg")} ms`,
-    `p95 duration: ${value("http_req_duration", "p(95)")} ms`,
-    `p99 duration: ${value("http_req_duration", "p(99)")} ms`,
+    `Functional result: ${functionalResult}`,
+    `Threshold result: ${thresholdResult}`,
+    `Created leads: ${createdCount}`,
+    `Failed leads: ${failedCount}`,
+    `Success rate: ${successRateValue}`,
+    `Average duration: ${metricValue(metrics, "http_req_duration", "avg")} ms`,
+    `p95 duration: ${metricValue(metrics, "http_req_duration", "p(95)")} ms`,
+    `p99 duration: ${metricValue(metrics, "http_req_duration", "p(99)")} ms`,
     "",
   ].join("\n");
 }
