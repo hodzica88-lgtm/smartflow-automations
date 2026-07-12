@@ -75,7 +75,7 @@ export function setup() {
   return { runId };
 }
 
-export default function (data) {
+export default function createLoadTestLead(data) {
   const sequence = exec.scenario.iterationInTest + 1;
   const response = http.post(
     `${__ENV.BASE_URL.replace(/\/$/, "")}/api/internal/load-test/leads`,
