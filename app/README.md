@@ -26,6 +26,9 @@ pnpm dev
 - `BREVO_API_KEY`
 - `BREVO_SENDER_EMAIL`
 - `BREVO_SENDER_NAME`
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY`
+- `VAPID_SUBJECT`
 
 ## Qualität prüfen
 
@@ -38,10 +41,18 @@ pnpm build
 ## Benachrichtigungen
 
 - Normale Benachrichtigungen laufen direkt über Brevo.
+- Push ist ein zusaetzlicher Kanal fuer neue Leads und ersetzt E-Mail nicht.
+- Push wird erst nach sichtbarer Aktivierung im Dashboard auf dem jeweiligen Geraet genutzt.
+- Der Browser fragt die Berechtigung nie ungefragt beim ersten Aufruf ab.
 - Make wird nicht mehr für die normale Benachrichtigungszustellung verwendet.
 - Der Worker-Endpunkt ist `POST /api/internal/notifications/process`.
 - Der Worker verlangt den Header `x-internal-api-secret` mit dem Wert aus `INTERNAL_API_SECRET`.
 - In der lokalen Entwicklung muss der Worker aktuell manuell ausgelöst werden.
+
+Push-Setup:
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` im Client setzen.
+- `VAPID_PRIVATE_KEY` und `VAPID_SUBJECT` nur serverseitig hinterlegen.
+- Im Dashboard unter Einstellungen das Geraet aktivieren und einen Test senden.
 
 Beispiel lokal:
 

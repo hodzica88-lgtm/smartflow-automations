@@ -1,5 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { loadServerEnv } from "@/shared/config/env";
+import { sendLeadPushNotificationsForCompany } from "@/features/push/server";
 
 const INTERNAL_API_SECRET_HEADER = "x-internal-api-secret";
 const MAX_QUEUE_BATCH = 25;
@@ -543,6 +544,21 @@ export async function POST(request: Request) {
           notification_type: item.notification_type,
           status: "sent",
         });
+
+        if (item.notification_type === "owner_new_lead") {
+          try {
+            await sendLeadPushNotificationsForCompany({
+              companyId: item.company_id,
+              leadId: item.lead_id,
+            });
+          } catch (pushError) {
+            console.warn("Push notification delivery could not be completed.", {
+              companyId: item.company_id,
+              leadId: item.lead_id,
+              message: pushError instanceof Error ? pushError.message : "Unknown error",
+            });
+          }
+        }
         continue;
       }
 

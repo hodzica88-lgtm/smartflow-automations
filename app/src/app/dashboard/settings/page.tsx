@@ -13,10 +13,12 @@ import {
   INDUSTRY_OPTIONS,
   isSupportedIndustry,
 } from "@/shared/config/inquiryTypes";
+import { isValidVapidSubject, loadServerEnv, publicEnv } from "@/shared/config/env";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
+import PushNotificationsSection from "../PushNotificationsSection";
 
 const timeZones = [
   "Europe/Berlin",
@@ -348,6 +350,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const success = resolvedSearchParams?.success ?? null;
   const error = resolvedSearchParams?.error ?? null;
   const companyId = await getCompanyId();
+  const serverEnv = loadServerEnv();
   const company = await getCompany(companyId);
 
   if (!company) {
@@ -356,6 +359,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   const supabase = createSupabaseServiceRoleClient();
   const industry = company.industry ?? "";
+  const pushConfigured = Boolean(
+    publicEnv.vapidPublicKey &&
+      serverEnv.vapidPrivateKey &&
+      isValidVapidSubject(serverEnv.vapidSubject),
+  );
 
   if (isSupportedIndustry(industry)) {
     await ensureCompanyInquiryTypesInitialized({
@@ -599,6 +607,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           )}
         </div>
       </section>
+
+      <PushNotificationsSection
+        vapidPublicKey={publicEnv.vapidPublicKey ?? null}
+        pushConfigured={pushConfigured}
+      />
     </main>
   );
 }

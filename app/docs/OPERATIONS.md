@@ -114,3 +114,17 @@ Bei planmaessiger Rotation oder Verdacht auf Leak:
 3. Brevo-Konfiguration (API-Key, Sender) und Erreichbarkeit pruefen.
 4. Ursache beheben, danach Worker kontrolliert erneut ausfuehren.
 5. Pruefen, ob failed-Rate wieder sinkt und keine stale processing-Eintraege bleiben.
+
+## 10) Vorgehen bei Push-Benachrichtigungen
+
+- Push ist ein zusaetzlicher Kanal fuer neue Leads; Brevo bleibt der E-Mail-Fallback.
+- Ein Geraet muss im Dashboard explizit ueber den sichtbaren Aktivieren-Button registriert werden.
+- Der Browser sollte beim ersten Seitenaufruf keine Berechtigung erhalten; das ist Absicht.
+- Die Push-Konfiguration benoetigt `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` und `VAPID_SUBJECT`.
+
+Pruefungen:
+1. Im Dashboard Push auf dem Zielgeraet aktivieren.
+2. Testbenachrichtigung senden und Verhalten im Browser kontrollieren.
+3. Einen neuen Lead ausloesen und pruefen, ob E-Mail und Push parallel verarbeitet werden.
+4. Bei 404/410 im Push-Transport die betroffene Subscription wird automatisch deaktiviert.
+5. Bei wiederholten Fehlern die Subscription im Dashboard auf dem Geraet entfernen und neu aktivieren.
