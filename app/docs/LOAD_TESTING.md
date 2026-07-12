@@ -117,6 +117,17 @@ Das k6-Skript erwartet:
 
 Diese Grenzwerte sind Startwerte. Nach dem Baseline-Test werden sie anhand der realen VPS- und Supabase-Leistung bewertet.
 
+## Ergebnisinterpretation
+
+Die Zusammenfassung trennt zwei Ergebnisse:
+
+- `Functional result`: bewertet, ob die erwarteten Leads ohne Fehler erstellt wurden.
+- `Threshold result`: bewertet die konfigurierten Fehler- und Antwortzeitgrenzen.
+
+Ein funktionales `PASS` mit einem Threshold-`FAIL` bedeutet: Es gab keinen Datenverlust, aber mindestens ein Performance-Ziel wurde verfehlt. Eine hoehere Laststufe darf dann erst nach Analyse oder einem bestaetigenden Wiederholungstest gestartet werden.
+
+k6 beendet den Prozess bei einem verletzten Threshold mit einem Fehlercode. Das ist beabsichtigt und darf nicht mit einem Anwendungsabsturz verwechselt werden. Containerzustand, Datenbankzaehlung und Logs muessen trotzdem separat geprueft werden.
+
 ## Waehrend des Tests beobachten
 
 - VPS CPU und RAM
