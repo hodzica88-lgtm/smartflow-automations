@@ -17,7 +17,10 @@ type LoadTestRequest = {
 const jsonResponse = (body: object, status: number) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "cache-control": "no-store",
+      "content-type": "application/json",
+    },
   });
 
 export async function POST(request: Request) {
@@ -72,6 +75,7 @@ export async function POST(request: Request) {
   }
 
   const marker = `${runId}-${sequence}`;
+  const source = `load_test:${runId}`;
   const { data: lead, error: leadError } = await supabase
     .from("leads")
     .insert({
@@ -82,7 +86,7 @@ export async function POST(request: Request) {
       phone: "+10000000000",
       email: `loadtest+${marker}@example.invalid`,
       inquiry_type: "Load Test",
-      source: `load_test:${runId}`,
+      source,
       status: "new",
       notes: `Automated load test run ${runId}, sequence ${sequence}`,
     })
@@ -121,12 +125,23 @@ export async function POST(request: Request) {
     ]);
 
     if (queueError) {
-      await supabase.from("leads").delete().eq("id", lead.id).eq("company_id", companyId);
+      const { error: cleanupError } = await supabase
+        .from("leads")
+        .delete()
+        .eq("id", lead.id)
+        .eq("company_id", companyId);
+
       return jsonResponse(
         {
           ok: false,
-          message: "Queue insert failed; lead was rolled back.",
+          message: cleanupError
+            ? "Queue insert failed and automatic lead cleanup failed."
+            : "Queue insert failed; the lead was removed.",
           error: queueError.message,
+          cleanupSucceeded: !cleanupError,
+          cleanupError: cleanupError?.message ?? null,
+          cleanupSource: source,
+          leadId: cleanupError ? lead.id : null,
         },
         500,
       );
