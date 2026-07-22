@@ -16,6 +16,7 @@ type ServerEnv = PublicEnv & {
   stripeWebhookSecret?: string;
   supabaseServiceRoleKey: string;
   internalApiSecret?: string;
+  operatorUserIds: string[];
 };
 
 type RequiredEnvKey =
@@ -28,6 +29,12 @@ const getOptionalEnv = (key: string) => {
 
   return value && value.trim().length > 0 ? value : undefined;
 };
+
+const getListEnv = (key: string) =>
+  (getOptionalEnv(key) ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
 
 const getRequiredEnv = (key: RequiredEnvKey) => {
   const value = getOptionalEnv(key);
@@ -85,6 +92,7 @@ export const loadServerEnv = (): ServerEnv => {
     stripeWebhookSecret: getOptionalEnv("STRIPE_WEBHOOK_SECRET"),
     supabaseServiceRoleKey: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     internalApiSecret: getOptionalEnv("INTERNAL_API_SECRET"),
+    operatorUserIds: getListEnv("OPERATOR_USER_IDS"),
   };
 };
 
