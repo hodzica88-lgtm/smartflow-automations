@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { createSupabaseMiddlewareClient } from "@/shared/lib/supabase/middleware";
 
-const protectedRoutePrefixes = ["/dashboard", "/onboarding"];
+const protectedRoutePrefixes = ["/dashboard", "/onboarding", "/operator"];
 
 const isProtectedRoute = (pathname: string) =>
   protectedRoutePrefixes.some((prefix) => pathname.startsWith(prefix));
@@ -23,16 +24,17 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname === "/login" && user) {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard";
-    dashboardUrl.search = "";
+    const nextPath = getSafePostLoginPath(request.nextUrl.searchParams.get("next"));
+    const destinationUrl = request.nextUrl.clone();
+    destinationUrl.pathname = nextPath ?? "/dashboard";
+    destinationUrl.search = "";
 
-    return NextResponse.redirect(dashboardUrl);
+    return NextResponse.redirect(destinationUrl);
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/onboarding/:path*", "/operator/:path*", "/login"],
 };
