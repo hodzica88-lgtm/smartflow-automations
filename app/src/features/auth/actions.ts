@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { publicEnv } from "@/shared/config/env";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
@@ -13,16 +14,31 @@ const getStringValue = (formData: FormData, key: string) => {
   return typeof value === "string" ? value.trim() : "";
 };
 
-const redirectWithError = (path: string, message: string): never => {
-  redirect(`${path}?error=${encodeURIComponent(message)}`);
+const redirectWithError = (
+  path: string,
+  message: string,
+  nextPath?: string | null,
+): never => {
+  const searchParams = new URLSearchParams({ error: message });
+
+  if (nextPath) {
+    searchParams.set("next", nextPath);
+  }
+
+  redirect(`${path}?${searchParams.toString()}`);
 };
 
 export const loginAction = async (formData: FormData) => {
   const email = getStringValue(formData, "email");
   const password = getStringValue(formData, "password");
+  const nextPath = getSafePostLoginPath(getStringValue(formData, "next"));
 
   if (!email || !password) {
-    redirectWithError("/login", "Bitte geben Sie E-Mail-Adresse und Passwort ein.");
+    redirectWithError(
+      "/login",
+      "Bitte geben Sie E-Mail-Adresse und Passwort ein.",
+      nextPath,
+    );
   }
 
   const supabase = await createSupabaseServerClient();
@@ -32,11 +48,19 @@ export const loginAction = async (formData: FormData) => {
   });
 
   if (error) {
-    redirectWithError("/login", "Ungültige E-Mail-Adresse oder ungültiges Passwort.");
+    redirectWithError(
+      "/login",
+      "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+      nextPath,
+    );
   }
 
   if (!data.user) {
-    redirectWithError("/login", "Ungültige E-Mail-Adresse oder ungültiges Passwort.");
+    redirectWithError(
+      "/login",
+      "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+      nextPath,
+    );
   }
 
   const user = data.user!;
@@ -45,7 +69,15 @@ export const loginAction = async (formData: FormData) => {
     await ensureUserProfile(user);
   } catch {
     await supabase.auth.signOut();
-    redirectWithError("/login", "Ihr Profil konnte nicht vorbereitet werden.");
+    redirectWithError(
+      "/login",
+      "Ihr Profil konnte nicht vorbereitet werden.",
+      nextPath,
+    );
+  }
+
+  if (nextPath?.startsWith("/operator")) {
+    redirect(nextPath);
   }
 
   const companyState = await getUserCompanyState(user.id);
@@ -54,7 +86,7 @@ export const loginAction = async (formData: FormData) => {
     redirect("/onboarding");
   }
 
-  redirect("/dashboard");
+  redirect(nextPath ?? "/dashboard");
 };
 
 export const logoutAction = async () => {
