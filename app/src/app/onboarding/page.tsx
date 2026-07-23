@@ -37,6 +37,14 @@ export default async function OnboardingPage({
     redirect(companyState.isOwner ? "/dashboard" : "/dashboard/leads");
   }
 
+  if (companyState.role === "member" || companyState.role === "admin") {
+    redirect(
+      companyState.teamStatus === "pending"
+        ? "/team/accept"
+        : "/login?error=Dieser+Mitarbeiterzugang+ist+nicht+mehr+aktiv.",
+    );
+  }
+
   const { error } = await searchParams;
 
   return (
