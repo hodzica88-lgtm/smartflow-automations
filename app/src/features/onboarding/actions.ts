@@ -102,10 +102,10 @@ export const completeOnboardingAction = async (formData: FormData) => {
     redirectWithError("Ihr Profil konnte nicht vorbereitet werden.");
   }
 
-  const existingCompany = await getUserCompanyState(user.id);
+  const existingCompany = await getUserCompanyState(user.id, { allowMember: true });
 
   if (existingCompany.companyId) {
-    redirect("/dashboard");
+    redirect(existingCompany.isOwner ? "/dashboard" : "/dashboard/leads");
   }
 
   let createdCompanyId: string | null = null;
