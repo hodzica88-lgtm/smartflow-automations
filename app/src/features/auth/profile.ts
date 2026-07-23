@@ -24,6 +24,10 @@ export const ensureUserProfile = async (user: User) => {
     return;
   }
 
+  if (user.app_metadata.varnito_role === "member") {
+    throw new Error("Invited employee profile is missing.");
+  }
+
   const fullName =
     typeof user.user_metadata.full_name === "string"
       ? user.user_metadata.full_name
@@ -34,6 +38,7 @@ export const ensureUserProfile = async (user: User) => {
     full_name: fullName,
     id: user.id,
     role: "owner",
+    team_status: "active",
   });
 
   if (insertError) {
