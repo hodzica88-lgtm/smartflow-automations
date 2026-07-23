@@ -47,12 +47,14 @@ export async function updateCustomerValueAction(formData: FormData) {
     getStringValue(formData, "average_order_value"),
   );
 
-  if (!averageOrderValue.ok || averageOrderValue.cents === null) {
-    redirectWithError(
-      averageOrderValue.ok
-        ? "Der durchschnittliche Auftragswert ist erforderlich."
-        : averageOrderValue.error,
-    );
+  if (!averageOrderValue.ok) {
+    redirectWithError(averageOrderValue.error);
+  }
+
+  const averageOrderValueCents = averageOrderValue.cents;
+
+  if (averageOrderValueCents === null) {
+    redirectWithError("Der durchschnittliche Auftragswert ist erforderlich.");
   }
 
   const monthlyVarnitoCost = parseMonthlyVarnitoCost(
@@ -63,13 +65,14 @@ export async function updateCustomerValueAction(formData: FormData) {
     redirectWithError(monthlyVarnitoCost.error);
   }
 
+  const monthlyVarnitoCostCents = monthlyVarnitoCost.cents;
   const companyId = await getCompanyId();
 
   try {
     await saveCustomerValueSettings({
       companyId,
-      averageOrderValueCents: averageOrderValue.cents,
-      monthlyVarnitoCostCents: monthlyVarnitoCost.cents,
+      averageOrderValueCents,
+      monthlyVarnitoCostCents,
     });
   } catch {
     redirectWithError("Die Werte konnten nicht gespeichert werden.");
