@@ -77,6 +77,7 @@ const getOpenLeads = async (companyId: string) => {
     .from("leads")
     .select("id, first_name, last_name, phone, inquiry_type, status, created_at")
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .in("status", [...OPEN_LEAD_STATUSES])
     .order("created_at", { ascending: true })
     .limit(5);
@@ -98,6 +99,7 @@ const getRecentLeadEvaluation = async (
     .from("leads")
     .select("status")
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .gte("created_at", since);
 
   if (error) {
@@ -212,7 +214,15 @@ export default async function DashboardPage() {
       ) : null}
 
       <section className={styles.empty} aria-label="Auswertung der letzten 30 Tage">
-        <h2>Auswertung der letzten 30 Tage</h2>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2>Auswertung der letzten 30 Tage</h2>
+            <p>Aktuelle Ergebnisse und offene Anfragen im gewählten Zeitraum.</p>
+          </div>
+          <Link className={styles.sectionLink} href="/dashboard/analytics">
+            Auswertungen öffnen
+          </Link>
+        </div>
         <div className={styles.grid}>
           <article className={styles.card}>
             <p className={styles.cardLabel}>Anfragen insgesamt</p>
@@ -298,6 +308,3 @@ export default async function DashboardPage() {
     </main>
   );
 }
-
-
-
