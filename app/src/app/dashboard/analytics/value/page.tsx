@@ -48,13 +48,13 @@ export async function updateCustomerValueAction(formData: FormData) {
   );
 
   if (!averageOrderValue.ok) {
-    redirectWithError(averageOrderValue.error);
+    return redirectWithError(averageOrderValue.error);
   }
 
   const averageOrderValueCents = averageOrderValue.cents;
 
   if (averageOrderValueCents === null) {
-    redirectWithError("Der durchschnittliche Auftragswert ist erforderlich.");
+    return redirectWithError("Der durchschnittliche Auftragswert ist erforderlich.");
   }
 
   const monthlyVarnitoCost = parseMonthlyVarnitoCost(
@@ -62,7 +62,7 @@ export async function updateCustomerValueAction(formData: FormData) {
   );
 
   if (!monthlyVarnitoCost.ok) {
-    redirectWithError(monthlyVarnitoCost.error);
+    return redirectWithError(monthlyVarnitoCost.error);
   }
 
   const monthlyVarnitoCostCents = monthlyVarnitoCost.cents;
@@ -75,7 +75,7 @@ export async function updateCustomerValueAction(formData: FormData) {
       monthlyVarnitoCostCents,
     });
   } catch {
-    redirectWithError("Die Werte konnten nicht gespeichert werden.");
+    return redirectWithError("Die Werte konnten nicht gespeichert werden.");
   }
 
   redirect("/dashboard/analytics/value?success=1");
