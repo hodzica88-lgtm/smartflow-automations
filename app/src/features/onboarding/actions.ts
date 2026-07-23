@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { INDUSTRY_OPTIONS, isSupportedIndustry } from "@/shared/config/inquiryTypes";
@@ -52,10 +53,23 @@ export const completeOnboardingAction = async (formData: FormData) => {
   const industry = getStringValue(formData, "industry");
   const timezone = getStringValue(formData, "timezone");
   const businessHours = getStringValue(formData, "businessHours");
+  const averageOrderValue = parseAverageOrderValue(
+    getStringValue(formData, "averageOrderValue"),
+  );
 
   if (!companyName || !contactPerson || !email || !phone || !timezone || !industry) {
     redirectWithError("Bitte füllen Sie alle Pflichtfelder aus.");
   }
+
+  if (!averageOrderValue.ok) {
+    return redirectWithError(averageOrderValue.error);
+  }
+
+  if (averageOrderValue.cents === null) {
+    return redirectWithError("Bitte geben Sie einen ungefähren durchschnittlichen Auftragswert an.");
+  }
+
+  const averageOrderValueCents = averageOrderValue.cents;
 
   if (!isValidEmail(email)) {
     redirectWithError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
@@ -122,6 +136,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
     createdCompanyId = companyId;
     const { error: settingsError } = await supabase.from("settings").insert({
       company_id: companyId,
+      average_order_value_cents: averageOrderValueCents,
     });
 
     if (settingsError) {

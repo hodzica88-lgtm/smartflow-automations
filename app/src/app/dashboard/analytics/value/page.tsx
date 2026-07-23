@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import {
   getCustomerValueSettings,
   parseAverageOrderValue,
-  parseMonthlyVarnitoCost,
-  saveCustomerValueSettings,
+  saveAverageOrderValue,
 } from "@/features/customer-value/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
@@ -51,31 +50,19 @@ export async function updateCustomerValueAction(formData: FormData) {
     return redirectWithError(averageOrderValue.error);
   }
 
-  const averageOrderValueCents = averageOrderValue.cents;
-
-  if (averageOrderValueCents === null) {
+  if (averageOrderValue.cents === null) {
     return redirectWithError("Der durchschnittliche Auftragswert ist erforderlich.");
   }
 
-  const monthlyVarnitoCost = parseMonthlyVarnitoCost(
-    getStringValue(formData, "monthly_varnito_cost"),
-  );
-
-  if (!monthlyVarnitoCost.ok) {
-    return redirectWithError(monthlyVarnitoCost.error);
-  }
-
-  const monthlyVarnitoCostCents = monthlyVarnitoCost.cents;
   const companyId = await getCompanyId();
 
   try {
-    await saveCustomerValueSettings({
+    await saveAverageOrderValue({
       companyId,
-      averageOrderValueCents,
-      monthlyVarnitoCostCents,
+      averageOrderValueCents: averageOrderValue.cents,
     });
   } catch {
-    return redirectWithError("Die Werte konnten nicht gespeichert werden.");
+    return redirectWithError("Der Durchschnittswert konnte nicht gespeichert werden.");
   }
 
   redirect("/dashboard/analytics/value?success=1");
@@ -110,12 +97,11 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
           ← Zurück zu den Auswertungen
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
-          Nutzen-Nachweis
+          Nutzen-Schätzung
         </p>
-        <h1 style={{ margin: 0 }}>Geschäftswerte hinterlegen</h1>
+        <h1 style={{ margin: 0 }}>Durchschnittlichen Auftragswert ändern</h1>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          Varnito berechnet Geldwerte ausschließlich aus Anfragen, die als „Auftrag erhalten“
-          abgeschlossen wurden. Termine und Angebote werden nicht als Umsatz gezählt.
+          Eine grobe Schätzung reicht. Varnito verwendet diesen einen Wert automatisch, um den ungefähren Wert gewonnener Aufträge zu zeigen.
         </p>
       </header>
 
@@ -130,7 +116,7 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
             background: "#e6ffed",
           }}
         >
-          Werte wurden gespeichert. Die Auswertung verwendet sie ab sofort.
+          Durchschnittswert wurde gespeichert.
         </section>
       ) : null}
 
@@ -163,16 +149,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
           background: "#fff",
         }}
       >
-        <div>
-          <h2 style={{ margin: 0 }}>Berechnungswerte</h2>
-          <p style={{ margin: "6px 0 0", color: "#555", lineHeight: 1.6 }}>
-            Verwenden Sie realistische Durchschnittswerte aus Ihren Aufträgen und Rechnungen.
-          </p>
-        </div>
-
         <form action={updateCustomerValueAction} style={{ display: "grid", gap: 18 }}>
           <label style={{ display: "grid", gap: 6 }}>
-            Durchschnittlicher Auftragswert in Euro
+            Ungefährer durchschnittlicher Auftragswert in Euro
             <input
               name="average_order_value"
               type="number"
@@ -181,31 +160,12 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
               step="0.01"
               inputMode="decimal"
               defaultValue={formatInputValue(settings.averageOrderValueCents)}
-              placeholder="zum Beispiel 750,00"
+              placeholder="zum Beispiel 500"
               required
               style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
             />
             <small style={{ color: "#555", lineHeight: 1.5 }}>
-              Dieser Wert wird nur mit dem Ergebnis „Auftrag erhalten“ multipliziert.
-            </small>
-          </label>
-
-          <label style={{ display: "grid", gap: 6 }}>
-            Tatsächliche monatliche Varnito-Kosten in Euro (optional)
-            <input
-              name="monthly_varnito_cost"
-              type="number"
-              min="0.01"
-              max="1000000"
-              step="0.01"
-              inputMode="decimal"
-              defaultValue={formatInputValue(settings.monthlyVarnitoCostCents)}
-              placeholder="Betrag laut Rechnung"
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
-            />
-            <small style={{ color: "#555", lineHeight: 1.5 }}>
-              Nur mit diesem echten Kostenwert kann Varnito ROI, Netto-Nutzen und Nutzenfaktor
-              berechnen. Das Feld kann bis zur ersten Rechnung leer bleiben.
+              Der Wert kann jederzeit angepasst werden. Weitere Beträge pro Lead sind nicht nötig.
             </small>
           </label>
 
@@ -226,29 +186,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
               fontWeight: 700,
             }}
           >
-            Werte speichern
+            Durchschnittswert speichern
           </button>
         </form>
-      </section>
-
-      <section
-        style={{
-          display: "grid",
-          width: "min(100%, 760px)",
-          gap: 8,
-          margin: "0 auto",
-          padding: 20,
-          border: "1px solid #e2e8f0",
-          borderRadius: 12,
-          background: "#fff",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Was Varnito daraus berechnet</h2>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          Bestätigter Auftragswert = Anzahl „Auftrag erhalten“ × durchschnittlicher
-          Auftragswert. Netto-Nutzen = bestätigter Auftragswert − monatliche Varnito-Kosten.
-          ROI = Netto-Nutzen ÷ monatliche Varnito-Kosten × 100.
-        </p>
       </section>
     </main>
   );

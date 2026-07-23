@@ -135,18 +135,6 @@ export default async function AnalyticsPage() {
     valueSettings.averageOrderValueCents === null
       ? null
       : jobsWon * valueSettings.averageOrderValueCents;
-  const netBenefitCents =
-    estimatedWonOrderValueCents === null || valueSettings.monthlyVarnitoCostCents === null
-      ? null
-      : estimatedWonOrderValueCents - valueSettings.monthlyVarnitoCostCents;
-  const roiPercent =
-    netBenefitCents === null || valueSettings.monthlyVarnitoCostCents === null
-      ? null
-      : (netBenefitCents / valueSettings.monthlyVarnitoCostCents) * 100;
-  const valueMultiple =
-    estimatedWonOrderValueCents === null || valueSettings.monthlyVarnitoCostCents === null
-      ? null
-      : estimatedWonOrderValueCents / valueSettings.monthlyVarnitoCostCents;
 
   const comparisonRows = [
     {
@@ -239,18 +227,20 @@ export default async function AnalyticsPage() {
       <section className={styles.section} aria-labelledby="value-title">
         <div className={styles.sectionHeader}>
           <div>
-            <h2 id="value-title">Nutzen und ROI</h2>
-            <p>Geldwerte nur aus Anfragen mit dem Ergebnis „Auftrag erhalten“.</p>
+            <h2 id="value-title">Geschätzter Nutzen</h2>
+            <p>Automatische Schätzung aus gewonnenen Aufträgen und einem Durchschnittswert.</p>
           </div>
           <Link className={styles.backLink} href="/dashboard/analytics/value">
-            {valueSettings.averageOrderValueCents === null ? "Werte hinterlegen" : "Werte ändern"}
+            {valueSettings.averageOrderValueCents === null
+              ? "Durchschnittswert hinterlegen"
+              : "Durchschnittswert ändern"}
           </Link>
         </div>
 
         {valueSettings.averageOrderValueCents === null ? (
           <p>
-            Hinterlegen Sie Ihren durchschnittlichen Auftragswert, damit Varnito den geschätzten
-            Wert gewonnener Aufträge berechnen kann. Ohne echte Eingabe wird kein Geldwert angezeigt.
+            Für bestehende Konten fehlt der einmalige Durchschnittswert noch. Neue Kunden geben ihn
+            direkt bei der Einrichtung an.
           </p>
         ) : (
           <>
@@ -263,37 +253,17 @@ export default async function AnalyticsPage() {
               <article className={styles.detailCard}>
                 <span>Ø Auftragswert</span>
                 <strong>{formatCurrency(valueSettings.averageOrderValueCents)}</strong>
-                <small>Vom Kunden gepflegter Durchschnittswert.</small>
+                <small>Einmal angegebener, jederzeit änderbarer Durchschnittswert.</small>
               </article>
               <article className={styles.detailCard}>
                 <span>Geschätzter Auftragswert</span>
                 <strong>{formatCurrency(estimatedWonOrderValueCents)}</strong>
                 <small>{jobsWon} gewonnene Aufträge × durchschnittlicher Auftragswert.</small>
               </article>
-              <article className={styles.detailCard}>
-                <span>Monatliche Varnito-Kosten</span>
-                <strong>{formatCurrency(valueSettings.monthlyVarnitoCostCents)}</strong>
-                <small>Tatsächlicher, vom Kunden gepflegter Rechnungsbetrag.</small>
-              </article>
-              <article className={styles.detailCard}>
-                <span>Geschätzter Netto-Nutzen</span>
-                <strong>{formatCurrency(netBenefitCents)}</strong>
-                <small>Geschätzter Auftragswert abzüglich monatlicher Varnito-Kosten.</small>
-              </article>
-              <article className={styles.detailCard}>
-                <span>Geschätzter ROI</span>
-                <strong>{roiPercent === null ? "—" : `${Math.round(roiPercent)} %`}</strong>
-                <small>
-                  {valueMultiple === null
-                    ? "Monatliche Varnito-Kosten fehlen noch."
-                    : `${valueMultiple.toLocaleString("de-DE", { maximumFractionDigits: 1 })}-facher Auftragswert im Verhältnis zu den Kosten.`}
-                </small>
-              </article>
             </div>
             <p className={styles.note}>
-              Diese Werte sind eine nachvollziehbare Schätzung auf Basis des gepflegten
-              Durchschnittswerts. Sie ersetzen keine Buchhaltung und behaupten keinen tatsächlich
-              bezahlten Umsatz.
+              Varnito berechnet diesen Wert automatisch. Es sind keine Beträge pro Lead und keine
+              zusätzliche Buchhaltung nötig. Die Schätzung ersetzt keinen tatsächlich bezahlten Umsatz.
             </p>
           </>
         )}
@@ -446,9 +416,9 @@ export default async function AnalyticsPage() {
         <p>
           Alle Auswertungen beziehen sich auf nicht gelöschte Anfragen und werden nach dem
           Eingangszeitpunkt der Anfrage dem jeweiligen Zeitraum zugeordnet. Die Erfolgsquote
-          vergleicht erfolgreiche mit allen bereits abgeschlossenen Anfragen. Geldwerte werden nur
-          aus „Auftrag erhalten“ und den vom Kunden gepflegten Durchschnitts- und Kostenwerten
-          berechnet.
+          vergleicht erfolgreiche mit allen bereits abgeschlossenen Anfragen. Der geschätzte
+          Auftragswert verwendet ausschließlich „Auftrag erhalten“ und den einmal angegebenen
+          durchschnittlichen Auftragswert.
         </p>
       </section>
     </main>
