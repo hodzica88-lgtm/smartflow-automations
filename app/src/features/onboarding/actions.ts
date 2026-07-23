@@ -102,10 +102,19 @@ export const completeOnboardingAction = async (formData: FormData) => {
     redirectWithError("Ihr Profil konnte nicht vorbereitet werden.");
   }
 
-  const existingCompany = await getUserCompanyState(user.id);
+  const existingCompany = await getUserCompanyState(user.id, { allowMember: true });
 
   if (existingCompany.companyId) {
-    redirect("/dashboard");
+    redirect(existingCompany.isOwner ? "/dashboard" : "/dashboard/leads");
+  }
+
+  if (existingCompany.role === "member" || existingCompany.role === "admin") {
+    if (existingCompany.teamStatus === "pending") {
+      redirect("/team/accept");
+    }
+
+    await authClient.auth.signOut();
+    redirect("/login?error=Dieser+Mitarbeiterzugang+ist+nicht+mehr+aktiv.");
   }
 
   let createdCompanyId: string | null = null;

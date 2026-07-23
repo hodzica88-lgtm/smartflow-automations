@@ -2,7 +2,14 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import {
+  getActiveCompanyTeamMembers,
+  getTeamMemberLabel,
+} from "@/features/team/service";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/shared/lib/supabase/server";
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Neue Anfrage",
@@ -49,6 +56,7 @@ const primaryActionStyle = {
 type LeadDetail = {
   id: string;
   company_id: string;
+  assigned_user_id: string | null;
   first_name: string | null;
   last_name: string | null;
   address: string | null;
@@ -69,6 +77,7 @@ type LeadHistoryEntry = {
   lead_id: string;
   from_status: string | null;
   to_status: string;
+  changed_by_user_id: string | null;
   created_at: string;
 };
 
@@ -92,7 +101,7 @@ const formatTimestamp = (value?: string | null) => {
   }
 };
 
-const getCompanyId = async () => {
+const getCompanyAccess = async () => {
   const authClient = await createSupabaseServerClient();
   const {
     data: { user },
@@ -102,13 +111,16 @@ const getCompanyId = async () => {
     redirect("/login");
   }
 
-  const companyState = await getUserCompanyState(user.id);
+  const companyState = await getUserCompanyState(user.id, { allowMember: true });
 
   if (!companyState.companyId) {
     redirect("/onboarding");
   }
 
-  return companyState.companyId;
+  return {
+    companyId: companyState.companyId,
+    userId: user.id,
+  };
 };
 
 const getLead = async (companyId: string, leadId: string) => {
@@ -116,10 +128,11 @@ const getLead = async (companyId: string, leadId: string) => {
   const { data, error } = await supabase
     .from("leads")
     .select(
-      "id, company_id, first_name, last_name, address, phone, email, inquiry_type, notes, source, status, successful_outcome, unsuccessful_outcome, created_at, updated_at",
+      "id, company_id, assigned_user_id, first_name, last_name, address, phone, email, inquiry_type, notes, source, status, successful_outcome, unsuccessful_outcome, created_at, updated_at",
     )
     .eq("id", leadId)
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) {
@@ -133,7 +146,7 @@ const getLeadHistory = async (companyId: string, leadId: string) => {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("lead_status_history")
-    .select("id, lead_id, from_status, to_status, created_at")
+    .select("id, lead_id, from_status, to_status, changed_by_user_id, created_at")
     .eq("company_id", companyId)
     .eq("lead_id", leadId)
     .order("created_at", { ascending: false });
@@ -163,6 +176,7 @@ export async function updateLeadDetailAction(formData: FormData) {
 
   const leadId = getString(formData, "leadId");
   const status = getString(formData, "status");
+  const assignedUserIdInput = getString(formData, "assigned_user_id");
   const successfulOutcome = getString(formData, "successful_outcome");
   const unsuccessfulOutcome = getString(formData, "unsuccessful_outcome");
 
@@ -170,10 +184,19 @@ export async function updateLeadDetailAction(formData: FormData) {
     redirect(`/dashboard/leads/${leadId || ""}?error=${encodeURIComponent("Ungültiger Lead-Status")}`);
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, userId } = await getCompanyAccess();
   const supabase = createSupabaseServiceRoleClient();
+  const teamMembers = await getActiveCompanyTeamMembers(companyId);
+  const assignedUserId = assignedUserIdInput || null;
 
-  const updates: Record<string, string | null> = { status };
+  if (assignedUserId && !teamMembers.some((member) => member.id === assignedUserId)) {
+    redirect(`/dashboard/leads/${leadId}?error=${encodeURIComponent("Ungültige Zuständigkeit")}`);
+  }
+
+  const updates: Record<string, string | null> = {
+    assigned_user_id: assignedUserId,
+    status,
+  };
 
   if (status === "successful") {
     if (!successfulOutcome) {
@@ -194,9 +217,10 @@ export async function updateLeadDetailAction(formData: FormData) {
 
   const { data: existingLead, error: existingLeadError } = await supabase
     .from("leads")
-    .select("status, successful_outcome, unsuccessful_outcome")
+    .select("status, successful_outcome, unsuccessful_outcome, assigned_user_id")
     .eq("id", leadId)
     .eq("company_id", companyId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (existingLeadError || !existingLead) {
@@ -205,10 +229,11 @@ export async function updateLeadDetailAction(formData: FormData) {
 
   const statusChanged = existingLead.status !== status;
   const outcomeChanged =
-    existingLead.successful_outcome !== successfulOutcome ||
-    existingLead.unsuccessful_outcome !== unsuccessfulOutcome;
+    existingLead.successful_outcome !== updates.successful_outcome ||
+    existingLead.unsuccessful_outcome !== updates.unsuccessful_outcome;
+  const assignmentChanged = existingLead.assigned_user_id !== assignedUserId;
 
-  if (!statusChanged && !outcomeChanged) {
+  if (!statusChanged && !outcomeChanged && !assignmentChanged) {
     redirect(`/dashboard/leads/${leadId}?success=1`);
   }
 
@@ -216,7 +241,8 @@ export async function updateLeadDetailAction(formData: FormData) {
     .from("leads")
     .update(updates)
     .eq("id", leadId)
-    .eq("company_id", companyId);
+    .eq("company_id", companyId)
+    .is("deleted_at", null);
 
   if (error) {
     redirect(`/dashboard/leads/${leadId}?error=${encodeURIComponent("Aktualisierung fehlgeschlagen")}`);
@@ -229,6 +255,7 @@ export async function updateLeadDetailAction(formData: FormData) {
         lead_id: leadId,
         from_status: existingLead.status,
         to_status: status,
+        changed_by_user_id: userId,
       },
     ]);
 
@@ -251,14 +278,21 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
   const success = resolvedSearchParams?.success === "1";
   const error = resolvedSearchParams?.error ?? null;
 
-  const companyId = await getCompanyId();
-  const lead = await getLead(companyId, leadId);
-  const history = await getLeadHistory(companyId, leadId);
+  const { companyId } = await getCompanyAccess();
+  const [lead, history, teamMembers] = await Promise.all([
+    getLead(companyId, leadId),
+    getLeadHistory(companyId, leadId),
+    getActiveCompanyTeamMembers(companyId),
+  ]);
 
   if (!lead) {
     notFound();
   }
 
+  const memberById = new Map(teamMembers.map((member) => [member.id, member]));
+  const assignedMember = lead.assigned_user_id
+    ? memberById.get(lead.assigned_user_id)
+    : null;
   const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt";
 
   return (
@@ -269,7 +303,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
         </Link>
         <h1 style={{ margin: "8px 0 4px" }}>{leadName}</h1>
         <p style={{ margin: 0, color: "#555" }}>
-          Detailansicht mit Statusverlauf und einfacher Workflow-Aktualisierung.
+          Detailansicht mit Zuständigkeit und Statusverlauf.
         </p>
       </div>
 
@@ -322,6 +356,10 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
                 <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.email ?? "—"}</p>
               </div>
               <div>
+                <strong>Zuständig</strong>
+                <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{getTeamMemberLabel(assignedMember)}</p>
+              </div>
+              <div>
                 <strong>Anfrage-Typ</strong>
                 <p style={{ margin: "4px 0 0", overflowWrap: "anywhere" }}>{lead.inquiry_type ?? "—"}</p>
               </div>
@@ -361,9 +399,21 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
         </section>
 
         <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff" }}>
-          <h2 style={{ marginTop: 0 }}>Status aktualisieren</h2>
+          <h2 style={{ marginTop: 0 }}>Lead aktualisieren</h2>
           <form action={updateLeadDetailAction} style={{ display: "grid", gap: 12 }}>
             <input type="hidden" name="leadId" value={lead.id} />
+
+            <label style={{ display: "grid", gap: 4 }}>
+              Zuständig
+              <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                <option value="">Nicht zugewiesen</option>
+                {teamMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {getTeamMemberLabel(member)}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label style={{ display: "grid", gap: 4 }}>
               Status
@@ -414,11 +464,17 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
             <p style={{ margin: 0, color: "#555" }}>Noch kein Verlauf vorhanden.</p>
           ) : (
             <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8, overflowWrap: "anywhere" }}>
-              {history.map((entry) => (
-                <li key={entry.id}>
-                  <strong>{formatTimestamp(entry.created_at)}</strong>: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)}
-                </li>
-              ))}
+              {history.map((entry) => {
+                const actor = entry.changed_by_user_id
+                  ? getTeamMemberLabel(memberById.get(entry.changed_by_user_id))
+                  : "Nicht erfasst";
+
+                return (
+                  <li key={entry.id}>
+                    <strong>{formatTimestamp(entry.created_at)}</strong>: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)} · {actor}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
