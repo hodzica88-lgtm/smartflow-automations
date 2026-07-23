@@ -31,10 +31,10 @@ export default async function OnboardingPage({
     redirect("/login");
   }
 
-  const companyState = await getUserCompanyState(user.id);
+  const companyState = await getUserCompanyState(user.id, { allowMember: true });
 
   if (companyState.companyId) {
-    redirect("/dashboard");
+    redirect(companyState.isOwner ? "/dashboard" : "/dashboard/leads");
   }
 
   const { error } = await searchParams;
