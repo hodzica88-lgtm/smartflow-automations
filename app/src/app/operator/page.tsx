@@ -155,7 +155,12 @@ export default async function OperatorPage() {
                   return (
                     <tr key={company.id}>
                       <td>
-                        <strong>{company.name}</strong>
+                        <Link
+                          className={styles.companyLink}
+                          href={`/operator/companies/${company.id}`}
+                        >
+                          {company.name}
+                        </Link>
                         <span className={styles.subtle}>{company.email}</span>
                       </td>
                       <td>
