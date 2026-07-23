@@ -1,8 +1,12 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
+type UserRole = "owner" | "admin" | "member";
+type TeamStatus = "pending" | "active";
+
 export type UserCompanyState = {
   companyId: string | null;
-  role: "owner" | "admin" | "member" | null;
+  role: UserRole | null;
+  teamStatus: TeamStatus | null;
   isOwner: boolean;
 };
 
@@ -25,6 +29,9 @@ export const getUserCompanyState = async (
     throw profileError;
   }
 
+  const role = (profile?.role as UserRole | undefined) ?? null;
+  const teamStatus = (profile?.team_status as TeamStatus | undefined) ?? null;
+
   if (profile?.default_company_id) {
     const { data: defaultCompany, error: defaultCompanyError } = await supabase
       .from("companies")
@@ -38,38 +45,50 @@ export const getUserCompanyState = async (
     }
 
     if (defaultCompany?.id) {
-      const role = profile.role as "owner" | "admin" | "member";
       const isOwner = role === "owner" && defaultCompany.owner_user_id === userId;
       const isActiveMember =
         options.allowMember === true &&
-        profile.team_status === "active" &&
+        teamStatus === "active" &&
         (role === "admin" || role === "member");
 
       if (isOwner || isActiveMember) {
         return {
           companyId: defaultCompany.id,
           role,
+          teamStatus,
           isOwner,
         };
       }
     }
   }
 
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .select("id")
-    .eq("owner_user_id", userId)
-    .is("deleted_at", null)
-    .limit(1)
-    .maybeSingle();
+  if (role === "owner") {
+    const { data: company, error: companyError } = await supabase
+      .from("companies")
+      .select("id")
+      .eq("owner_user_id", userId)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
 
-  if (companyError) {
-    throw companyError;
+    if (companyError) {
+      throw companyError;
+    }
+
+    if (company?.id) {
+      return {
+        companyId: company.id,
+        role,
+        teamStatus,
+        isOwner: true,
+      };
+    }
   }
 
   return {
-    companyId: company?.id ?? null,
-    role: company?.id ? "owner" : null,
-    isOwner: Boolean(company?.id),
+    companyId: null,
+    role,
+    teamStatus,
+    isOwner: false,
   };
 };
