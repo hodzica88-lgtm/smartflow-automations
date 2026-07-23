@@ -46,12 +46,34 @@ const getRequiredEnv = (key: RequiredEnvKey) => {
   return value;
 };
 
+const getRequiredPublicEnv = (
+  value: string | undefined,
+  key: "NEXT_PUBLIC_SUPABASE_ANON_KEY" | "NEXT_PUBLIC_SUPABASE_URL",
+) => {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+
+  return trimmedValue;
+};
+
 export const publicEnv: PublicEnv = {
-  appUrl: getOptionalEnv("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000",
-  stripePublishableKey: getOptionalEnv("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
-  vapidPublicKey: getOptionalEnv("NEXT_PUBLIC_VAPID_PUBLIC_KEY"),
-  supabaseAnonKey: getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-  supabaseUrl: getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
+  appUrl:
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000",
+  stripePublishableKey:
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() || undefined,
+  vapidPublicKey:
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() || undefined,
+  supabaseAnonKey: getRequiredPublicEnv(
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  ),
+  supabaseUrl: getRequiredPublicEnv(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    "NEXT_PUBLIC_SUPABASE_URL",
+  ),
 };
 
 export const isValidVapidSubject = (value: string | undefined) => {
