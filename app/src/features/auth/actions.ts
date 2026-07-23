@@ -83,6 +83,21 @@ export const loginAction = async (formData: FormData) => {
   const companyState = await getUserCompanyState(user.id, { allowMember: true });
 
   if (!companyState.companyId) {
+    if (
+      (companyState.role === "member" || companyState.role === "admin") &&
+      companyState.teamStatus === "pending"
+    ) {
+      redirect("/team/accept");
+    }
+
+    if (companyState.role === "member" || companyState.role === "admin") {
+      await supabase.auth.signOut();
+      redirectWithError(
+        "/login",
+        "Dieser Mitarbeiterzugang ist nicht mehr aktiv.",
+      );
+    }
+
     redirect("/onboarding");
   }
 
