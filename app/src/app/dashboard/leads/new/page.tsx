@@ -32,7 +32,7 @@ const getString = (formData: FormData, key: string) => {
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
-const getCompanyId = async () => {
+const getCompanyAccess = async () => {
   const authClient = await createSupabaseServerClient();
   const {
     data: { user },
@@ -42,12 +42,15 @@ const getCompanyId = async () => {
     redirect("/login");
   }
 
-  const companyState = await getUserCompanyState(user.id);
+  const companyState = await getUserCompanyState(user.id, { allowMember: true });
   if (!companyState.companyId) {
     redirect("/onboarding");
   }
 
-  return companyState.companyId;
+  return {
+    companyId: companyState.companyId,
+    userId: user.id,
+  };
 };
 
 export async function createPhoneLeadAction(formData: FormData) {
@@ -69,7 +72,7 @@ export async function createPhoneLeadAction(formData: FormData) {
     redirect("/dashboard/leads/new?error=Bitte+geben+Sie+eine+gültige+E-Mail-Adresse+ein");
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, userId } = await getCompanyAccess();
   const supabase = createSupabaseServiceRoleClient();
 
   const activeInquiryTypes = await getActiveCompanyInquiryTypes({
@@ -90,6 +93,7 @@ export async function createPhoneLeadAction(formData: FormData) {
     .from("leads")
     .insert({
       company_id: companyId,
+      assigned_user_id: userId,
       first_name: name,
       last_name: null,
       phone,
@@ -118,7 +122,7 @@ type NewLeadPageProps = {
 export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
   const resolvedSearchParams = await searchParams;
   const error = resolvedSearchParams?.error ?? null;
-  const companyId = await getCompanyId();
+  const { companyId } = await getCompanyAccess();
   const supabase = createSupabaseServiceRoleClient();
   const activeInquiryTypes = await getActiveCompanyInquiryTypes({
     supabase,
