@@ -27,10 +27,25 @@ const mapTeamMember = (row: {
 
 export const getCompanyTeamMembers = async (companyId: string) => {
   const supabase = createSupabaseServiceRoleClient();
+  const { data: company, error: companyError } = await supabase
+    .from("companies")
+    .select("owner_user_id")
+    .eq("id", companyId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (companyError) {
+    throw companyError;
+  }
+
+  if (!company) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("users")
     .select("id, email, full_name, role, team_status, created_at")
-    .eq("default_company_id", companyId)
+    .or(`default_company_id.eq.${companyId},id.eq.${company.owner_user_id}`)
     .in("role", ["owner", "admin", "member"])
     .order("created_at", { ascending: true });
 
