@@ -116,7 +116,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
   const email = getStringValue(formData, "email").toLowerCase();
 
   if (!isValidEmail(email)) {
-    redirectTeamError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+    return redirectTeamError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
   }
 
   const { companyId } = await getOwnerAccess();
@@ -124,7 +124,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
   try {
     await createPendingMember(companyId, email);
   } catch (error) {
-    redirectTeamError(
+    return redirectTeamError(
       error instanceof Error
         ? error.message
         : "Die Einladung konnte nicht versendet werden.",
@@ -149,19 +149,19 @@ export async function resendTeamInvitationAction(formData: FormData) {
     .maybeSingle();
 
   if (error || !member) {
-    redirectTeamError("Offene Einladung wurde nicht gefunden.");
+    return redirectTeamError("Offene Einladung wurde nicht gefunden.");
   }
 
   const { error: deleteError } = await supabase.auth.admin.deleteUser(member.id);
 
   if (deleteError) {
-    redirectTeamError("Die alte Einladung konnte nicht ersetzt werden.");
+    return redirectTeamError("Die alte Einladung konnte nicht ersetzt werden.");
   }
 
   try {
     await createPendingMember(companyId, member.email);
   } catch {
-    redirectTeamError("Die neue Einladung konnte nicht versendet werden.");
+    return redirectTeamError("Die neue Einladung konnte nicht versendet werden.");
   }
 
   redirectTeamSuccess("Einladung wurde erneut versendet.");
@@ -172,7 +172,7 @@ export async function removeTeamMemberAction(formData: FormData) {
   const { companyId, ownerUserId } = await getOwnerAccess();
 
   if (!memberId || memberId === ownerUserId) {
-    redirectTeamError("Dieser Zugang kann nicht entfernt werden.");
+    return redirectTeamError("Dieser Zugang kann nicht entfernt werden.");
   }
 
   const supabase = createSupabaseServiceRoleClient();
@@ -185,13 +185,13 @@ export async function removeTeamMemberAction(formData: FormData) {
     .maybeSingle();
 
   if (error || !member) {
-    redirectTeamError("Mitarbeiterzugang wurde nicht gefunden.");
+    return redirectTeamError("Mitarbeiterzugang wurde nicht gefunden.");
   }
 
   const { error: deleteError } = await supabase.auth.admin.deleteUser(member.id);
 
   if (deleteError) {
-    redirectTeamError("Mitarbeiterzugang konnte nicht entfernt werden.");
+    return redirectTeamError("Mitarbeiterzugang konnte nicht entfernt werden.");
   }
 
   redirectTeamSuccess("Mitarbeiterzugang wurde entfernt.");
