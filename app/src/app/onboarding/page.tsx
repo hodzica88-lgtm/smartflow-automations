@@ -147,6 +147,24 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
+            <span className={styles.label}>Ungefährer durchschnittlicher Auftragswert in Euro</span>
+            <input
+              className={styles.input}
+              inputMode="decimal"
+              max="10000000"
+              min="0.01"
+              name="averageOrderValue"
+              placeholder="zum Beispiel 500"
+              required
+              step="0.01"
+              type="number"
+            />
+            <small>
+              Eine grobe Schätzung reicht. Varnito nutzt sie später automatisch, um den ungefähren Wert gewonnener Aufträge zu zeigen.
+            </small>
+          </label>
+
+          <label className={styles.field}>
             <span className={styles.label}>Geschäftszeiten</span>
             <textarea
               className={styles.textarea}
