@@ -108,6 +108,15 @@ export const completeOnboardingAction = async (formData: FormData) => {
     redirect(existingCompany.isOwner ? "/dashboard" : "/dashboard/leads");
   }
 
+  if (existingCompany.role === "member" || existingCompany.role === "admin") {
+    if (existingCompany.teamStatus === "pending") {
+      redirect("/team/accept");
+    }
+
+    await authClient.auth.signOut();
+    redirect("/login?error=Dieser+Mitarbeiterzugang+ist+nicht+mehr+aktiv.");
+  }
+
   let createdCompanyId: string | null = null;
 
   try {
