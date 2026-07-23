@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getCustomerAnalyticsData } from "@/features/analytics/data";
+import { getCustomerValueSettings } from "@/features/customer-value/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
@@ -44,6 +45,19 @@ const formatDate = (value: string, timezone: string) => {
 
 const formatRate = (value: number | null) =>
   value === null ? "—" : `${Math.round(value * 100)} %`;
+
+const formatCurrency = (cents: number | null) => {
+  if (cents === null) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+};
 
 const formatCountChange = (current: number, previous: number) => {
   if (previous === 0) {
@@ -103,7 +117,10 @@ const formatResponseComparison = (current: number | null, previous: number | nul
 
 export default async function AnalyticsPage() {
   const companyId = await getCompanyId();
-  const analytics = await getCustomerAnalyticsData(companyId);
+  const [analytics, valueSettings] = await Promise.all([
+    getCustomerAnalyticsData(companyId),
+    getCustomerValueSettings(companyId),
+  ]);
   const currentPeriod = `${formatDate(analytics.periodStart, analytics.timezone)} bis ${formatDate(
     analytics.periodEnd,
     analytics.timezone,
@@ -113,6 +130,23 @@ export default async function AnalyticsPage() {
     analytics.timezone,
   )} bis ${formatDate(analytics.periodStart, analytics.timezone)}`;
   const hasCurrentLeads = analytics.current.total > 0;
+  const jobsWon = analytics.successfulOutcomes.find((outcome) => outcome.key === "job_won")?.count ?? 0;
+  const estimatedWonOrderValueCents =
+    valueSettings.averageOrderValueCents === null
+      ? null
+      : jobsWon * valueSettings.averageOrderValueCents;
+  const netBenefitCents =
+    estimatedWonOrderValueCents === null || valueSettings.monthlyVarnitoCostCents === null
+      ? null
+      : estimatedWonOrderValueCents - valueSettings.monthlyVarnitoCostCents;
+  const roiPercent =
+    netBenefitCents === null || valueSettings.monthlyVarnitoCostCents === null
+      ? null
+      : (netBenefitCents / valueSettings.monthlyVarnitoCostCents) * 100;
+  const valueMultiple =
+    estimatedWonOrderValueCents === null || valueSettings.monthlyVarnitoCostCents === null
+      ? null
+      : estimatedWonOrderValueCents / valueSettings.monthlyVarnitoCostCents;
 
   const comparisonRows = [
     {
@@ -200,6 +234,69 @@ export default async function AnalyticsPage() {
             {analytics.response.measurableLeads} von {analytics.response.totalLeads} messbar
           </span>
         </article>
+      </section>
+
+      <section className={styles.section} aria-labelledby="value-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="value-title">Nutzen und ROI</h2>
+            <p>Geldwerte nur aus Anfragen mit dem Ergebnis „Auftrag erhalten“.</p>
+          </div>
+          <Link className={styles.backLink} href="/dashboard/analytics/value">
+            {valueSettings.averageOrderValueCents === null ? "Werte hinterlegen" : "Werte ändern"}
+          </Link>
+        </div>
+
+        {valueSettings.averageOrderValueCents === null ? (
+          <p>
+            Hinterlegen Sie Ihren durchschnittlichen Auftragswert, damit Varnito den geschätzten
+            Wert gewonnener Aufträge berechnen kann. Ohne echte Eingabe wird kein Geldwert angezeigt.
+          </p>
+        ) : (
+          <>
+            <div className={styles.detailGrid}>
+              <article className={styles.detailCard}>
+                <span>Aufträge erhalten</span>
+                <strong>{jobsWon}</strong>
+                <small>Nur erfolgreiche Anfragen mit dem Ergebnis „Auftrag erhalten“.</small>
+              </article>
+              <article className={styles.detailCard}>
+                <span>Ø Auftragswert</span>
+                <strong>{formatCurrency(valueSettings.averageOrderValueCents)}</strong>
+                <small>Vom Kunden gepflegter Durchschnittswert.</small>
+              </article>
+              <article className={styles.detailCard}>
+                <span>Geschätzter Auftragswert</span>
+                <strong>{formatCurrency(estimatedWonOrderValueCents)}</strong>
+                <small>{jobsWon} gewonnene Aufträge × durchschnittlicher Auftragswert.</small>
+              </article>
+              <article className={styles.detailCard}>
+                <span>Monatliche Varnito-Kosten</span>
+                <strong>{formatCurrency(valueSettings.monthlyVarnitoCostCents)}</strong>
+                <small>Tatsächlicher, vom Kunden gepflegter Rechnungsbetrag.</small>
+              </article>
+              <article className={styles.detailCard}>
+                <span>Geschätzter Netto-Nutzen</span>
+                <strong>{formatCurrency(netBenefitCents)}</strong>
+                <small>Geschätzter Auftragswert abzüglich monatlicher Varnito-Kosten.</small>
+              </article>
+              <article className={styles.detailCard}>
+                <span>Geschätzter ROI</span>
+                <strong>{roiPercent === null ? "—" : `${Math.round(roiPercent)} %`}</strong>
+                <small>
+                  {valueMultiple === null
+                    ? "Monatliche Varnito-Kosten fehlen noch."
+                    : `${valueMultiple.toLocaleString("de-DE", { maximumFractionDigits: 1 })}-facher Auftragswert im Verhältnis zu den Kosten.`}
+                </small>
+              </article>
+            </div>
+            <p className={styles.note}>
+              Diese Werte sind eine nachvollziehbare Schätzung auf Basis des gepflegten
+              Durchschnittswerts. Sie ersetzen keine Buchhaltung und behaupten keinen tatsächlich
+              bezahlten Umsatz.
+            </p>
+          </>
+        )}
       </section>
 
       <section className={styles.section} aria-labelledby="comparison-title">
@@ -349,8 +446,9 @@ export default async function AnalyticsPage() {
         <p>
           Alle Auswertungen beziehen sich auf nicht gelöschte Anfragen und werden nach dem
           Eingangszeitpunkt der Anfrage dem jeweiligen Zeitraum zugeordnet. Die Erfolgsquote
-          vergleicht erfolgreiche mit allen bereits abgeschlossenen Anfragen. Geldwerte und ROI
-          werden erst ergänzt, sobald dafür echte, vom Kunden gepflegte Werte vorhanden sind.
+          vergleicht erfolgreiche mit allen bereits abgeschlossenen Anfragen. Geldwerte werden nur
+          aus „Auftrag erhalten“ und den vom Kunden gepflegten Durchschnitts- und Kostenwerten
+          berechnet.
         </p>
       </section>
     </main>
