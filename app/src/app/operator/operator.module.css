@@ -9,7 +9,8 @@
 .header,
 .metrics,
 .alert,
-.companySection {
+.companySection,
+.detailGrid {
   width: min(100%, 80rem);
   margin-inline: auto;
 }
@@ -30,10 +31,18 @@
   text-transform: uppercase;
 }
 
-.title {
+.title,
+.detailTitle {
   margin: 0;
-  font-size: clamp(2.25rem, 6vw, 4rem);
   line-height: 1;
+}
+
+.title {
+  font-size: clamp(2.25rem, 6vw, 4rem);
+}
+
+.detailTitle {
+  font-size: clamp(2rem, 5vw, 3.5rem);
 }
 
 .copy,
@@ -55,6 +64,19 @@
   margin: 0.5rem 0 0;
   font-size: 0.875rem;
   overflow-wrap: anywhere;
+}
+
+.backLink {
+  display: inline-flex;
+  margin-bottom: 1rem;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.backLink:hover,
+.companyLink:hover {
+  text-decoration: underline;
 }
 
 .actions {
@@ -139,13 +161,20 @@
   margin: 0;
 }
 
-.companySection {
+.companySection,
+.detailCard {
   display: grid;
   gap: 1rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
   padding: 1rem;
+}
+
+.detailGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
 }
 
 .sectionHeader {
@@ -171,6 +200,32 @@
   font-weight: 700;
 }
 
+.definitionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.definitionGrid > div {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.definitionGrid dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.definitionGrid dd {
+  margin: 0.35rem 0 0;
+  overflow-wrap: anywhere;
+}
+
 .emptyState {
   display: grid;
   gap: 0.5rem;
@@ -188,34 +243,55 @@
   overflow-x: auto;
 }
 
-.table {
+.table,
+.compactTable {
   width: 100%;
-  min-width: 72rem;
   border-collapse: collapse;
 }
 
+.table {
+  min-width: 72rem;
+}
+
+.compactTable {
+  min-width: 50rem;
+}
+
 .table th,
-.table td {
+.table td,
+.compactTable th,
+.compactTable td {
   border-top: 1px solid var(--border);
   padding: 0.875rem 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 
-.table th {
+.table th,
+.compactTable th {
   color: var(--muted);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.table td {
+.table td,
+.compactTable td {
   font-size: 0.875rem;
 }
 
 .table td > span,
-.table td > strong {
+.table td > strong,
+.compactTable td > span,
+.compactTable td > strong {
   display: block;
+}
+
+.companyLink {
+  display: inline-block;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .subtle {
@@ -251,6 +327,16 @@
 .neutral {
   background: #edf2f7;
   color: #475569;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.8125rem;
+}
+
+.errorCell {
+  max-width: 24rem;
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 48rem) {
