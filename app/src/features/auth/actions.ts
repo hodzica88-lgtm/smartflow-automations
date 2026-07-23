@@ -80,10 +80,14 @@ export const loginAction = async (formData: FormData) => {
     redirect(nextPath);
   }
 
-  const companyState = await getUserCompanyState(user.id);
+  const companyState = await getUserCompanyState(user.id, { allowMember: true });
 
   if (!companyState.companyId) {
     redirect("/onboarding");
+  }
+
+  if (!companyState.isOwner) {
+    redirect("/dashboard/leads");
   }
 
   redirect(nextPath ?? "/dashboard");
