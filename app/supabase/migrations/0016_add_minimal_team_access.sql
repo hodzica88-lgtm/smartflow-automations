@@ -1,5 +1,5 @@
 -- 0016_add_minimal_team_access.sql
--- Minimal employee access: pending/active state plus tenant-safe RLS access.
+-- Minimal employee lifecycle state. Employee data access remains server-only.
 
 begin;
 
@@ -15,31 +15,5 @@ alter table public.users
 
 create index if not exists users_default_company_team_status_idx
   on public.users (default_company_id, team_status, role);
-
-create or replace function public.app_user_has_company_access(target_company_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1
-    from public.users u
-    join public.companies c on c.id = target_company_id
-    where u.id = auth.uid()
-      and u.default_company_id = target_company_id
-      and u.team_status = 'active'
-      and c.deleted_at is null
-      and (
-        (u.role = 'owner' and c.owner_user_id = auth.uid())
-        or u.role in ('admin', 'member')
-      )
-  );
-$$;
-
-revoke all on function public.app_user_has_company_access(uuid) from public;
-grant execute on function public.app_user_has_company_access(uuid) to authenticated;
-grant execute on function public.app_user_has_company_access(uuid) to service_role;
 
 commit;
