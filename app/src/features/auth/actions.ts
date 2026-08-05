@@ -6,7 +6,7 @@ import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/ser
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { publicEnv } from "@/shared/config/env";
+import { SITE_DOMAIN } from "@/shared/config/site";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 const getStringValue = (formData: FormData, key: string) => {
@@ -131,7 +131,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
 
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${publicEnv.appUrl}/login`,
+    redirectTo: `${SITE_DOMAIN}/login`,
   });
 
   redirect("/forgot-password?sent=1");

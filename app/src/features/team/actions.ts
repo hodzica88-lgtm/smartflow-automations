@@ -6,7 +6,7 @@ import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/ser
 import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { publicEnv } from "@/shared/config/env";
+import { SITE_DOMAIN } from "@/shared/config/site";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -123,7 +123,7 @@ const createPendingMember = async (companyId: string, emailInput: string) => {
         varnito_company_id: companyId,
         varnito_role: "member",
       },
-      redirectTo: `${publicEnv.appUrl}/team/accept`,
+      redirectTo: `${SITE_DOMAIN}/team/accept`,
     });
 
   if (inviteError || !invited.user) {
