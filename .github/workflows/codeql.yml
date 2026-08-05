@@ -2,9 +2,15 @@ name: CodeQL
 
 on:
   pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/codeql.yml"
   push:
     branches:
       - main
+    paths:
+      - "app/**"
+      - ".github/workflows/codeql.yml"
   schedule:
     - cron: "21 2 * * 1"
 
@@ -23,9 +29,6 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3

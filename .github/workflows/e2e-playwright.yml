@@ -1,15 +1,25 @@
-name: CI
+name: E2E Playwright
 
 on:
   pull_request:
+    paths:
+      - "app/**"
+      - ".github/workflows/e2e-playwright.yml"
   push:
     branches:
       - "**"
+    paths:
+      - "app/**"
+      - ".github/workflows/e2e-playwright.yml"
 
 jobs:
-  validate:
+  e2e:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
     env:
+      INTERNAL_API_SECRET: internal-secret-test
       NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
       NEXT_PUBLIC_SUPABASE_ANON_KEY: anon_test_placeholder
@@ -28,19 +38,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
           node-version: 22
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Typecheck
-        run: pnpm exec tsc --noEmit
-
-      - name: Unit and integration tests
-        run: pnpm test
-
-      - name: Build
+      - name: Build app
         run: pnpm build
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: app/playwright-report
+          retention-days: 7
