@@ -307,6 +307,39 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             </Link>
           ) : null}
         </div>
+
+        <form
+          action="/api/leads/export"
+          method="get"
+          style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}
+        >
+          <label style={{ display: "grid", gap: 4 }}>
+            Zeitraum
+            <select name="range" defaultValue="month" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }}>
+              <option value="today">Heute</option>
+              <option value="week">Diese Woche</option>
+              <option value="month">Dieser Monat</option>
+              <option value="custom">Eigener Zeitraum</option>
+            </select>
+          </label>
+
+          <label style={{ display: "grid", gap: 4 }}>
+            Von
+            <input name="from" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }} />
+          </label>
+
+          <label style={{ display: "grid", gap: 4 }}>
+            Bis
+            <input name="to" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }} />
+          </label>
+
+          <button name="format" value="csv" type="submit" style={secondaryActionStyle}>
+            CSV Export
+          </button>
+          <button name="format" value="xlsx" type="submit" style={secondaryActionStyle}>
+            Excel Export
+          </button>
+        </form>
       </section>
 
       {success ? (
