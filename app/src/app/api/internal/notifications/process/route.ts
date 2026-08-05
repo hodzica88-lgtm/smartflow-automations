@@ -1,5 +1,10 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { loadServerEnv } from "@/shared/config/env";
+import {
+  getCompanyBranding,
+  getCompanyEmailTemplates,
+  renderTemplateText,
+} from "@/features/branding/service";
 import { sendLeadPushNotificationsForCompany } from "@/features/push/server";
 
 const INTERNAL_API_SECRET_HEADER = "x-internal-api-secret";
@@ -138,9 +143,28 @@ const getLeadFullName = (lead: LeadData) => {
   return fullName.length > 0 ? fullName : null;
 };
 
-const renderLeadValue = (value: string | null | undefined) => {
-  const normalized = value?.trim();
-  return normalized && normalized.length > 0 ? escapeHtml(normalized) : "Nicht angegeben";
+const textToHtml = (value: string) =>
+  `<div style="white-space:pre-wrap;">${escapeHtml(value)}</div>`;
+
+const buildBrandedHtml = (input: {
+  logoUrl: string | null;
+  primaryColor: string;
+  bodyText: string;
+  signature: string;
+}) => {
+  const logo = input.logoUrl
+    ? `<img src="${escapeHtml(input.logoUrl)}" alt="Logo" style="max-height:48px;max-width:180px;display:block;margin-bottom:14px;"/>`
+    : "";
+
+  return `
+<div style="font-family:Arial,sans-serif;color:#1f2937;line-height:1.5;max-width:680px;margin:0 auto;">
+  ${logo}
+  <div style="border-top:3px solid ${escapeHtml(input.primaryColor)};padding-top:14px;">
+    ${textToHtml(input.bodyText)}
+    <p style="margin-top:18px;color:#4b5563;">${escapeHtml(input.signature)}</p>
+  </div>
+</div>
+`.trim();
 };
 
 const getMissingBrevoEnv = (serverEnv: ReturnType<typeof loadServerEnv>) => {
@@ -157,54 +181,6 @@ const getMissingBrevoEnv = (serverEnv: ReturnType<typeof loadServerEnv>) => {
   }
 
   return missing;
-};
-
-const buildCustomerConfirmationHtml = (companyName: string, lead: LeadData) => {
-  const leadName = getLeadFullName(lead);
-
-  return `
-<div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:640px;margin:0 auto;">
-  <h2 style="margin-bottom:16px;color:#1a1a1a;">Ihre Anfrage ist eingegangen</h2>
-  <p>Hallo ${leadName ? escapeHtml(leadName) : ""},</p>
-  <p>vielen Dank für Ihre Anfrage bei ${escapeHtml(companyName)}. Wir haben Ihre Nachricht erhalten und melden uns in der Regel zeitnah bei Ihnen.</p>
-  <p>Falls Sie weitere Informationen ergänzen möchten, können Sie einfach auf diese E-Mail antworten.</p>
-  <p style="margin-top:24px;">Freundliche Grüße<br/>${escapeHtml(companyName)}</p>
-</div>
-`.trim();
-};
-
-const buildOwnerNewLeadHtml = (companyName: string, lead: LeadData, dashboardUrl: string) => {
-  const leadName = getLeadFullName(lead) ?? "Nicht angegeben";
-
-  return `
-<div style="font-family:Arial,sans-serif;color:#222;line-height:1.5;max-width:680px;margin:0 auto;">
-  <h2 style="margin-bottom:16px;color:#1a1a1a;">Neue Anfrage über AnfragePilot</h2>
-  <p>Für ${escapeHtml(companyName)} wurde eine neue Anfrage erfasst.</p>
-  <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-    <tr>
-      <td style="padding:8px;border:1px solid #ddd;font-weight:bold;width:180px;">Name</td>
-      <td style="padding:8px;border:1px solid #ddd;">${escapeHtml(leadName)}</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ddd;font-weight:bold;">Telefon</td>
-      <td style="padding:8px;border:1px solid #ddd;">${renderLeadValue(lead.phone)}</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ddd;font-weight:bold;">E-Mail</td>
-      <td style="padding:8px;border:1px solid #ddd;">${renderLeadValue(lead.email)}</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ddd;font-weight:bold;">Anfrageart</td>
-      <td style="padding:8px;border:1px solid #ddd;">${renderLeadValue(lead.inquiry_type)}</td>
-    </tr>
-    <tr>
-      <td style="padding:8px;border:1px solid #ddd;font-weight:bold;">Nachricht</td>
-      <td style="padding:8px;border:1px solid #ddd;">${renderLeadValue(lead.notes)}</td>
-    </tr>
-  </table>
-  <p><a href="${escapeHtml(dashboardUrl)}" style="color:#0a66c2;">Lead im Dashboard öffnen</a></p>
-</div>
-`.trim();
 };
 
 const extractBrevoErrorDetails = async (response: Response): Promise<BrevoErrorDetails> => {
@@ -415,10 +391,12 @@ export async function POST(request: Request) {
       const ownerData = owner as UserData;
       const leadData = lead as LeadData;
       const dashboardUrl = `${serverEnv.appUrl}/dashboard/leads/${item.lead_id}`;
+      const branding = await getCompanyBranding(companyData.id, companyData.name);
+      const templates = await getCompanyEmailTemplates(companyData.id);
 
       const sender = {
         email: serverEnv.brevoSenderEmail as string,
-        name: serverEnv.brevoSenderName as string,
+        name: branding.companyName || (serverEnv.brevoSenderName as string),
       };
 
       const companyEmail = normalizeEmail(companyData.email);
@@ -435,7 +413,19 @@ export async function POST(request: Request) {
           );
         }
 
+        const rendered = renderTemplateText(templates.customer_confirmation, {
+          company_name: branding.companyName,
+          dashboard_url: dashboardUrl,
+          lead_email: leadEmail,
+          lead_inquiry_type: leadData.inquiry_type,
+          lead_message: leadData.notes,
+          lead_name: getLeadFullName(leadData) ?? "Kunde",
+          lead_phone: leadData.phone,
+          signature: branding.signature,
+        });
+
         const replyToCandidate =
+          (branding.email && isValidEmail(branding.email) && branding.email) ||
           (companyEmail && isValidEmail(companyEmail) && companyEmail) ||
           (ownerEmail && isValidEmail(ownerEmail) && ownerEmail) ||
           null;
@@ -448,8 +438,13 @@ export async function POST(request: Request) {
               name: getLeadFullName(leadData) ?? undefined,
             },
           ],
-          subject: "Ihre Anfrage ist eingegangen",
-          htmlContent: buildCustomerConfirmationHtml(companyData.name, leadData),
+          subject: rendered.subject,
+          htmlContent: buildBrandedHtml({
+            logoUrl: branding.logoUrl,
+            primaryColor: branding.primaryColor,
+            bodyText: rendered.body,
+            signature: branding.signature,
+          }),
           ...(replyToCandidate
             ? {
                 replyTo: {
@@ -460,8 +455,20 @@ export async function POST(request: Request) {
             : {}),
         };
       } else if (item.notification_type === "owner_new_lead") {
+        const rendered = renderTemplateText(templates.owner_new_lead, {
+          company_name: branding.companyName,
+          dashboard_url: dashboardUrl,
+          lead_email: leadEmail,
+          lead_inquiry_type: leadData.inquiry_type,
+          lead_message: leadData.notes,
+          lead_name: getLeadFullName(leadData) ?? "Nicht angegeben",
+          lead_phone: leadData.phone,
+          signature: branding.signature,
+        });
+
         const ownerRecipientEmail =
           (companyNotificationEmail && isValidEmail(companyNotificationEmail) && !isBlockedOwnerRecipientEmail(companyNotificationEmail) && companyNotificationEmail) ||
+          (branding.email && isValidEmail(branding.email) && !isBlockedOwnerRecipientEmail(branding.email) && branding.email) ||
           (companyEmail && isValidEmail(companyEmail) && !isBlockedOwnerRecipientEmail(companyEmail) && companyEmail) ||
           null;
 
@@ -479,8 +486,13 @@ export async function POST(request: Request) {
               name: companyData.contact_person ?? ownerData.full_name ?? undefined,
             },
           ],
-          subject: "Neue Anfrage über AnfragePilot",
-          htmlContent: buildOwnerNewLeadHtml(companyData.name, leadData, dashboardUrl),
+          subject: rendered.subject,
+          htmlContent: buildBrandedHtml({
+            logoUrl: branding.logoUrl,
+            primaryColor: branding.primaryColor,
+            bodyText: rendered.body,
+            signature: branding.signature,
+          }),
           ...(leadEmail && isValidEmail(leadEmail)
             ? {
                 replyTo: {

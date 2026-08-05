@@ -9,6 +9,13 @@ import {
   reorderInquiryTypes,
   validateInquiryTypeName,
 } from "@/features/inquiry-types/service";
+import {
+  EMAIL_TEMPLATE_TYPES,
+  getCompanyBranding,
+  getCompanyEmailTemplates,
+  upsertCompanyBranding,
+  upsertCompanyEmailTemplate,
+} from "@/features/branding/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import {
   INDUSTRY_OPTIONS,
@@ -20,6 +27,7 @@ import {
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 import PushNotificationsSection from "../PushNotificationsSection";
+import EmailTemplateEditor from "./EmailTemplateEditor";
 
 const timeZones = [
   "Europe/Berlin",
@@ -342,6 +350,60 @@ export async function applyIndustryTemplateAction() {
   redirectSettingsSuccess(`${added} Anfragearten aus der Branchenvorlage ergänzt.`);
 }
 
+export async function updateBrandingAction(formData: FormData) {
+  "use server";
+
+  const companyId = await getCompanyId();
+  const companyName = getStringValue(formData, "branding_company_name");
+  const logoUrl = getStringValue(formData, "branding_logo_url");
+  const primaryColor = getStringValue(formData, "branding_primary_color") || "#1d4ed8";
+  const phone = getStringValue(formData, "branding_phone");
+  const website = getStringValue(formData, "branding_website");
+  const email = getStringValue(formData, "branding_email");
+  const signature = getStringValue(formData, "branding_signature");
+
+  if (!companyName || !signature) {
+    redirectSettingsError("Bitte Firmenname und Signatur ausfuellen.");
+  }
+
+  await upsertCompanyBranding(companyId, {
+    companyName,
+    email: email || null,
+    logoUrl: logoUrl || null,
+    phone: phone || null,
+    primaryColor,
+    signature,
+    website: website || null,
+  });
+
+  redirectSettingsSuccess("Branding gespeichert.");
+}
+
+export async function updateEmailTemplateAction(formData: FormData) {
+  "use server";
+
+  const companyId = await getCompanyId();
+  const templateType = getStringValue(formData, "template_type");
+  const subject = getStringValue(formData, "template_subject");
+  const body = getStringValue(formData, "template_body");
+
+  if (!(EMAIL_TEMPLATE_TYPES as readonly string[]).includes(templateType)) {
+    redirectSettingsError("Ungueltiges E-Mail-Template.");
+  }
+
+  if (!subject || !body) {
+    redirectSettingsError("Betreff und Inhalt duerfen nicht leer sein.");
+  }
+
+  await upsertCompanyEmailTemplate(companyId, {
+    type: templateType as (typeof EMAIL_TEMPLATE_TYPES)[number],
+    subject,
+    body,
+  });
+
+  redirectSettingsSuccess("E-Mail-Template gespeichert.");
+}
+
 type SettingsPageProps = {
   searchParams?: Promise<{ success?: string; error?: string }>;
 };
@@ -375,6 +437,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   }
 
   const inquiryTypes = await getCompanyInquiryTypes({ supabase, companyId });
+  const branding = await getCompanyBranding(companyId, company.name ?? "Varnito");
+  const templates = await getCompanyEmailTemplates(companyId);
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
@@ -616,6 +680,65 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         vapidPublicKey={publicEnv.vapidPublicKey ?? null}
         pushConfigured={pushConfigured}
       />
+
+      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 12 }}>
+        <h2 style={{ margin: 0 }}>Branding</h2>
+        <p style={{ margin: 0, color: "#555" }}>
+          Diese Angaben werden in allen automatischen E-Mails verwendet.
+        </p>
+        <form action={updateBrandingAction} style={{ display: "grid", gap: 10 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            Firmenlogo URL
+            <input name="branding_logo_url" defaultValue={branding.logoUrl ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            Firmenname
+            <input name="branding_company_name" defaultValue={branding.companyName} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} required />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            Primaerfarbe
+            <input name="branding_primary_color" type="color" defaultValue={branding.primaryColor} style={{ width: 84, height: 42, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            Telefon
+            <input name="branding_phone" defaultValue={branding.phone ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            Website
+            <input name="branding_website" defaultValue={branding.website ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            E-Mail
+            <input name="branding_email" defaultValue={branding.email ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+          </label>
+          <label style={{ display: "grid", gap: 6 }}>
+            Signatur
+            <textarea name="branding_signature" defaultValue={branding.signature} rows={4} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} required />
+          </label>
+          <button type="submit" style={primaryActionStyle}>Branding speichern</button>
+        </form>
+      </section>
+
+      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 14 }}>
+        <h2 style={{ margin: 0 }}>E-Mail-Templates</h2>
+        <p style={{ margin: 0, color: "#555" }}>
+          Kein HTML-Editor. Platzhalter: {"{{company_name}}"}, {"{{signature}}"}, {"{{lead_name}}"}, {"{{lead_phone}}"}, {"{{lead_email}}"}, {"{{lead_inquiry_type}}"}, {"{{lead_message}}"}, {"{{dashboard_url}}"}
+        </p>
+
+        {EMAIL_TEMPLATE_TYPES.map((templateType) => (
+          <form key={templateType} action={updateEmailTemplateAction} style={{ display: "grid", gap: 10 }}>
+            <input type="hidden" name="template_type" value={templateType} />
+            <EmailTemplateEditor
+              templateType={templateType}
+              companyName={branding.companyName}
+              defaultPrimaryColor={branding.primaryColor}
+              initialSubject={templates[templateType].subject}
+              initialBody={templates[templateType].body}
+            />
+            <button type="submit" style={primaryActionStyle}>Template speichern</button>
+          </form>
+        ))}
+      </section>
     </main>
   );
 }
