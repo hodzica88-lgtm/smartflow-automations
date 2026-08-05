@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { openBillingPortalAction, startBillingCheckoutAction } from "@/features/billing/actions";
+import LegalFooter from "@/shared/ui/LegalFooter";
 import {
   BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
@@ -51,6 +52,14 @@ const secondaryButtonStyle = {
   background: "#fff",
   color: "#1a202c",
   border: "1px solid #cbd5e0",
+} as const;
+
+const checkboxRowStyle = {
+  display: "flex",
+  gap: 12,
+  alignItems: "flex-start",
+  lineHeight: 1.5,
+  color: "#4b5563",
 } as const;
 
 const formatDateTime = (value: string | null) => {
@@ -177,8 +186,14 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         </p>
 
         {access.isOwner ? (
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <form action={startBillingCheckoutAction}>
+          <div style={{ display: "grid", gap: 12 }}>
+            <form action={startBillingCheckoutAction} style={{ display: "grid", gap: 12 }}>
+              <label style={checkboxRowStyle}>
+                <input name="legal_acceptance" type="checkbox" required style={{ marginTop: 4 }} />
+                <span>
+                  Ich bestätige die <Link href="/agb">AGB</Link> und die <Link href="/datenschutz">Datenschutzerklärung</Link> für die Testphase und den Checkout.
+                </span>
+              </label>
               <button type="submit" style={primaryButtonStyle}>Abo starten</button>
             </form>
 
@@ -198,6 +213,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </p>
         )}
       </section>
+
+      <LegalFooter />
     </main>
   );
 }

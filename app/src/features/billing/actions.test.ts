@@ -64,6 +64,7 @@ vi.mock("@/features/billing/service", () => ({
   requireUserCompanyAccess: vi.fn(async () => ({
     companyId: "company_a",
     isOwner: true,
+    userId: "user_a",
   })),
 }));
 
@@ -140,6 +141,14 @@ vi.mock("@/shared/lib/supabase/server", () => ({
         };
       }
 
+      if (table === "legal_acceptances") {
+        return {
+          insert() {
+            return Promise.resolve({ error: null });
+          },
+        };
+      }
+
       throw new Error(`Unexpected table: ${table}`);
     },
   })),
@@ -172,8 +181,14 @@ describe("stripe billing checkout trial", () => {
     state.subscriptionsUpdatePayload = null;
   });
 
+  const createCheckoutFormData = () => {
+    const formData = new FormData();
+    formData.set("legal_acceptance", "on");
+    return formData;
+  };
+
   it("sets 30-day trial for first checkout", async () => {
-    await expect(startBillingCheckoutAction()).rejects.toThrow(
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
       "REDIRECT:https://checkout.stripe.test/session_1",
     );
 
@@ -186,7 +201,7 @@ describe("stripe billing checkout trial", () => {
   it("does not grant second trial when trial_used_at exists", async () => {
     state.billingSnapshot.trialUsedAt = new Date().toISOString();
 
-    await expect(startBillingCheckoutAction()).rejects.toThrow(
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
       "REDIRECT:https://checkout.stripe.test/session_1",
     );
 
@@ -200,7 +215,7 @@ describe("stripe billing checkout trial", () => {
     state.billingSnapshot.status = "active";
     state.billingSnapshot.stripeSubscriptionId = "sub_existing_1";
 
-    await expect(startBillingCheckoutAction()).rejects.toThrow(
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
       "REDIRECT:https://checkout.stripe.test/session_1",
     );
 

@@ -1,4 +1,5 @@
 import AcceptTeamInvitationClient from "./AcceptTeamInvitationClient";
+import LegalFooter from "@/shared/ui/LegalFooter";
 
 type AcceptTeamInvitationPageProps = {
   searchParams?: Promise<{ error?: string }>;
@@ -14,6 +15,7 @@ export default async function AcceptTeamInvitationPage({
       <section style={{ display: "grid", width: "min(100%, 620px)", gap: 20, padding: 24, border: "1px solid #e2e8f0", borderRadius: 12, background: "#fff" }}>
         <AcceptTeamInvitationClient error={resolvedSearchParams?.error ?? null} />
       </section>
+      <LegalFooter />
     </main>
   );
 }

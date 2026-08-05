@@ -10,6 +10,7 @@ import {
   requireUserCompanyAccess,
   getCompanyBillingSnapshot,
 } from "@/features/billing/service";
+import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -69,7 +70,7 @@ const getCompanyForBilling = async (companyId: string) => {
   return data;
 };
 
-export async function startBillingCheckoutAction() {
+export async function startBillingCheckoutAction(formData: FormData) {
   const access = await requireUserCompanyAccess({
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
@@ -78,6 +79,16 @@ export async function startBillingCheckoutAction() {
   if (!access.isOwner) {
     redirectBillingError("Nur Eigentümer können ein Abonnement starten.");
   }
+
+  if (formData.get("legal_acceptance") !== "on") {
+    redirectBillingError("Bitte bestätigen Sie AGB und Datenschutzhinweise.");
+  }
+
+  await acceptBillingLegalTerms({
+    companyId: access.companyId,
+    sourcePath: BILLING_ROUTE,
+    userId: access.userId,
+  });
 
   const stripe = createStripeServerClient();
   const [price, company, billing] = await Promise.all([

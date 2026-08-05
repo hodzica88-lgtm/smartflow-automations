@@ -2,6 +2,7 @@ import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { createAppNotification } from "@/features/notifications/service";
 import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
+import LegalFooter from "@/shared/ui/LegalFooter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -318,6 +319,8 @@ export default async function Page({ params, searchParams }: PageProps) {
           </div>
         </form>
       )}
+
+      <LegalFooter />
     </div>
   );
 }

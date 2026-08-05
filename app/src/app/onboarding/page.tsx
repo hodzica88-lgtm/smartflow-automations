@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { completeOnboardingAction } from "@/features/onboarding/actions";
 import { INDUSTRY_OPTIONS } from "@/shared/config/inquiryTypes";
+import LegalFooter from "@/shared/ui/LegalFooter";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./onboarding.module.css";
@@ -186,6 +187,8 @@ export default async function OnboardingPage({
           </button>
         </form>
       </section>
+
+      <LegalFooter />
     </main>
   );
 }
