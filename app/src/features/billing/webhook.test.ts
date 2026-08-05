@@ -4,6 +4,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const testState = vi.hoisted(() => ({
   upsertCompanySubscription: vi.fn(),
   webhookEvents: new Map<string, { id: string; processed_at: string | null }>(),
+  retrievedSubscription: {
+    cancel_at_period_end: false,
+    canceled_at: null as number | null,
+    current_period_end: 2_000_000_000,
+    current_period_start: 1_999_000_000,
+    customer: "cus_test_123",
+    id: "sub_test_123",
+    items: {
+      data: [
+        {
+          current_period_end: 2_000_000_000,
+          current_period_start: 1_999_000_000,
+          price: {
+            id: "price_test_123",
+            product: "prod_test_123",
+          },
+        },
+      ],
+    },
+    metadata: {
+      company_id: "company_test_123",
+    },
+    status: "active",
+    trial_end: null,
+    trial_start: null,
+  },
 }));
 
 vi.mock("@/shared/lib/supabase/server", () => ({
@@ -82,30 +108,9 @@ vi.mock("@/shared/lib/stripe/server", async () => {
   const StripeModule = await import("stripe");
   const stripeClient = new StripeModule.default("sk_test_123456789");
 
-  vi.spyOn(stripeClient.subscriptions, "retrieve").mockResolvedValue({
-    cancel_at_period_end: false,
-    canceled_at: null,
-    current_period_end: 2_000_000_000,
-    current_period_start: 1_999_000_000,
-    customer: "cus_test_123",
-    id: "sub_test_123",
-    items: {
-      data: [
-        {
-          price: {
-            id: "price_test_123",
-            product: "prod_test_123",
-          },
-        },
-      ],
-    },
-    metadata: {
-      company_id: "company_test_123",
-    },
-    status: "active",
-    trial_end: null,
-    trial_start: null,
-  } as unknown as Stripe.Response<Stripe.Subscription>);
+  vi.spyOn(stripeClient.subscriptions, "retrieve").mockImplementation(async () =>
+    testState.retrievedSubscription as unknown as Stripe.Response<Stripe.Subscription>,
+  );
 
   return {
     createStripeServerClient: () => stripeClient,
@@ -134,6 +139,30 @@ describe("processStripeWebhookRequest", () => {
     testState.webhookEvents.clear();
     testState.upsertCompanySubscription.mockReset();
     process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
+    testState.retrievedSubscription.cancel_at_period_end = false;
+    testState.retrievedSubscription.canceled_at = null;
+    testState.retrievedSubscription.current_period_end = 2_000_000_000;
+    testState.retrievedSubscription.current_period_start = 1_999_000_000;
+    testState.retrievedSubscription.customer = "cus_test_123";
+    testState.retrievedSubscription.id = "sub_test_123";
+    testState.retrievedSubscription.items = {
+      data: [
+        {
+          current_period_end: 2_000_000_000,
+          current_period_start: 1_999_000_000,
+          price: {
+            id: "price_test_123",
+            product: "prod_test_123",
+          },
+        },
+      ],
+    };
+    testState.retrievedSubscription.metadata = {
+      company_id: "company_test_123",
+    };
+    testState.retrievedSubscription.status = "active";
+    testState.retrievedSubscription.trial_end = null;
+    testState.retrievedSubscription.trial_start = null;
   });
 
   afterEach(() => {
@@ -201,5 +230,131 @@ describe("processStripeWebhookRequest", () => {
       }),
     );
     expect(testState.webhookEvents.get("evt_test_123")?.processed_at).toBeTruthy();
+  });
+
+  it("persists cancel_at_period_end from customer.subscription.updated", async () => {
+    testState.retrievedSubscription.cancel_at_period_end = true;
+
+    const payload = JSON.stringify({
+      id: "evt_sub_updated_123",
+      object: "event",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_test_123",
+          object: "subscription",
+          cancel_at_period_end: false,
+          canceled_at: null,
+          customer: "cus_test_123",
+          items: {
+            data: [
+              {
+                current_period_end: 2_000_000_000,
+                current_period_start: 1_999_000_000,
+                price: {
+                  id: "price_test_123",
+                  product: "prod_test_123",
+                },
+              },
+            ],
+          },
+          metadata: {},
+          status: "active",
+          trial_end: null,
+          trial_start: null,
+        },
+      },
+    });
+
+    const signature = stripeClient.webhooks.generateTestHeaderString({
+      payload,
+      secret: webhookSecret,
+    });
+
+    const response = await processStripeWebhookRequest(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "stripe-signature": signature,
+        },
+        body: payload,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(testState.upsertCompanySubscription).toHaveBeenCalledTimes(1);
+    expect(testState.upsertCompanySubscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cancelAtPeriodEnd: true,
+        companyId: "company_test_123",
+        stripeSubscriptionId: "sub_test_123",
+      }),
+    );
+  });
+
+  it("processes customer.subscription.deleted and stores canceled state", async () => {
+    const canceledAtUnix = 2_000_100_000;
+    const payload = JSON.stringify({
+      id: "evt_sub_deleted_123",
+      object: "event",
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          id: "sub_test_123",
+          object: "subscription",
+          cancel_at_period_end: false,
+          canceled_at: canceledAtUnix,
+          customer: "cus_test_123",
+          items: {
+            data: [
+              {
+                current_period_end: 2_000_000_000,
+                current_period_start: 1_999_000_000,
+                price: {
+                  id: "price_test_123",
+                  product: "prod_test_123",
+                },
+              },
+            ],
+          },
+          metadata: {},
+          status: "canceled",
+          trial_end: null,
+          trial_start: null,
+        },
+      },
+    });
+
+    const signature = stripeClient.webhooks.generateTestHeaderString({
+      payload,
+      secret: webhookSecret,
+    });
+
+    const response = await processStripeWebhookRequest(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "stripe-signature": signature,
+        },
+        body: payload,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(testState.upsertCompanySubscription).toHaveBeenCalledTimes(1);
+    expect(testState.upsertCompanySubscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cancelAtPeriodEnd: false,
+        companyId: "company_test_123",
+        status: "canceled",
+      }),
+    );
+    expect(testState.upsertCompanySubscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        canceledAt: new Date(canceledAtUnix * 1000).toISOString(),
+      }),
+    );
   });
 });

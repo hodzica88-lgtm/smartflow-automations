@@ -100,13 +100,18 @@ const syncSubscription = async (companyId: string, subscription: Stripe.Subscrip
     status: normalizeBillingStatus(subscription.status),
     currentPeriodStart: toIsoString(currentPeriodStart),
     currentPeriodEnd: toIsoString(currentPeriodEnd),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
     trialStartedAt: toIsoString(subscription.trial_start),
     trialEndsAt: toIsoString(subscription.trial_end),
     trialUsedAt: toIsoString(subscription.trial_start) ?? new Date().toISOString(),
     canceledAt: toIsoString(subscription.canceled_at),
   });
 };
+
+type SubscriptionEventType =
+  | "customer.subscription.created"
+  | "customer.subscription.updated"
+  | "customer.subscription.deleted";
 
 const markWebhookProcessed = async (stripeEventId: string) => {
   const supabase = createSupabaseServiceRoleClient();
@@ -215,14 +220,31 @@ const handleCheckoutCompleted = async (
   }
 };
 
-const handleSubscriptionEvent = async (subscription: Stripe.Subscription) => {
+const handleSubscriptionEvent = async (
+  subscription: Stripe.Subscription,
+  stripe: Stripe,
+  eventType: SubscriptionEventType,
+) => {
   const companyId = await resolveCompanyIdForSubscriptionEvent(subscription);
 
   if (!companyId) {
     return;
   }
 
-  await syncSubscription(companyId, subscription);
+  if (eventType === "customer.subscription.deleted") {
+    await syncSubscription(companyId, subscription);
+    return;
+  }
+
+  try {
+    const refreshed = await stripe.subscriptions.retrieve(subscription.id, {
+      expand: ["items.data.price.product"],
+    });
+
+    await syncSubscription(companyId, refreshed);
+  } catch {
+    await syncSubscription(companyId, subscription);
+  }
 };
 
 const handleInvoiceEvent = async (invoice: Stripe.Invoice, stripe: Stripe) => {
@@ -242,7 +264,7 @@ const handleInvoiceEvent = async (invoice: Stripe.Invoice, stripe: Stripe) => {
     expand: ["items.data.price.product"],
   });
 
-  await handleSubscriptionEvent(subscription);
+  await handleSubscriptionEvent(subscription, stripe, "customer.subscription.updated");
 };
 
 export const processStripeEvent = async (event: Stripe.Event) => {
@@ -259,9 +281,25 @@ export const processStripeEvent = async (event: Stripe.Event) => {
       await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, stripe);
       break;
     case "customer.subscription.created":
+      await handleSubscriptionEvent(
+        event.data.object as Stripe.Subscription,
+        stripe,
+        "customer.subscription.created",
+      );
+      break;
     case "customer.subscription.updated":
+      await handleSubscriptionEvent(
+        event.data.object as Stripe.Subscription,
+        stripe,
+        "customer.subscription.updated",
+      );
+      break;
     case "customer.subscription.deleted":
-      await handleSubscriptionEvent(event.data.object as Stripe.Subscription);
+      await handleSubscriptionEvent(
+        event.data.object as Stripe.Subscription,
+        stripe,
+        "customer.subscription.deleted",
+      );
       break;
     case "invoice.paid":
     case "invoice.payment_failed":
