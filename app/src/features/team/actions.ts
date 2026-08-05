@@ -24,6 +24,67 @@ const redirectTeamSuccess = (message: string): never => {
   redirect(`/dashboard/team?success=${encodeURIComponent(message)}`);
 };
 
+const isAuthUserNotFoundError = (error: unknown) => {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof (error as { status?: unknown }).status === "number" &&
+    (error as { status: number }).status === 404
+  );
+};
+
+const cleanupPendingMemberByEmail = async (
+  companyId: string,
+  email: string,
+  supabase: ReturnType<typeof createSupabaseServiceRoleClient>,
+) => {
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from("users")
+    .select("id, role, team_status, default_company_id")
+    .ilike("email", email)
+    .maybeSingle();
+
+  if (existingProfileError) {
+    throw existingProfileError;
+  }
+
+  if (!existingProfile) {
+    return;
+  }
+
+  const isPendingMember =
+    existingProfile.role === "member" && existingProfile.team_status === "pending";
+
+  if (!isPendingMember) {
+    throw new Error("Diese E-Mail-Adresse besitzt bereits einen Varnito-Zugang.");
+  }
+
+  if (existingProfile.default_company_id !== companyId) {
+    throw new Error("Diese E-Mail-Adresse besitzt bereits einen Varnito-Zugang.");
+  }
+
+  const { error: authDeleteError } = await supabase.auth.admin.deleteUser(
+    existingProfile.id,
+  );
+
+  if (authDeleteError && !isAuthUserNotFoundError(authDeleteError)) {
+    throw authDeleteError;
+  }
+
+  const { error: profileDeleteError } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", existingProfile.id)
+    .eq("role", "member")
+    .eq("team_status", "pending")
+    .eq("default_company_id", companyId);
+
+  if (profileDeleteError) {
+    throw profileDeleteError;
+  }
+};
+
 const getOwnerAccess = async () => {
   const authClient = await createSupabaseServerClient();
   const {
@@ -50,19 +111,7 @@ const createPendingMember = async (companyId: string, emailInput: string) => {
   const email = emailInput.trim().toLowerCase();
   const supabase = createSupabaseServiceRoleClient();
 
-  const { data: existingProfile, error: existingProfileError } = await supabase
-    .from("users")
-    .select("id")
-    .ilike("email", email)
-    .maybeSingle();
-
-  if (existingProfileError) {
-    throw existingProfileError;
-  }
-
-  if (existingProfile) {
-    throw new Error("Diese E-Mail-Adresse besitzt bereits einen Varnito-Zugang.");
-  }
+  await cleanupPendingMemberByEmail(companyId, email, supabase);
 
   const { data: invited, error: inviteError } =
     await supabase.auth.admin.inviteUserByEmail(email, {
@@ -154,7 +203,19 @@ export async function resendTeamInvitationAction(formData: FormData) {
 
   const { error: deleteError } = await supabase.auth.admin.deleteUser(member.id);
 
-  if (deleteError) {
+  if (deleteError && !isAuthUserNotFoundError(deleteError)) {
+    return redirectTeamError("Die alte Einladung konnte nicht ersetzt werden.");
+  }
+
+  const { error: profileDeleteError } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", member.id)
+    .eq("default_company_id", companyId)
+    .eq("role", "member")
+    .eq("team_status", "pending");
+
+  if (profileDeleteError) {
     return redirectTeamError("Die alte Einladung konnte nicht ersetzt werden.");
   }
 

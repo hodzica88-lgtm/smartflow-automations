@@ -15,8 +15,7 @@ export default function AcceptTeamInvitationClient({
   error,
 }: AcceptTeamInvitationClientProps) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
-  const [sessionState, setSessionState] =
-    useState<SessionState>("loading");
+  const [sessionState, setSessionState] = useState<SessionState>("loading");
 
   useEffect(() => {
     let mounted = true;
@@ -35,12 +34,33 @@ export default function AcceptTeamInvitationClient({
 
     const init = async () => {
       try {
-        const { data, error } =
-          await supabase.auth.exchangeCodeForSession(window.location.href);
+        const url = new URL(window.location.href);
 
-        if (!error && data.session) {
-          markReady();
-          return;
+        if (url.searchParams.has("code")) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(
+            window.location.href,
+          );
+
+          if (!error && data.session) {
+            markReady();
+            return;
+          }
+        }
+
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+
+        if (accessToken && refreshToken) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (!error && data.session) {
+            markReady();
+            return;
+          }
         }
       } catch {}
 
