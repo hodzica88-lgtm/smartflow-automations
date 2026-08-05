@@ -3,8 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   applicationName: "Varnito",
-  title: "SmartFlow",
-  description: "Workflow automation for clear, repeatable operations.",
+  title: "Varnito",
+  description: "Varnito sichert eingehende Anfragen, informiert den Betrieb und organisiert die Bearbeitung im Team.",
   manifest: "/manifest.webmanifest",
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="de">
       <body>{children}</body>
     </html>
   );

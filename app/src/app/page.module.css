@@ -1,95 +1,275 @@
-.main {
+.page {
   min-height: 100vh;
-  padding: 32px 20px;
-  background: #f8fafc;
+  padding: 24px 20px 0;
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 24%),
+    #f8fafc;
   color: #111827;
 }
 
-.hero {
-  max-width: 920px;
+.hero,
+.section,
+.ctaBand {
+  width: min(100%, 72rem);
   margin: 0 auto;
-  padding: 72px 0 48px;
 }
 
-.badge {
-  display: inline-block;
-  margin-bottom: 20px;
+.hero {
+  display: grid;
+  gap: 28px;
+  padding: 48px 0 32px;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 18px;
+}
+
+.kicker,
+.sectionEyebrow,
+.pricingLabel,
+.previewLabel {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.875rem;
   font-weight: 700;
-  color: #2563eb;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.section h2,
+.ctaBand h2 {
+  margin: 0;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
 }
 
 .hero h1 {
-  margin: 0;
-  font-size: clamp(44px, 8vw, 86px);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
+  max-width: 11ch;
+  font-size: clamp(3rem, 9vw, 6.3rem);
 }
 
-.hero p {
-  max-width: 680px;
-  margin: 24px 0 0;
-  font-size: 20px;
-  line-height: 1.6;
+.lead {
+  max-width: 44rem;
+  margin: 0;
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  line-height: 1.7;
   color: #4b5563;
+}
+
+.supportingText,
+.section p,
+.pricingCopy,
+.faqCard p,
+.featureCard p,
+.timelineStep p,
+.viewCard p,
+.previewCard p,
+.ctaBand p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.7;
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 34px;
+  gap: 12px;
 }
 
-.primary,
-.secondary {
+.primaryButton,
+.secondaryButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: 0 22px;
+  padding: 0 20px;
   border-radius: 999px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.primary {
-  background: #111827;
-  color: white;
+.primaryButton {
+  background: #0f766e;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
 }
 
-.secondary {
-  background: white;
+.secondaryButton {
+  background: #fff;
   color: #111827;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
 }
 
-.features {
-  max-width: 920px;
-  margin: 0 auto;
+.heroPanel,
+.pricingCard,
+.ctaBand {
+  border: 1px solid #dbe2ea;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.heroPanel {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 16px;
 }
 
-.card {
-  padding: 22px;
-  border-radius: 24px;
-  background: white;
+.previewCard,
+.featureCard,
+.viewCard,
+.faqCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  padding: 18px;
+}
+
+.previewCard strong,
+.featureCard h3,
+.viewCard strong,
+.faqCard h3,
+.timelineStep h3 {
+  display: block;
+  margin: 6px 0 8px;
+  font-size: 1.05rem;
+}
+
+.section {
+  padding: 26px 0 0;
+}
+
+.sectionHeading {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.section h2,
+.ctaBand h2 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.gridThree,
+.gridTwo,
+.viewsGrid,
+.faqGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.gridThree,
+.viewsGrid,
+.faqGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gridTwo {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.timelineStep {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: #fff;
   border: 1px solid #e5e7eb;
 }
 
-.card h3 {
-  margin: 0 0 10px;
+.timelineStep span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #e6ffed;
+  color: #176b35;
+  font-weight: 800;
 }
 
-.card p {
-  margin: 0;
-  color: #6b7280;
-  line-height: 1.5;
+.benefitsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-@media (max-width: 800px) {
-  .features {
+.benefitChip {
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-weight: 700;
+}
+
+.pricingCard {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.price {
+  display: block;
+  margin-top: 8px;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+.pricingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pricingMeta span {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.ctaBand {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-top: 32px;
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .gridThree,
+  .viewsGrid,
+  .faqGrid,
+  .gridTwo,
+  .ctaBand {
     grid-template-columns: 1fr;
+  }
+
+  .ctaBand {
+    display: grid;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    align-items: start;
+    padding-top: 72px;
+  }
+
+  .pricingCard {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    align-items: center;
   }
 }
