@@ -5,7 +5,9 @@ import {
   BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
   getCompanyBillingSnapshot,
+  getPlannedCancellationDate,
   getBillingStatusLabel,
+  isCancellationPlanned,
   requireUserCompanyAccess,
   syncOwnerCompanyBillingFromStripe,
 } from "@/features/billing/service";
@@ -115,6 +117,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           ownerUserId: access.userId,
         })) ?? (await getCompanyBillingSnapshot(access.companyId))
       : access.billing;
+  const plannedCancellationDate = getPlannedCancellationDate(billing);
+  const cancellationPlanned = isCancellationPlanned(billing);
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const companyName = await getCompanyName(access.companyId);
@@ -161,7 +165,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           <div><strong>Zugriff:</strong> {billing.hasAppAccess ? "Freigeschaltet" : "Gesperrt"}</div>
           <div><strong>Testphase bis:</strong> {formatDateTime(billing.trialEndsAt)}</div>
           <div><strong>Aktueller Zeitraum bis:</strong> {formatDateTime(billing.currentPeriodEnd)}</div>
-          <div><strong>Kündigung zum Periodenende:</strong> {billing.cancelAtPeriodEnd ? "Ja" : "Nein"}</div>
+          <div><strong>Kündigung geplant:</strong> {cancellationPlanned ? "Ja" : "Nein"}</div>
+          <div><strong>Kündigungsdatum:</strong> {formatDateTime(plannedCancellationDate)}</div>
         </div>
       </section>
 

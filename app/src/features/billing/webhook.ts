@@ -92,6 +92,7 @@ const syncSubscription = async (companyId: string, subscription: Stripe.Subscrip
 
   await upsertCompanySubscription({
     companyId,
+    cancelAt: toIsoString(subscription.cancel_at),
     stripeCustomerId: customerId,
     stripeSubscriptionId: subscription.id,
     stripePriceId: priceId,

@@ -5,6 +5,7 @@ const testState = vi.hoisted(() => ({
   upsertCompanySubscription: vi.fn(),
   webhookEvents: new Map<string, { id: string; processed_at: string | null }>(),
   retrievedSubscription: {
+    cancel_at: null as number | null,
     cancel_at_period_end: false,
     canceled_at: null as number | null,
     current_period_end: 2_000_000_000,
@@ -140,6 +141,7 @@ describe("processStripeWebhookRequest", () => {
     testState.upsertCompanySubscription.mockReset();
     process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
     testState.retrievedSubscription.cancel_at_period_end = false;
+    testState.retrievedSubscription.cancel_at = null;
     testState.retrievedSubscription.canceled_at = null;
     testState.retrievedSubscription.current_period_end = 2_000_000_000;
     testState.retrievedSubscription.current_period_start = 1_999_000_000;
@@ -233,7 +235,9 @@ describe("processStripeWebhookRequest", () => {
   });
 
   it("persists cancel_at_period_end from customer.subscription.updated", async () => {
+    const cancelAtUnix = 2_000_300_000;
     testState.retrievedSubscription.cancel_at_period_end = true;
+    testState.retrievedSubscription.cancel_at = cancelAtUnix;
 
     const payload = JSON.stringify({
       id: "evt_sub_updated_123",
@@ -286,6 +290,7 @@ describe("processStripeWebhookRequest", () => {
     expect(testState.upsertCompanySubscription).toHaveBeenCalledTimes(1);
     expect(testState.upsertCompanySubscription).toHaveBeenCalledWith(
       expect.objectContaining({
+        cancelAt: new Date(cancelAtUnix * 1000).toISOString(),
         cancelAtPeriodEnd: true,
         companyId: "company_test_123",
         stripeSubscriptionId: "sub_test_123",
@@ -294,6 +299,7 @@ describe("processStripeWebhookRequest", () => {
   });
 
   it("processes customer.subscription.deleted and stores canceled state", async () => {
+    const cancelAtUnix = 2_000_200_000;
     const canceledAtUnix = 2_000_100_000;
     const payload = JSON.stringify({
       id: "evt_sub_deleted_123",
@@ -304,6 +310,7 @@ describe("processStripeWebhookRequest", () => {
           id: "sub_test_123",
           object: "subscription",
           cancel_at_period_end: false,
+          cancel_at: cancelAtUnix,
           canceled_at: canceledAtUnix,
           customer: "cus_test_123",
           items: {
@@ -346,6 +353,7 @@ describe("processStripeWebhookRequest", () => {
     expect(testState.upsertCompanySubscription).toHaveBeenCalledTimes(1);
     expect(testState.upsertCompanySubscription).toHaveBeenCalledWith(
       expect.objectContaining({
+        cancelAt: new Date(cancelAtUnix * 1000).toISOString(),
         cancelAtPeriodEnd: false,
         companyId: "company_test_123",
         status: "canceled",

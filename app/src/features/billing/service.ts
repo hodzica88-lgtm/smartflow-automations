@@ -25,6 +25,7 @@ export type BillingStatus = (typeof BILLING_STATUSES)[number];
 
 type BillingSubscriptionRow = {
   company_id: string;
+  cancel_at: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   stripe_price_id: string | null;
@@ -42,6 +43,7 @@ type BillingSubscriptionRow = {
 
 export type BillingSnapshot = {
   companyId: string;
+  cancelAt: string | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   stripePriceId: string | null;
@@ -65,6 +67,11 @@ export type AppCompanyAccess = {
   isOwner: boolean;
   billing: BillingSnapshot;
 };
+
+type BillingAccessInput = Pick<
+  BillingSnapshot,
+  "cancelAt" | "cancelAtPeriodEnd" | "currentPeriodEnd" | "status" | "trialEndsAt"
+>;
 
 const BILLING_STATUS_SET = new Set<string>(BILLING_STATUSES);
 
@@ -103,7 +110,7 @@ export const normalizeBillingStatus = (value: string | null | undefined): Billin
 };
 
 export const hasBillingAccess = (
-  input: Pick<BillingSnapshot, "status" | "trialEndsAt" | "currentPeriodEnd">,
+  input: BillingAccessInput,
   now: Date = new Date(),
 ) => {
   if (input.status === "active") {
@@ -114,11 +121,21 @@ export const hasBillingAccess = (
     return toFuture(input.trialEndsAt ?? input.currentPeriodEnd, now);
   }
 
+  if (input.status === "canceled") {
+    if (toFuture(input.cancelAt, now)) {
+      return true;
+    }
+
+    if (input.cancelAtPeriodEnd && toFuture(input.currentPeriodEnd, now)) {
+      return true;
+    }
+  }
+
   return false;
 };
 
 export const getBillingLockReason = (
-  input: Pick<BillingSnapshot, "status" | "trialEndsAt" | "currentPeriodEnd">,
+  input: BillingAccessInput,
   now: Date = new Date(),
 ) => {
   if (hasBillingAccess(input, now)) {
@@ -143,6 +160,26 @@ export const getBillingLockReason = (
   }
 };
 
+export const getPlannedCancellationDate = (
+  input: Pick<BillingSnapshot, "cancelAt" | "cancelAtPeriodEnd" | "currentPeriodEnd">,
+  now: Date = new Date(),
+) => {
+  if (toFuture(input.cancelAt, now)) {
+    return input.cancelAt;
+  }
+
+  if (input.cancelAtPeriodEnd && toFuture(input.currentPeriodEnd, now)) {
+    return input.currentPeriodEnd;
+  }
+
+  return null;
+};
+
+export const isCancellationPlanned = (
+  input: Pick<BillingSnapshot, "cancelAt" | "cancelAtPeriodEnd" | "currentPeriodEnd">,
+  now: Date = new Date(),
+) => getPlannedCancellationDate(input, now) !== null;
+
 const toSnapshot = (
   companyId: string,
   row: BillingSubscriptionRow | null,
@@ -150,6 +187,7 @@ const toSnapshot = (
 ): BillingSnapshot => {
   const snapshot: BillingSnapshot = {
     companyId,
+    cancelAt: row?.cancel_at ?? null,
     stripeCustomerId: row?.stripe_customer_id ?? null,
     stripeSubscriptionId: row?.stripe_subscription_id ?? null,
     stripePriceId: row?.stripe_price_id ?? null,
@@ -189,7 +227,7 @@ export const getCompanyBillingSnapshot = async (
   const { data, error } = await supabase
     .from("subscriptions")
     .select(
-      "company_id, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_product_id, plan, status, current_period_start, current_period_end, cancel_at_period_end, trial_started_at, trial_ends_at, trial_used_at, canceled_at",
+      "company_id, cancel_at, stripe_customer_id, stripe_subscription_id, stripe_price_id, stripe_product_id, plan, status, current_period_start, current_period_end, cancel_at_period_end, trial_started_at, trial_ends_at, trial_used_at, canceled_at",
     )
     .eq("company_id", companyId)
     .maybeSingle();
@@ -262,6 +300,7 @@ export const syncOwnerCompanyBillingFromStripe = async (
   const { error: updateError } = await supabase
     .from("subscriptions")
     .update({
+      cancel_at: toIsoString(subscription.cancel_at),
       canceled_at: toIsoString(subscription.canceled_at),
       cancel_at_period_end: subscription.cancel_at_period_end ?? false,
       current_period_end: toIsoString(currentPeriodEnd),
@@ -287,6 +326,7 @@ export const syncOwnerCompanyBillingFromStripe = async (
 
 type UpsertCompanySubscriptionInput = {
   companyId: string;
+  cancelAt?: string | null;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   stripePriceId?: string | null;
@@ -317,6 +357,7 @@ export const upsertCompanySubscription = async (
   }
 
   const payload = {
+    cancel_at: input.cancelAt,
     stripe_customer_id: input.stripeCustomerId,
     stripe_subscription_id: input.stripeSubscriptionId,
     stripe_price_id: input.stripePriceId,

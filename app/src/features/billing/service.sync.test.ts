@@ -83,6 +83,7 @@ vi.mock("@/shared/lib/stripe/server", () => ({
         testState.stripeRetrieveCalls += 1;
 
         return {
+          cancel_at: 2_000_800_000,
           cancel_at_period_end: true,
           canceled_at: 2_001_000_000,
           customer: "cus_sync_123",
@@ -139,6 +140,7 @@ describe("syncOwnerCompanyBillingFromStripe", () => {
     expect((testState.subscriptionUpdatePayload?.current_period_end as string) ?? "").toContain("2033-");
     expect((testState.subscriptionUpdatePayload?.trial_started_at as string) ?? "").toContain("2033-");
     expect((testState.subscriptionUpdatePayload?.trial_ends_at as string) ?? "").toContain("2033-");
+    expect((testState.subscriptionUpdatePayload?.cancel_at as string) ?? "").toContain("2033-");
     expect((testState.subscriptionUpdatePayload?.canceled_at as string) ?? "").toContain("2033-");
   });
 
