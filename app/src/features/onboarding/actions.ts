@@ -164,7 +164,6 @@ export const completeOnboardingAction = async (formData: FormData) => {
         status: "trialing",
         trial_ends_at: trialEnd.toISOString(),
         trial_started_at: trialStart.toISOString(),
-        trial_used_at: trialStart.toISOString(),
       });
 
     if (subscriptionError) {

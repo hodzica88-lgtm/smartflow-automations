@@ -6,6 +6,7 @@ import type Stripe from "stripe";
 import {
   BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
+  BILLING_TRIAL_DAYS,
   requireUserCompanyAccess,
   getCompanyBillingSnapshot,
 } from "@/features/billing/service";
@@ -15,6 +16,24 @@ import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 const redirectBillingError = (message: string): never => {
   redirect(`${BILLING_ROUTE}?error=${encodeURIComponent(message)}`);
+};
+
+const canGrantCheckoutTrial = (
+  billing: Awaited<ReturnType<typeof getCompanyBillingSnapshot>>,
+) => {
+  if (billing.trialUsedAt) {
+    return false;
+  }
+
+  if (billing.stripeSubscriptionId) {
+    return false;
+  }
+
+  if (billing.status === "active") {
+    return false;
+  }
+
+  return true;
 };
 
 const getStripePrice = async (stripe: Stripe) => {
@@ -78,12 +97,11 @@ export async function startBillingCheckoutAction() {
     },
   };
 
-  if (
-    billing.status === "trialing" &&
-    billing.trialEndsAt &&
-    Date.parse(billing.trialEndsAt) > Date.now()
-  ) {
-    subscriptionData.trial_end = Math.floor(Date.parse(billing.trialEndsAt) / 1000);
+  const trialGrantedAt = new Date();
+  const shouldGrantTrial = canGrantCheckoutTrial(billing);
+
+  if (shouldGrantTrial) {
+    subscriptionData.trial_period_days = BILLING_TRIAL_DAYS;
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -110,10 +128,30 @@ export async function startBillingCheckoutAction() {
   const { error } = await supabase
     .from("subscriptions")
     .update({
+      current_period_end: shouldGrantTrial
+        ? new Date(
+            trialGrantedAt.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000,
+          ).toISOString()
+        : billing.currentPeriodEnd,
+      current_period_start: shouldGrantTrial
+        ? trialGrantedAt.toISOString()
+        : billing.currentPeriodStart,
+      status: shouldGrantTrial ? "trialing" : billing.status,
       stripe_customer_id: billing.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : null),
       stripe_price_id: price.id,
       stripe_product_id: priceProductId,
       plan: "pro",
+      trial_ends_at: shouldGrantTrial
+        ? new Date(
+            trialGrantedAt.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000,
+          ).toISOString()
+        : billing.trialEndsAt,
+      trial_started_at: shouldGrantTrial
+        ? trialGrantedAt.toISOString()
+        : billing.trialStartedAt,
+      trial_used_at: shouldGrantTrial
+        ? trialGrantedAt.toISOString()
+        : billing.trialUsedAt,
     })
     .eq("company_id", access.companyId);
 
