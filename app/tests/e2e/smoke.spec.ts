@@ -10,11 +10,11 @@ test("login page loads", async ({ page }) => {
 
 test("guest is redirected from dashboard", async ({ page }) => {
   await page.goto("/dashboard");
-  await expect(page).toHaveURL(/\/login\?next=\/dashboard/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
 });
 
 test("public inquiry page loads", async ({ page }) => {
-  const response = await page.goto("/c/e2e-company/inquiry");
+  const response = await page.goto("/c/00000000-0000-4000-8000-000000000001/inquiry");
 
   expect(response).not.toBeNull();
   expect(response?.status()).toBeLessThan(500);
@@ -23,7 +23,7 @@ test("public inquiry page loads", async ({ page }) => {
 
 test("billing page is protected", async ({ page }) => {
   await page.goto("/dashboard/billing");
-  await expect(page).toHaveURL(/\/login\?next=\/dashboard\/billing/);
+  await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fbilling/);
 });
 
 test("team accept page loads", async ({ page }) => {

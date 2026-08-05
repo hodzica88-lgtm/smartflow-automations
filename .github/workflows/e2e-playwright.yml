@@ -53,7 +53,24 @@ jobs:
         run: pnpm build
 
       - name: Run Playwright tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e -- --reporter=line
+
+      - name: Print Playwright failure contexts
+        if: failure()
+        run: |
+          if [ -d test-results ]; then
+            find test-results -name 'error-context.md' -print -exec cat {} \;
+          else
+            echo "No test-results directory found."
+          fi
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: app/test-results
+          retention-days: 7
 
       - name: Upload Playwright report
         if: always()
