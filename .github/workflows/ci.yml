@@ -28,7 +28,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: service_role_test_placeholder
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
