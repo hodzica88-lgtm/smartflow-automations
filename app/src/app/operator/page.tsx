@@ -105,10 +105,10 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <input
+              className={styles.searchInput}
               name="q"
               defaultValue={resolvedSearchParams?.q ?? ""}
               placeholder="Firma suchen"
-              style={{ minHeight: 42, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 12px" }}
             />
             <button className={styles.primaryButton} type="submit">
               Suchen
@@ -223,7 +223,7 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
                       </td>
                       <td>{formatDateTime(company.createdAt)}</td>
                       <td>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div className={styles.actionGroup}>
                           <form action={company.deletedAt ? activateCompanyAction : deactivateCompanyAction}>
                             <input type="hidden" name="company_id" value={company.id} />
                             <button className={styles.secondaryButton} type="submit">

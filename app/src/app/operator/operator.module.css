@@ -15,12 +15,22 @@
   margin-inline: auto;
 }
 
+.header,
+.companySection,
+.detailCard {
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1.5rem;
   flex-wrap: wrap;
+  padding: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
 }
 
 .eyebrow {
@@ -95,6 +105,7 @@
   padding-inline: 1rem;
   font-weight: 700;
   text-decoration: none;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
 .primaryButton {
@@ -102,16 +113,25 @@
   background: var(--accent);
   color: #ffffff;
   cursor: pointer;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
 }
 
 .primaryButton:hover {
   background: var(--accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.22);
 }
 
 .secondaryButton {
   border: 1px solid var(--border);
   background: var(--surface);
   color: inherit;
+}
+
+.secondaryButton:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
 }
 
 .metrics {
@@ -126,9 +146,17 @@
   align-content: space-between;
   gap: 1rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--surface);
   padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
 }
 
 .metricCard p,
@@ -151,7 +179,7 @@
   display: grid;
   gap: 0.5rem;
   border: 1px solid #f4b4b4;
-  border-radius: 10px;
+  border-radius: 14px;
   background: #fff5f5;
   padding: 1rem;
 }
@@ -166,9 +194,9 @@
   display: grid;
   gap: 1rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--surface);
-  padding: 1rem;
+  padding: 1.15rem;
 }
 
 .detailGrid {
@@ -257,6 +285,11 @@
   min-width: 50rem;
 }
 
+.table tbody tr:hover,
+.compactTable tbody tr:hover {
+  background: rgba(15, 118, 110, 0.035);
+}
+
 .table th,
 .table td,
 .compactTable th,
@@ -307,6 +340,7 @@
   padding: 0.25rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .success {
@@ -337,6 +371,28 @@
 .errorCell {
   max-width: 24rem;
   overflow-wrap: anywhere;
+}
+
+.searchInput {
+  min-width: 16rem;
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 0 0.9rem;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+.actionGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 @media (min-width: 48rem) {

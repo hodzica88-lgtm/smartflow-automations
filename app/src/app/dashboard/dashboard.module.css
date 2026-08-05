@@ -11,6 +11,11 @@
   width: min(100%, 64rem);
   gap: 1rem;
   margin-inline: auto;
+  padding: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
 }
 
 .eyebrow {
@@ -50,10 +55,14 @@
   cursor: pointer;
   font-weight: 700;
   padding-inline: 1rem;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
 }
 
 .button:hover {
   background: var(--accent-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.22);
 }
 
 .grid {
@@ -69,9 +78,17 @@
   align-content: space-between;
   gap: 1rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 14px;
   background: var(--surface);
   padding: 1rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--border));
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
 }
 
 .cardLabel {
@@ -103,9 +120,10 @@
   gap: 0.75rem;
   margin-inline: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--surface);
-  padding: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
 }
 
 .sectionActions {
@@ -120,17 +138,20 @@
   justify-content: center;
   min-height: 2.75rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
   color: #1f2937;
   cursor: pointer;
   font-weight: 700;
   padding-inline: 1rem;
   text-decoration: none;
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
 
 .buttonSecondary:hover {
   border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
 }
 
 .empty h2,
@@ -177,11 +198,19 @@
   display: grid;
   gap: 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   padding: 0.875rem 1rem;
   text-decoration: none;
   color: inherit;
   background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.openLeadCard:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--border));
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
 .openLeadCardNew {
@@ -212,6 +241,7 @@
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .openLeadStatusNew {
