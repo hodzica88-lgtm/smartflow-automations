@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getUserCompanyState } from "@/features/onboarding/company";
+import { requireUserCompanyAccess } from "@/features/billing/service";
 import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import {
-  createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 
@@ -33,23 +32,14 @@ const getString = (formData: FormData, key: string) => {
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
 const getCompanyAccess = async () => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const companyState = await getUserCompanyState(user.id, { allowMember: true });
-  if (!companyState.companyId) {
-    redirect("/onboarding");
-  }
+  const access = await requireUserCompanyAccess({
+    allowMember: true,
+    nextPath: "/dashboard/leads/new",
+  });
 
   return {
-    companyId: companyState.companyId,
-    userId: user.id,
+    companyId: access.companyId,
+    userId: access.userId,
   };
 };
 

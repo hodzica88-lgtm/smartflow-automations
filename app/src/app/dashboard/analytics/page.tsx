@@ -1,32 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
+import { requireUserCompanyAccess } from "@/features/billing/service";
 import { getCustomerAnalyticsData } from "@/features/analytics/data";
 import { getCustomerValueSettings } from "@/features/customer-value/service";
-import { getUserCompanyState } from "@/features/onboarding/company";
-import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./analytics.module.css";
 
 export const dynamic = "force-dynamic";
 
 const getCompanyId = async () => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const access = await requireUserCompanyAccess({
+    nextPath: "/dashboard/analytics",
+  });
 
-  if (!user) {
-    redirect("/login?next=/dashboard/analytics");
-  }
-
-  const companyState = await getUserCompanyState(user.id);
-
-  if (!companyState.companyId) {
-    redirect("/onboarding");
-  }
-
-  return companyState.companyId;
+  return access.companyId;
 };
 
 const formatDate = (value: string, timezone: string) => {

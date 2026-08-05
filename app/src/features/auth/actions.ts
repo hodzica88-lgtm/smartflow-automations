@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
@@ -99,6 +100,12 @@ export const loginAction = async (formData: FormData) => {
     }
 
     redirect("/onboarding");
+  }
+
+  const billing = await getCompanyBillingSnapshot(companyState.companyId);
+
+  if (!billing.hasAppAccess) {
+    redirect(BILLING_ROUTE);
   }
 
   if (!companyState.isOwner) {

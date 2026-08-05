@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getUserCompanyState } from "@/features/onboarding/company";
+import { requireUserCompanyAccess } from "@/features/billing/service";
 import {
   inviteTeamMemberAction,
   removeTeamMemberAction,
@@ -11,7 +11,6 @@ import {
   getCompanyTeamMembers,
   getTeamMemberLabel,
 } from "@/features/team/service";
-import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 const actionStyle = {
   display: "inline-flex",
@@ -44,23 +43,16 @@ type TeamPageProps = {
 };
 
 export default async function TeamPage({ searchParams }: TeamPageProps) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const access = await requireUserCompanyAccess({
+    nextPath: "/dashboard/team",
+  });
 
-  if (!user) {
-    redirect("/login?next=/dashboard/team");
-  }
-
-  const companyState = await getUserCompanyState(user.id);
-
-  if (!companyState.companyId || !companyState.isOwner) {
+  if (!access.isOwner) {
     redirect("/dashboard/leads");
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const members = await getCompanyTeamMembers(companyState.companyId);
+  const members = await getCompanyTeamMembers(access.companyId);
 
   return (
     <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>

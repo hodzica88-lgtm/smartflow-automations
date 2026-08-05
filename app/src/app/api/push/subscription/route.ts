@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getCompanyBillingSnapshot } from "@/features/billing/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -95,6 +96,11 @@ export async function POST(request: Request) {
     return jsonResponse({ ok: false, message: "Firma nicht gefunden." }, 403);
   }
 
+  const billing = await getCompanyBillingSnapshot(companyState.companyId);
+  if (!billing.hasAppAccess) {
+    return jsonResponse({ ok: false, message: "Billing muss zuerst aktiviert werden." }, 402);
+  }
+
   const body = (await request.json().catch(() => null)) as {
     subscription?: unknown;
     deviceName?: unknown;
@@ -158,6 +164,11 @@ export async function DELETE(request: Request) {
   const companyState = await getUserCompanyState(user.id);
   if (!companyState.companyId) {
     return jsonResponse({ ok: false, message: "Firma nicht gefunden." }, 403);
+  }
+
+  const billing = await getCompanyBillingSnapshot(companyState.companyId);
+  if (!billing.hasAppAccess) {
+    return jsonResponse({ ok: false, message: "Billing muss zuerst aktiviert werden." }, 402);
   }
 
   const body = (await request.json().catch(() => null)) as { endpoint?: unknown } | null;

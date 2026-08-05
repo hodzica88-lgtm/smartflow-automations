@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { publicEnv } from "@/shared/config/env";
 import {
@@ -321,6 +322,12 @@ export async function acceptTeamInvitationAction(formData: FormData) {
 
   if (activationError) {
     redirect("/team/accept?error=Der+Mitarbeiterzugang+konnte+nicht+aktiviert+werden.");
+  }
+
+  const billing = await getCompanyBillingSnapshot(profile.default_company_id);
+
+  if (!billing.hasAppAccess) {
+    redirect(BILLING_ROUTE);
   }
 
   redirect("/dashboard/leads");

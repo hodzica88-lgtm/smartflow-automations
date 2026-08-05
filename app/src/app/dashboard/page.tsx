@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { BILLING_ROUTE, requireUserCompanyAccess } from "@/features/billing/service";
 import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
-import { getUserCompanyState } from "@/features/onboarding/company";
 import {
-  createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 import InquiryShareSection from "./InquiryShareSection";
@@ -54,21 +52,11 @@ const getRecentFailedNotificationCount = async (companyId: string) => {
 };
 
 const getCompanyId = async () => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const access = await requireUserCompanyAccess({
+    nextPath: "/dashboard",
+  });
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  const companyState = await getUserCompanyState(user.id);
-  if (!companyState.companyId) {
-    redirect("/onboarding");
-  }
-
-  return companyState.companyId;
+  return access.companyId;
 };
 
 const getOpenLeads = async (companyId: string) => {
@@ -158,6 +146,9 @@ export default async function DashboardPage() {
         </p>
 
         <form action={logoutAction} className={styles.toolbar}>
+          <Link className={styles.button} href={BILLING_ROUTE}>
+            Billing
+          </Link>
           <button className={styles.button} type="submit">
             Abmelden
           </button>

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
@@ -45,6 +46,8 @@ const isValidWebsite = (website: string) => {
 };
 
 export const completeOnboardingAction = async (formData: FormData) => {
+  const trialStart = new Date();
+  const trialEnd = new Date(trialStart.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const companyName = getStringValue(formData, "companyName");
   const contactPerson = getStringValue(formData, "contactPerson");
   const email = getStringValue(formData, "email");
@@ -156,7 +159,12 @@ export const completeOnboardingAction = async (formData: FormData) => {
       .from("subscriptions")
       .insert({
         company_id: companyId,
+        current_period_end: trialEnd.toISOString(),
+        current_period_start: trialStart.toISOString(),
         status: "trialing",
+        trial_ends_at: trialEnd.toISOString(),
+        trial_started_at: trialStart.toISOString(),
+        trial_used_at: trialStart.toISOString(),
       });
 
     if (subscriptionError) {

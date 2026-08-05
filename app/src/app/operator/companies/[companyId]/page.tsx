@@ -34,7 +34,7 @@ const NOTIFICATION_STATUS_LABELS: Record<string, string> = {
   processing: "In Bearbeitung",
   sent: "Gesendet",
   failed: "Fehlgeschlagen",
-  cancelled: "Abgebrochen",
+  canceled: "Abgebrochen",
 };
 
 const NOTIFICATION_TYPE_LABELS: Record<string, string> = {

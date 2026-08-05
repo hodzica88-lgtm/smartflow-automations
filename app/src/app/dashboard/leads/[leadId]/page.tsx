@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { getUserCompanyState } from "@/features/onboarding/company";
+import { requireUserCompanyAccess } from "@/features/billing/service";
 import {
   getActiveCompanyTeamMembers,
   getTeamMemberLabel,
 } from "@/features/team/service";
 import {
-  createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 
@@ -102,24 +101,14 @@ const formatTimestamp = (value?: string | null) => {
 };
 
 const getCompanyAccess = async () => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const companyState = await getUserCompanyState(user.id, { allowMember: true });
-
-  if (!companyState.companyId) {
-    redirect("/onboarding");
-  }
+  const access = await requireUserCompanyAccess({
+    allowMember: true,
+    nextPath: "/dashboard/leads",
+  });
 
   return {
-    companyId: companyState.companyId,
-    userId: user.id,
+    companyId: access.companyId,
+    userId: access.userId,
   };
 };
 

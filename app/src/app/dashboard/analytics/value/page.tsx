@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { requireUserCompanyAccess } from "@/features/billing/service";
 import {
   getCustomerValueSettings,
   parseAverageOrderValue,
   saveAverageOrderValue,
 } from "@/features/customer-value/service";
-import { getUserCompanyState } from "@/features/onboarding/company";
-import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,22 +16,11 @@ const getStringValue = (formData: FormData, key: string) => {
 };
 
 const getCompanyId = async () => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const access = await requireUserCompanyAccess({
+    nextPath: "/dashboard/analytics/value",
+  });
 
-  if (!user) {
-    redirect("/login?next=/dashboard/analytics/value");
-  }
-
-  const companyState = await getUserCompanyState(user.id);
-
-  if (!companyState.companyId) {
-    redirect("/onboarding");
-  }
-
-  return companyState.companyId;
+  return access.companyId;
 };
 
 const redirectWithError = (message: string): never => {

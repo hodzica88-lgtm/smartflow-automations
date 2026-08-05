@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import {
   addMissingIndustryTemplateInquiryTypes,
@@ -385,6 +386,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         <p style={{ marginTop: 8, color: "#555" }}>
           Aktualisieren Sie die Grunddaten Ihres Unternehmens für SmartFlow.
         </p>
+        <Link href="/dashboard/billing" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+          Billing öffnen
+        </Link>
       </section>
 
       {success ? (
