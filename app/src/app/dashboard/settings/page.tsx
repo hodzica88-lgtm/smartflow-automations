@@ -504,8 +504,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const success = resolvedSearchParams?.success ?? null;
   const error = resolvedSearchParams?.error ?? null;
   const companyId = await getCompanyId();
-  const serverEnv = loadServerEnv();
-  const company = await getCompany(companyId);
+  const [serverEnv, company] = await Promise.all([loadServerEnv(), getCompany(companyId)]);
 
   if (!company) {
     redirect("/onboarding");
@@ -527,9 +526,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     });
   }
 
-  const inquiryTypes = await getCompanyInquiryTypes({ supabase, companyId });
-  const branding = await getCompanyBranding(companyId, company.name ?? "Varnito");
-  const templates = await getCompanyEmailTemplates(companyId);
+  const [inquiryTypes, branding, templates] = await Promise.all([
+    getCompanyInquiryTypes({ supabase, companyId }),
+    getCompanyBranding(companyId, company.name ?? "Varnito"),
+    getCompanyEmailTemplates(companyId),
+  ]);
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>

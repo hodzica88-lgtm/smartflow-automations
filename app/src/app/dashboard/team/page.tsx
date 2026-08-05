@@ -54,8 +54,10 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const members = await getCompanyTeamMembers(access.companyId);
-  const auditLog = await getCompanyAuditLog(access.companyId);
+  const [members, auditLog] = await Promise.all([
+    getCompanyTeamMembers(access.companyId),
+    getCompanyAuditLog(access.companyId),
+  ]);
 
   return (
     <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>

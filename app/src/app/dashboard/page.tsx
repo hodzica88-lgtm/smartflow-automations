@@ -124,10 +124,13 @@ const formatCreatedAt = (createdAt: string) => {
 
 export default async function DashboardPage() {
   const companyId = await getCompanyId();
-  const metrics = await getDashboardMetrics(companyId);
-  const openLeads = await getOpenLeads(companyId);
-  const recentLeadEvaluation = await getRecentLeadEvaluation(companyId);
-  const recentFailedNotificationCount = await getRecentFailedNotificationCount(companyId);
+  const [metrics, openLeads, recentLeadEvaluation, recentFailedNotificationCount] =
+    await Promise.all([
+      getDashboardMetrics(companyId),
+      getOpenLeads(companyId),
+      getRecentLeadEvaluation(companyId),
+      getRecentFailedNotificationCount(companyId),
+    ]);
   const totalLeads =
     metrics.newLeads +
     metrics.contactedLeads +

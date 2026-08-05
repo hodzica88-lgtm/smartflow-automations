@@ -123,8 +123,10 @@ export default async function OperatorCompanyDetailPage({
 }: OperatorCompanyDetailPageProps) {
   const operator = await requireOperatorUser();
   const { companyId } = await params;
-  const data = await getOperatorCompanyDetailData(companyId);
-  const auditLog = await getCompanyAuditLog(companyId);
+  const [data, auditLog] = await Promise.all([
+    getOperatorCompanyDetailData(companyId),
+    getCompanyAuditLog(companyId),
+  ]);
 
   if (!data) {
     notFound();
