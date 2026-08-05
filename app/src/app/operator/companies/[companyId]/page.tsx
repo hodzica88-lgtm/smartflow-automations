@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import AuditLogSection from "@/features/audit-log/AuditLogSection";
+import { getCompanyAuditLog } from "@/features/audit-log/service";
 import { requireOperatorUser } from "@/features/operator/access";
 import {
   getOperatorCompanyDetailData,
@@ -122,6 +124,7 @@ export default async function OperatorCompanyDetailPage({
   const operator = await requireOperatorUser();
   const { companyId } = await params;
   const data = await getOperatorCompanyDetailData(companyId);
+  const auditLog = await getCompanyAuditLog(companyId);
 
   if (!data) {
     notFound();
@@ -454,6 +457,16 @@ export default async function OperatorCompanyDetailPage({
             </table>
           </div>
         )}
+      </section>
+
+      <section className={styles.companySection} aria-label="Audit Log">
+        <AuditLogSection
+          title="Audit Log"
+          description="Zeit, Benutzer und Aktion der wichtigsten Änderungen."
+          entries={auditLog}
+          emptyTitle="Noch keine Ereignisse"
+          emptyMessage="Sobald Änderungen an der Firma erfolgen, erscheinen sie hier."
+        />
       </section>
     </main>
   );

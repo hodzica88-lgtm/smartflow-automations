@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
+import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { publicEnv } from "@/shared/config/env";
@@ -106,6 +107,7 @@ const getOwnerAccess = async () => {
   return {
     companyId: companyState.companyId,
     ownerUserId: user.id,
+    ownerEmail: user.email ?? user.id,
   };
 };
 
@@ -170,7 +172,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
     return redirectTeamError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
   }
 
-  const { companyId, ownerUserId } = await getOwnerAccess();
+  const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
 
   try {
     await createPendingMember(companyId, email);
@@ -190,6 +192,14 @@ export async function inviteTeamMemberAction(formData: FormData) {
     message: `${email} wurde ins Team eingeladen.`,
     dedupeKey: `team_invited:${email}`,
     metadata: { email },
+  });
+
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId: ownerUserId,
+    actorLabel: ownerEmail,
+    action: "team_invited",
+    details: { email },
   });
 
   redirectTeamSuccess("Einladung wurde versendet.");
@@ -237,12 +247,20 @@ export async function resendTeamInvitationAction(formData: FormData) {
     return redirectTeamError("Die neue Einladung konnte nicht versendet werden.");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId: null,
+    actorLabel: "System",
+    action: "team_invitation_resent",
+    details: { email: member.email },
+  });
+
   redirectTeamSuccess("Einladung wurde erneut versendet.");
 }
 
 export async function removeTeamMemberAction(formData: FormData) {
   const memberId = getStringValue(formData, "member_id");
-  const { companyId, ownerUserId } = await getOwnerAccess();
+  const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
 
   if (!memberId || memberId === ownerUserId) {
     return redirectTeamError("Dieser Zugang kann nicht entfernt werden.");
@@ -266,6 +284,14 @@ export async function removeTeamMemberAction(formData: FormData) {
   if (deleteError) {
     return redirectTeamError("Mitarbeiterzugang konnte nicht entfernt werden.");
   }
+
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId: ownerUserId,
+    actorLabel: ownerEmail,
+    action: "team_member_removed",
+    details: { memberId },
+  });
 
   redirectTeamSuccess("Mitarbeiterzugang wurde entfernt.");
 }
@@ -351,6 +377,14 @@ export async function acceptTeamInvitationAction(formData: FormData) {
     metadata: {
       userId: user.id,
     },
+  });
+
+  await recordCompanyAuditLog({
+    companyId: profile.default_company_id,
+    actorUserId: user.id,
+    actorLabel: user.email ?? user.id,
+    action: "invite_accepted",
+    details: { fullName },
   });
 
   redirect("/dashboard/leads");

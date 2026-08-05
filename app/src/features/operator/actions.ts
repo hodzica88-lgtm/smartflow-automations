@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { requireOperatorUser } from "@/features/operator/access";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -12,11 +13,11 @@ const getString = (formData: FormData, key: string) => {
 };
 
 const assertOperator = async () => {
-  await requireOperatorUser();
+  return requireOperatorUser();
 };
 
 export async function deactivateCompanyAction(formData: FormData) {
-  await assertOperator();
+  const operator = await assertOperator();
   const companyId = getString(formData, "company_id");
 
   if (!companyId) {
@@ -33,12 +34,19 @@ export async function deactivateCompanyAction(formData: FormData) {
     redirect("/operator?error=Firma+konnte+nicht+deaktiviert+werden");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId: operator.id,
+    actorLabel: operator.email ?? operator.id,
+    action: "company_deactivated",
+  });
+
   revalidatePath("/operator");
   redirect("/operator?success=Firma+deaktiviert");
 }
 
 export async function activateCompanyAction(formData: FormData) {
-  await assertOperator();
+  const operator = await assertOperator();
   const companyId = getString(formData, "company_id");
 
   if (!companyId) {
@@ -54,6 +62,13 @@ export async function activateCompanyAction(formData: FormData) {
   if (error) {
     redirect("/operator?error=Firma+konnte+nicht+aktiviert+werden");
   }
+
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId: operator.id,
+    actorLabel: operator.email ?? operator.id,
+    action: "company_activated",
+  });
 
   revalidatePath("/operator");
   redirect("/operator?success=Firma+aktiviert");

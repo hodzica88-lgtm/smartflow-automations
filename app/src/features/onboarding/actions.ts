@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
+import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
@@ -187,6 +188,17 @@ export const completeOnboardingAction = async (formData: FormData) => {
     if (profileError) {
       throw profileError;
     }
+
+    await recordCompanyAuditLog({
+      companyId,
+      actorUserId: user.id,
+      actorLabel: user.email ?? user.id,
+      action: "company_created",
+      details: {
+        companyName,
+        industry,
+      },
+    });
   } catch {
     if (createdCompanyId) {
       const supabase = createSupabaseServiceRoleClient();

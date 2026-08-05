@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireUserCompanyAccess } from "@/features/billing/service";
+import AuditLogSection from "@/features/audit-log/AuditLogSection";
+import { getCompanyAuditLog } from "@/features/audit-log/service";
 import {
   inviteTeamMemberAction,
   removeTeamMemberAction,
@@ -53,6 +55,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const members = await getCompanyTeamMembers(access.companyId);
+  const auditLog = await getCompanyAuditLog(access.companyId);
 
   return (
     <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>
@@ -147,6 +150,14 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
           );
         })}
       </section>
+
+      <AuditLogSection
+        title="Audit Log"
+        description="Zeit, Benutzer und Aktion der wichtigsten Änderungen."
+        entries={auditLog}
+        emptyTitle="Noch keine Ereignisse"
+        emptyMessage="Sobald Änderungen erfolgen, erscheinen sie hier."
+      />
     </main>
   );
 }

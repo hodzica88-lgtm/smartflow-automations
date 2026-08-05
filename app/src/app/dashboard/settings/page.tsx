@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import {
   addMissingIndustryTemplateInquiryTypes,
   ensureCompanyInquiryTypesInitialized,
@@ -89,6 +90,29 @@ const getCompanyId = async () => {
   return companyState.companyId;
 };
 
+const getCompanyActionContext = async () => {
+  const authClient = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await authClient.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const companyState = await getUserCompanyState(user.id);
+
+  if (!companyState.companyId) {
+    redirect("/onboarding");
+  }
+
+  return {
+    companyId: companyState.companyId,
+    actorUserId: user.id,
+    actorLabel: user.email ?? user.id,
+  };
+};
+
 const getCompany = async (companyId: string) => {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
@@ -147,7 +171,7 @@ export async function updateCompanyAction(formData: FormData) {
     redirectSettingsError("Bitte wählen Sie eine gültige Branche");
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
 
   const { error } = await supabase
@@ -169,6 +193,17 @@ export async function updateCompanyAction(formData: FormData) {
     redirectSettingsError("Die Einstellungen konnten nicht gespeichert werden");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "company_updated",
+    details: {
+      name,
+      industry,
+    },
+  });
+
   await ensureCompanyInquiryTypesInitialized({
     supabase,
     companyId,
@@ -188,7 +223,7 @@ export async function addInquiryTypeAction(formData: FormData) {
     redirectSettingsError(validated.error);
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
 
   const inquiryTypes = await getCompanyInquiryTypes({ supabase, companyId });
@@ -210,6 +245,14 @@ export async function addInquiryTypeAction(formData: FormData) {
     redirectSettingsError("Anfrageart konnte nicht hinzugefügt werden.");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "inquiry_type_added",
+    details: { name: validated.value },
+  });
+
   redirectSettingsSuccess("Anfrageart hinzugefügt.");
 }
 
@@ -228,7 +271,7 @@ export async function renameInquiryTypeAction(formData: FormData) {
     redirectSettingsError(validated.error);
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
 
   const { data: existing, error: existingError } = await supabase
@@ -258,6 +301,14 @@ export async function renameInquiryTypeAction(formData: FormData) {
     redirectSettingsError("Anfrageart konnte nicht umbenannt werden.");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "inquiry_type_renamed",
+    details: { inquiryTypeId, name: validated.value },
+  });
+
   redirectSettingsSuccess("Anfrageart umbenannt.");
 }
 
@@ -271,7 +322,7 @@ export async function toggleInquiryTypeAction(formData: FormData) {
     redirectSettingsError("Ungültige Anfrageart-Aktion.");
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
 
   const { error } = await supabase
@@ -283,6 +334,14 @@ export async function toggleInquiryTypeAction(formData: FormData) {
   if (error) {
     redirectSettingsError("Status der Anfrageart konnte nicht geändert werden.");
   }
+
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "inquiry_type_toggled",
+    details: { inquiryTypeId, active: activeValue === "1" },
+  });
 
   redirectSettingsSuccess("Status der Anfrageart aktualisiert.");
 }
@@ -297,7 +356,7 @@ export async function moveInquiryTypeAction(formData: FormData) {
     redirectSettingsError("Ungültige Anfrageart-Aktion.");
   }
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
   const inquiryTypes = await getCompanyInquiryTypes({ supabase, companyId });
 
@@ -321,13 +380,21 @@ export async function moveInquiryTypeAction(formData: FormData) {
     orderedIds: reordered.map((entry) => entry.id),
   });
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "inquiry_type_reordered",
+    details: { inquiryTypeId, direction },
+  });
+
   redirect("/dashboard/settings");
 }
 
 export async function applyIndustryTemplateAction() {
   "use server";
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const supabase = createSupabaseServiceRoleClient();
   const company = await getCompany(companyId);
 
@@ -347,13 +414,21 @@ export async function applyIndustryTemplateAction() {
     redirectSettingsSuccess("Keine fehlenden Anfragearten in der Branchenvorlage gefunden.");
   }
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "inquiry_type_template_applied",
+    details: { industry, added },
+  });
+
   redirectSettingsSuccess(`${added} Anfragearten aus der Branchenvorlage ergänzt.`);
 }
 
 export async function updateBrandingAction(formData: FormData) {
   "use server";
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const companyName = getStringValue(formData, "branding_company_name");
   const logoUrl = getStringValue(formData, "branding_logo_url");
   const primaryColor = getStringValue(formData, "branding_primary_color") || "#1d4ed8";
@@ -376,13 +451,21 @@ export async function updateBrandingAction(formData: FormData) {
     website: website || null,
   });
 
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "branding_updated",
+    details: { companyName },
+  });
+
   redirectSettingsSuccess("Branding gespeichert.");
 }
 
 export async function updateEmailTemplateAction(formData: FormData) {
   "use server";
 
-  const companyId = await getCompanyId();
+  const { companyId, actorUserId, actorLabel } = await getCompanyActionContext();
   const templateType = getStringValue(formData, "template_type");
   const subject = getStringValue(formData, "template_subject");
   const body = getStringValue(formData, "template_body");
@@ -399,6 +482,14 @@ export async function updateEmailTemplateAction(formData: FormData) {
     type: templateType as (typeof EMAIL_TEMPLATE_TYPES)[number],
     subject,
     body,
+  });
+
+  await recordCompanyAuditLog({
+    companyId,
+    actorUserId,
+    actorLabel,
+    action: "email_template_updated",
+    details: { templateType },
   });
 
   redirectSettingsSuccess("E-Mail-Template gespeichert.");

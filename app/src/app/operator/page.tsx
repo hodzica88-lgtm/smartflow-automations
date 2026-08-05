@@ -181,6 +181,7 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
                   <th>Benachrichtigungen</th>
                   <th>Abonnement</th>
                   <th>Erstellt</th>
+                  <th>Aktionen</th>
                 </tr>
               </thead>
               <tbody>
