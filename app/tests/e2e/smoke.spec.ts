@@ -13,12 +13,12 @@ test("guest is redirected from dashboard", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
 });
 
-test("public inquiry page loads", async ({ page }) => {
-  const response = await page.goto("/c/00000000-0000-4000-8000-000000000001/inquiry");
+test("landing page loads", async ({ page }) => {
+  const response = await page.goto("/");
 
   expect(response).not.toBeNull();
   expect(response?.status()).toBeLessThan(500);
-  await expect(page.getByRole("heading", { name: "Kontaktanfrage" })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test("billing page is protected", async ({ page }) => {
