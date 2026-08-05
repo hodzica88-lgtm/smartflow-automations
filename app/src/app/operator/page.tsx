@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { logoutAction } from "@/features/auth/actions";
+import { activateCompanyAction, deactivateCompanyAction } from "@/features/operator/actions";
 import { requireOperatorUser } from "@/features/operator/access";
 import {
   getOperatorDashboardData,
@@ -51,9 +52,23 @@ const formatSubscription = (company: OperatorCompany) => {
   return `${plan} · ${company.subscriptionStatus}`;
 };
 
-export default async function OperatorPage() {
+type OperatorPageProps = {
+  searchParams?: Promise<{ q?: string; success?: string; error?: string }>;
+};
+
+export default async function OperatorPage({ searchParams }: OperatorPageProps) {
   const operator = await requireOperatorUser();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const { metrics, companies } = await getOperatorDashboardData();
+  const query = resolvedSearchParams?.q?.trim().toLowerCase() ?? "";
+  const filteredCompanies = query
+    ? companies.filter((company) =>
+        [company.name, company.email, company.subscriptionStatus ?? "", company.subscriptionPlan ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : companies;
 
   return (
     <main className={styles.shell}>
@@ -80,6 +95,26 @@ export default async function OperatorPage() {
             </button>
           </form>
         </div>
+      </section>
+
+      <section className={styles.companySection} aria-label="Suche">
+        <form method="get" className={styles.sectionHeader}>
+          <div>
+            <h2>Suche</h2>
+            <p>Nach Firma, E-Mail oder Abo-Status suchen.</p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              name="q"
+              defaultValue={resolvedSearchParams?.q ?? ""}
+              placeholder="Firma suchen"
+              style={{ minHeight: 42, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 12px" }}
+            />
+            <button className={styles.primaryButton} type="submit">
+              Suchen
+            </button>
+          </div>
+        </form>
       </section>
 
       <section className={styles.metrics} aria-label="Betreiberkennzahlen">
@@ -125,10 +160,10 @@ export default async function OperatorPage() {
             <h2 id="companies-title">Kundenunternehmen</h2>
             <p>Die neuesten 100 Unternehmen, sortiert nach Erstellungsdatum.</p>
           </div>
-          <span>{companies.length} angezeigt</span>
+          <span>{filteredCompanies.length} angezeigt</span>
         </div>
 
-        {companies.length === 0 ? (
+        {filteredCompanies.length === 0 ? (
           <div className={styles.emptyState}>
             <h3>Noch keine Unternehmen</h3>
             <p>Sobald sich ein Kunde registriert, erscheint er hier.</p>
@@ -149,7 +184,7 @@ export default async function OperatorPage() {
                 </tr>
               </thead>
               <tbody>
-                {companies.map((company) => {
+                {filteredCompanies.map((company) => {
                   const status = getCompanyStatus(company);
 
                   return (
@@ -186,6 +221,16 @@ export default async function OperatorPage() {
                         ) : null}
                       </td>
                       <td>{formatDateTime(company.createdAt)}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <form action={company.deletedAt ? activateCompanyAction : deactivateCompanyAction}>
+                            <input type="hidden" name="company_id" value={company.id} />
+                            <button className={styles.secondaryButton} type="submit">
+                              {company.deletedAt ? "Aktivieren" : "Deaktivieren"}
+                            </button>
+                          </form>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
