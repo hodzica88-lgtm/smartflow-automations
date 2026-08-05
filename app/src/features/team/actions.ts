@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
+import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { publicEnv } from "@/shared/config/env";
 import {
@@ -169,7 +170,7 @@ export async function inviteTeamMemberAction(formData: FormData) {
     return redirectTeamError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
   }
 
-  const { companyId } = await getOwnerAccess();
+  const { companyId, ownerUserId } = await getOwnerAccess();
 
   try {
     await createPendingMember(companyId, email);
@@ -180,6 +181,16 @@ export async function inviteTeamMemberAction(formData: FormData) {
         : "Die Einladung konnte nicht versendet werden.",
     );
   }
+
+  await createAppNotification({
+    companyId,
+    actorUserId: ownerUserId,
+    type: "team_invited",
+    title: "Mitarbeiter eingeladen",
+    message: `${email} wurde ins Team eingeladen.`,
+    dedupeKey: `team_invited:${email}`,
+    metadata: { email },
+  });
 
   redirectTeamSuccess("Einladung wurde versendet.");
 }
@@ -329,6 +340,18 @@ export async function acceptTeamInvitationAction(formData: FormData) {
   if (!billing.hasAppAccess) {
     redirect(BILLING_ROUTE);
   }
+
+  await createAppNotification({
+    companyId: profile.default_company_id,
+    actorUserId: user.id,
+    type: "invite_accepted",
+    title: "Einladung angenommen",
+    message: `${fullName} hat die Einladung angenommen und den Zugang aktiviert.`,
+    dedupeKey: `invite_accepted:${user.id}`,
+    metadata: {
+      userId: user.id,
+    },
+  });
 
   redirect("/dashboard/leads");
 }

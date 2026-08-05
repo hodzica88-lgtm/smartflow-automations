@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { BILLING_LOOKUP_KEY, normalizeBillingStatus, upsertCompanySubscription } from "@/features/billing/service";
+import { createAppNotification } from "@/features/notifications/service";
 import { loadServerEnv } from "@/shared/config/env";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -221,6 +222,16 @@ const handleCheckoutCompleted = async (
   }
 };
 
+const createAppNotificationSafe = async (
+  input: Parameters<typeof createAppNotification>[0],
+) => {
+  try {
+    await createAppNotification(input);
+  } catch {
+    // Notification center must not block billing state synchronization.
+  }
+};
+
 const handleSubscriptionEvent = async (
   subscription: Stripe.Subscription,
   stripe: Stripe,
@@ -232,8 +243,26 @@ const handleSubscriptionEvent = async (
     return;
   }
 
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: previousSub } = await supabase
+    .from("subscriptions")
+    .select("status, cancel_at_period_end")
+    .limit(1)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  const previousStatus = String(previousSub?.status ?? "inactive");
+  const previousCancelAtPeriodEnd = Boolean(previousSub?.cancel_at_period_end);
+
   if (eventType === "customer.subscription.deleted") {
     await syncSubscription(companyId, subscription);
+    await createAppNotificationSafe({
+      companyId,
+      type: "subscription_canceled",
+      title: "Abo gekündigt",
+      message: "Das Abonnement wurde beendet.",
+      dedupeKey: `subscription_canceled:${subscription.id}:${eventType}`,
+      metadata: { stripeSubscriptionId: subscription.id },
+    });
     return;
   }
 
@@ -243,6 +272,33 @@ const handleSubscriptionEvent = async (
     });
 
     await syncSubscription(companyId, refreshed);
+
+    const nextStatus = normalizeBillingStatus(refreshed.status);
+    const nextCancelAtPeriodEnd = refreshed.cancel_at_period_end ?? false;
+
+    if (previousStatus === "canceled" && (nextStatus === "active" || nextStatus === "trialing")) {
+      await createAppNotificationSafe({
+        companyId,
+        type: "subscription_reactivated",
+        title: "Abo wieder aktiviert",
+        message: "Das Abonnement wurde wieder aktiviert.",
+        dedupeKey: `subscription_reactivated:${subscription.id}`,
+        metadata: { stripeSubscriptionId: subscription.id },
+      });
+    }
+
+    if (nextStatus === "canceled" || nextCancelAtPeriodEnd) {
+      if (!(previousStatus === "canceled" || previousCancelAtPeriodEnd)) {
+        await createAppNotificationSafe({
+          companyId,
+          type: "subscription_canceled",
+          title: "Abo gekündigt",
+          message: "Das Abonnement wurde zur Kündigung markiert.",
+          dedupeKey: `subscription_canceled:${subscription.id}`,
+          metadata: { stripeSubscriptionId: subscription.id },
+        });
+      }
+    }
   } catch {
     await syncSubscription(companyId, subscription);
   }
@@ -259,6 +315,24 @@ const handleInvoiceEvent = async (invoice: Stripe.Invoice, stripe: Stripe) => {
 
   if (!subscriptionId) {
     return;
+  }
+
+  if (invoice.status === "open") {
+    const companyId = await findCompanyIdByStripeReference(
+      typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id ?? null,
+      subscriptionId,
+    );
+
+    if (companyId) {
+      await createAppNotificationSafe({
+        companyId,
+        type: "payment_failed",
+        title: "Zahlung fehlgeschlagen",
+        message: "Eine Abonnement-Zahlung konnte nicht verarbeitet werden.",
+        dedupeKey: `payment_failed:${invoice.id}`,
+        metadata: { stripeSubscriptionId: subscriptionId, stripeInvoiceId: invoice.id },
+      });
+    }
   }
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId, {

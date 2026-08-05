@@ -1,4 +1,5 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import { createAppNotification } from "@/features/notifications/service";
 import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
 import { headers } from "next/headers";
@@ -246,6 +247,17 @@ export default async function Page({ params, searchParams }: PageProps) {
                 )}`
               );
             }
+
+            await createAppNotification({
+              companyId: targetCompanyId,
+              type: "new_inquiry",
+              title: "Neue Anfrage",
+              message: "Eine neue Anfrage wurde über das Formular erfasst.",
+              dedupeKey: `new_inquiry:${leadData.id}`,
+              metadata: {
+                leadId: leadData.id,
+              },
+            });
 
             redirect(`/c/${targetCompanyId}/inquiry?success=1`);
         }}>
