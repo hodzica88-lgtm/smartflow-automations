@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import type Stripe from "stripe";
 
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export const BILLING_ROUTE = "/dashboard/billing";
@@ -65,6 +67,23 @@ export type AppCompanyAccess = {
 };
 
 const BILLING_STATUS_SET = new Set<string>(BILLING_STATUSES);
+
+const toIsoString = (timestamp: number | null | undefined) => {
+  if (!timestamp) {
+    return null;
+  }
+
+  return new Date(timestamp * 1000).toISOString();
+};
+
+const getStripeCurrentPeriod = (subscription: Stripe.Subscription) => {
+  const item = subscription.items.data[0];
+
+  return {
+    currentPeriodEnd: item?.current_period_end ?? null,
+    currentPeriodStart: item?.current_period_start ?? null,
+  };
+};
 
 const toFuture = (value: string | null, now: Date) => {
   if (!value) {
@@ -180,6 +199,90 @@ export const getCompanyBillingSnapshot = async (
   }
 
   return toSnapshot(companyId, (data as BillingSubscriptionRow | null) ?? null, now);
+};
+
+type SyncOwnerCompanyBillingFromStripeInput = {
+  companyId: string;
+  ownerUserId: string;
+};
+
+export const syncOwnerCompanyBillingFromStripe = async (
+  input: SyncOwnerCompanyBillingFromStripeInput,
+) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: company, error: companyError } = await supabase
+    .from("companies")
+    .select("id")
+    .eq("id", input.companyId)
+    .eq("owner_user_id", input.ownerUserId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (companyError) {
+    throw companyError;
+  }
+
+  if (!company) {
+    throw new Error("Nur Eigentümer dürfen das Billing synchronisieren.");
+  }
+
+  const { data: subscriptionRow, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .select("stripe_subscription_id")
+    .eq("company_id", input.companyId)
+    .maybeSingle();
+
+  if (subscriptionError) {
+    throw subscriptionError;
+  }
+
+  const stripeSubscriptionId = subscriptionRow?.stripe_subscription_id ?? null;
+
+  if (!stripeSubscriptionId) {
+    return null;
+  }
+
+  const stripe = createStripeServerClient();
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId, {
+    expand: ["items.data.price.product"],
+  });
+  const { currentPeriodEnd, currentPeriodStart } = getStripeCurrentPeriod(subscription);
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id ?? null;
+  const firstItem = subscription.items.data[0];
+  const price = firstItem?.price;
+  const stripePriceId = price?.id ?? null;
+  const stripeProductId =
+    typeof price?.product === "string"
+      ? price.product
+      : price?.product?.id ?? null;
+
+  const { error: updateError } = await supabase
+    .from("subscriptions")
+    .update({
+      canceled_at: toIsoString(subscription.canceled_at),
+      cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+      current_period_end: toIsoString(currentPeriodEnd),
+      current_period_start: toIsoString(currentPeriodStart),
+      plan: "pro",
+      status: normalizeBillingStatus(subscription.status),
+      stripe_customer_id: customerId,
+      stripe_price_id: stripePriceId,
+      stripe_product_id: stripeProductId,
+      stripe_subscription_id: subscription.id,
+      trial_ends_at: toIsoString(subscription.trial_end),
+      trial_started_at: toIsoString(subscription.trial_start),
+      trial_used_at: toIsoString(subscription.trial_start) ?? new Date().toISOString(),
+    })
+    .eq("company_id", input.companyId);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return getCompanyBillingSnapshot(input.companyId);
 };
 
 type UpsertCompanySubscriptionInput = {

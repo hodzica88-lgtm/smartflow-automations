@@ -9,6 +9,10 @@ vi.mock("@/features/onboarding/company", () => ({
   getUserCompanyState: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/stripe/server", () => ({
+  createStripeServerClient: vi.fn(),
+}));
+
 const { getBillingLockReason, hasBillingAccess } = await import("./service");
 
 describe("billing access", () => {

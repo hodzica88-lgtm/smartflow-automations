@@ -4,8 +4,10 @@ import { openBillingPortalAction, startBillingCheckoutAction } from "@/features/
 import {
   BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
+  getCompanyBillingSnapshot,
   getBillingStatusLabel,
   requireUserCompanyAccess,
+  syncOwnerCompanyBillingFromStripe,
 } from "@/features/billing/service";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -105,13 +107,22 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
   });
+
+  const billing =
+    access.isOwner && access.billing.stripeSubscriptionId
+      ? (await syncOwnerCompanyBillingFromStripe({
+          companyId: access.companyId,
+          ownerUserId: access.userId,
+        })) ?? (await getCompanyBillingSnapshot(access.companyId))
+      : access.billing;
+
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const companyName = await getCompanyName(access.companyId);
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
       <header style={{ display: "grid", gap: 8 }}>
-        <Link href={access.billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+        <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
           ← Zurück
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
@@ -119,7 +130,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         </p>
         <h1 style={{ margin: 0 }}>{companyName}</h1>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          {getStatusText(resolvedSearchParams?.billing ?? access.billing.lockReason)}
+          {getStatusText(resolvedSearchParams?.billing ?? billing.lockReason)}
         </p>
       </header>
 
@@ -146,11 +157,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <div style={{ display: "grid", gap: 10 }}>
           <div><strong>Produkt:</strong> Varnito Pro</div>
           <div><strong>Lookup Key:</strong> {BILLING_LOOKUP_KEY}</div>
-          <div><strong>Status:</strong> {getBillingStatusLabel(access.billing.status)}</div>
-          <div><strong>Zugriff:</strong> {access.billing.hasAppAccess ? "Freigeschaltet" : "Gesperrt"}</div>
-          <div><strong>Testphase bis:</strong> {formatDateTime(access.billing.trialEndsAt)}</div>
-          <div><strong>Aktueller Zeitraum bis:</strong> {formatDateTime(access.billing.currentPeriodEnd)}</div>
-          <div><strong>Kündigung zum Periodenende:</strong> {access.billing.cancelAtPeriodEnd ? "Ja" : "Nein"}</div>
+          <div><strong>Status:</strong> {getBillingStatusLabel(billing.status)}</div>
+          <div><strong>Zugriff:</strong> {billing.hasAppAccess ? "Freigeschaltet" : "Gesperrt"}</div>
+          <div><strong>Testphase bis:</strong> {formatDateTime(billing.trialEndsAt)}</div>
+          <div><strong>Aktueller Zeitraum bis:</strong> {formatDateTime(billing.currentPeriodEnd)}</div>
+          <div><strong>Kündigung zum Periodenende:</strong> {billing.cancelAtPeriodEnd ? "Ja" : "Nein"}</div>
         </div>
       </section>
 
@@ -170,7 +181,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <button
                 type="submit"
                 style={secondaryButtonStyle}
-                disabled={!access.billing.stripeCustomerId}
+                disabled={!billing.stripeCustomerId}
               >
                 Abonnement verwalten
               </button>
