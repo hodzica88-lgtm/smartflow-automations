@@ -25,6 +25,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm --dir app install --frozen-lockfile
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
