@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { requireUserCompanyAccess } from "@/features/billing/service";
 import { getCompanyUnreadNotificationCount } from "@/features/notifications/service";
+import { DASHBOARD_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 const navStyle = {
   display: "flex",
@@ -25,6 +27,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { market } = await getRequestMarket();
+  const copy = DASHBOARD_COPY[market];
   const access = await requireUserCompanyAccess({
     allowMember: true,
     enforceBilling: false,
@@ -58,12 +62,12 @@ export default async function DashboardLayout({
           <div style={navStyle}>
             <Link href="/dashboard" style={linkStyle}>Dashboard</Link>
             <Link href="/dashboard/leads" style={linkStyle}>Leads</Link>
-            <Link href="/dashboard/settings" style={linkStyle}>Einstellungen</Link>
-            <Link href="/dashboard/help" style={linkStyle}>Hilfe</Link>
+            <Link href="/dashboard/settings" style={linkStyle}>{copy.navSettings}</Link>
+            <Link href="/dashboard/help" style={linkStyle}>{copy.navHelp}</Link>
           </div>
 
-          <Link href="/dashboard/notifications" style={linkStyle} aria-label="Benachrichtigungen">
-            Glocke {unreadCount > 0 ? `(${unreadCount})` : "(0)"}
+          <Link href="/dashboard/notifications" style={linkStyle} aria-label={copy.navNotifications}>
+            {copy.navBell} {unreadCount > 0 ? `(${unreadCount})` : "(0)"}
           </Link>
         </div>
       </header>

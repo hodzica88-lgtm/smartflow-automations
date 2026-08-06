@@ -7,6 +7,8 @@ import {
   getOperatorDashboardData,
   type OperatorCompany,
 } from "@/features/operator/data";
+import { OPERATOR_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 import styles from "./operator.module.css";
 
@@ -57,6 +59,8 @@ type OperatorPageProps = {
 };
 
 export default async function OperatorPage({ searchParams }: OperatorPageProps) {
+  const { market } = await getRequestMarket();
+  const copy = OPERATOR_COPY[market];
   const operator = await requireOperatorUser();
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const { metrics, companies } = await getOperatorDashboardData();
@@ -74,24 +78,23 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
     <main className={styles.shell}>
       <section className={styles.header} aria-labelledby="operator-title">
         <div>
-          <p className={styles.eyebrow}>Varnito Betreiberbereich</p>
+          <p className={styles.eyebrow}>{copy.sectionLabel}</p>
           <h1 className={styles.title} id="operator-title">
-            Systemübersicht
+            {copy.title}
           </h1>
           <p className={styles.copy}>
-            Zentrale Übersicht über Kundenunternehmen, Leads, Abonnements und
-            Benachrichtigungsprobleme.
+            {copy.copy}
           </p>
           <p className={styles.operatorIdentity}>Angemeldet als {operator.email ?? operator.id}</p>
         </div>
 
         <div className={styles.actions}>
           <Link className={styles.secondaryButton} href="/dashboard">
-            Kundendashboard
+            {copy.toCustomerDashboard}
           </Link>
           <form action={logoutAction}>
             <button className={styles.primaryButton} type="submit">
-              Abmelden
+              {copy.logout}
             </button>
           </form>
         </div>
@@ -100,18 +103,18 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
       <section className={styles.companySection} aria-label="Suche">
         <form method="get" className={styles.sectionHeader}>
           <div>
-            <h2>Suche</h2>
-            <p>Nach Firma, E-Mail oder Abo-Status suchen.</p>
+            <h2>{copy.searchTitle}</h2>
+            <p>{copy.searchCopy}</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             <input
               className={styles.searchInput}
               name="q"
               defaultValue={resolvedSearchParams?.q ?? ""}
-              placeholder="Firma suchen"
+              placeholder={copy.searchPlaceholder}
             />
             <button className={styles.primaryButton} type="submit">
-              Suchen
+              {copy.searchButton}
             </button>
           </div>
         </form>
@@ -119,27 +122,27 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
 
       <section className={styles.metrics} aria-label="Betreiberkennzahlen">
         <article className={styles.metricCard}>
-          <p>Aktive Unternehmen</p>
+          <p>{copy.metrics.activeCompanies}</p>
           <strong>{metrics.activeCompanies}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>Benutzer insgesamt</p>
+          <p>{copy.metrics.totalUsers}</p>
           <strong>{metrics.totalUsers}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>Leads letzte 30 Tage</p>
+          <p>{copy.metrics.leadsLast30d}</p>
           <strong>{metrics.leadsLast30d}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>Fehler letzte 24 Stunden</p>
+          <p>{copy.metrics.errorsLast24h}</p>
           <strong>{metrics.failedNotifications24h}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>Fällige Queue-Einträge</p>
+          <p>{copy.metrics.dueQueue}</p>
           <strong>{metrics.dueNotifications}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>Unternehmen mit Warnung</p>
+          <p>{copy.metrics.companiesNeedingAttention}</p>
           <strong>{metrics.companiesNeedingAttention}</strong>
         </article>
       </section>

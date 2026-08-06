@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BILLING_ROUTE, requireUserCompanyAccess } from "@/features/billing/service";
 import { logoutAction } from "@/features/auth/actions";
 import { getDashboardMetrics } from "@/features/dashboard/data";
+import { DASHBOARD_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 import {
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
@@ -10,9 +12,12 @@ import InquiryShareSection from "./InquiryShareSection";
 import styles from "./dashboard.module.css";
 
 const OPEN_LEAD_STATUSES = ["new", "contacted"] as const;
-const STATUS_LABELS: Record<(typeof OPEN_LEAD_STATUSES)[number], string> = {
-  new: "Neue Anfrage",
-  contacted: "Kontaktiert",
+const getStatusLabels = (market: "de" | "us") => {
+  const copy = DASHBOARD_COPY[market];
+  return {
+    new: copy.newLeads,
+    contacted: copy.contacted,
+  } as Record<(typeof OPEN_LEAD_STATUSES)[number], string>;
 };
 
 type OpenLead = {
@@ -111,18 +116,10 @@ const getRecentLeadEvaluation = async (
   };
 };
 
-const formatCreatedAt = (createdAt: string) => {
-  try {
-    return new Date(createdAt).toLocaleString("de-DE", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  } catch {
-    return createdAt;
-  }
-};
-
 export default async function DashboardPage() {
+  const { market, config } = await getRequestMarket();
+  const copy = DASHBOARD_COPY[market];
+  const statusLabels = getStatusLabels(market);
   const companyId = await getCompanyId();
   const [metrics, openLeads, recentLeadEvaluation, recentFailedNotificationCount] =
     await Promise.all([
@@ -142,10 +139,10 @@ export default async function DashboardPage() {
       <section className={styles.header} aria-labelledby="dashboard-title">
         <p className={styles.eyebrow}>Dashboard</p>
         <h1 className={styles.title} id="dashboard-title">
-          Ihre Übersicht
+          {copy.overviewTitle}
         </h1>
         <p className={styles.copy}>
-          Schneller Überblick über Ihre aktuellen Leads und den Weg zur Lead-Verwaltung.
+          {copy.overviewCopy}
         </p>
 
         <form action={logoutAction} className={styles.toolbar}>
@@ -153,21 +150,21 @@ export default async function DashboardPage() {
             Billing
           </Link>
           <button className={styles.button} type="submit">
-            Abmelden
+            {copy.logout}
           </button>
         </form>
       </section>
 
       {totalLeads === 0 ? (
         <section className={styles.empty} aria-label="Keine Leads vorhanden">
-          <h2>Keine Leads vorhanden</h2>
+          <h2>{copy.noLeadsTitle}</h2>
           <p>
-            Sobald neue Anfragen eingehen, sehen Sie hier die wichtigsten Lead-Zahlen.
+            {copy.noLeadsCopy}
           </p>
           <div className={styles.sectionActions}>
-            <Link className={styles.button} href="/dashboard/leads">Leads verwalten</Link>
+            <Link className={styles.button} href="/dashboard/leads">{copy.manageLeads}</Link>
             <a className={styles.buttonSecondary} href="/dashboard/settings">
-              Firmen­einstellungen
+              {copy.companySettings}
             </a>
           </div>
         </section>
@@ -175,34 +172,34 @@ export default async function DashboardPage() {
 
       <section className={styles.grid} aria-label="Dashboard Übersicht">
         <article className={styles.card}>
-          <p className={styles.cardLabel}>Neue Anfragen</p>
+          <p className={styles.cardLabel}>{copy.newLeads}</p>
           <strong className={styles.cardValue}>{metrics.newLeads}</strong>
         </article>
 
         <article className={styles.card}>
-          <p className={styles.cardLabel}>Kontaktiert</p>
+          <p className={styles.cardLabel}>{copy.contacted}</p>
           <strong className={styles.cardValue}>{metrics.contactedLeads}</strong>
         </article>
 
         <article className={styles.card}>
-          <p className={styles.cardLabel}>Erfolgreich</p>
+          <p className={styles.cardLabel}>{copy.successful}</p>
           <strong className={styles.cardValue}>{metrics.successfulLeads}</strong>
         </article>
 
         <article className={styles.card}>
-          <p className={styles.cardLabel}>Nicht erfolgreich</p>
+          <p className={styles.cardLabel}>{copy.unsuccessful}</p>
           <strong className={styles.cardValue}>{metrics.unsuccessfulLeads}</strong>
         </article>
       </section>
 
       {recentFailedNotificationCount > 0 ? (
         <section className={`${styles.empty} ${styles.warningSection}`} aria-label="E-Mail-Versand prüfen">
-          <h2>E-Mail-Versand prüfen</h2>
-          <p>Mindestens eine Benachrichtigung konnte nicht versendet werden.</p>
-          <p>{recentFailedNotificationCount} fehlgeschlagene Benachrichtigungen in den letzten 7 Tagen.</p>
-          <p>Bitte prüfen Sie die Benachrichtigungs-E-Mail in den Einstellungen.</p>
+          <h2>{copy.checkEmailDelivery}</h2>
+          <p>{copy.checkEmailDeliveryCopy}</p>
+          <p>{copy.failedNotificationsLastDays(recentFailedNotificationCount)}</p>
+          <p>{market === "us" ? "Please review the notification email in settings." : "Bitte pruefen Sie die Benachrichtigungs-E-Mail in den Einstellungen."}</p>
           <Link className={styles.sectionLink} href="/dashboard/settings">
-            Einstellungen öffnen
+            {copy.openSettings}
           </Link>
         </section>
       ) : null}
@@ -210,47 +207,47 @@ export default async function DashboardPage() {
       <section className={styles.empty} aria-label="Auswertung der letzten 30 Tage">
         <div className={styles.sectionHeader}>
           <div>
-            <h2>Auswertung der letzten 30 Tage</h2>
-            <p>Aktuelle Ergebnisse und offene Anfragen im gewählten Zeitraum.</p>
+            <h2>{copy.last30DaysTitle}</h2>
+            <p>{copy.last30DaysCopy}</p>
           </div>
           <Link className={styles.sectionLink} href="/dashboard/analytics">
-            Auswertungen öffnen
+            {copy.openAnalytics}
           </Link>
         </div>
         <div className={styles.grid}>
           <article className={styles.card}>
-            <p className={styles.cardLabel}>Anfragen insgesamt</p>
+            <p className={styles.cardLabel}>{copy.totalInquiries}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.total}</strong>
           </article>
 
           <article className={styles.card}>
-            <p className={styles.cardLabel}>Erfolgreich</p>
+            <p className={styles.cardLabel}>{copy.successful}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.successful}</strong>
           </article>
 
           <article className={styles.card}>
-            <p className={styles.cardLabel}>Nicht erfolgreich</p>
+            <p className={styles.cardLabel}>{copy.unsuccessful}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.unsuccessful}</strong>
           </article>
 
           <article className={styles.card}>
-            <p className={styles.cardLabel}>Noch offen</p>
+            <p className={styles.cardLabel}>{copy.stillOpen}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.open}</strong>
           </article>
         </div>
         <p>
           {recentLeadEvaluation.resultRate === null
-            ? "Noch keine abgeschlossenen Anfragen"
-            : `Erfolgsquote: ${Math.round(recentLeadEvaluation.resultRate * 100)} %`}
+            ? copy.noClosedLeads
+            : copy.successRate(Math.round(recentLeadEvaluation.resultRate * 100))}
         </p>
       </section>
 
       {totalLeads > 0 ? (
         <section className={styles.empty} aria-label="Leads verwalten">
-          <h2>Lead-Übersicht</h2>
-          <p>Gehen Sie zur Lead-Verwaltung, um Status und Ergebnisse zu aktualisieren.</p>
+          <h2>{copy.leadOverviewTitle}</h2>
+          <p>{copy.leadOverviewCopy}</p>
           <div className={styles.sectionActions}>
-            <Link className={styles.button} href="/dashboard/leads">Zu Leads</Link>
+            <Link className={styles.button} href="/dashboard/leads">{copy.toLeads}</Link>
           </div>
         </section>
       ) : null}
@@ -258,20 +255,20 @@ export default async function DashboardPage() {
       <section className={styles.empty} aria-label="Offene Anfragen">
         <div className={styles.sectionHeader}>
           <div>
-            <h2>Offene Anfragen</h2>
-            <p>Hier sehen Sie die ältesten offenen Anfragen zuerst.</p>
+            <h2>{copy.openInquiriesTitle}</h2>
+            <p>{copy.openInquiriesCopy}</p>
           </div>
           <Link className={styles.sectionLink} href="/dashboard/leads">
-            Alle Anfragen anzeigen
+            {copy.showAllInquiries}
           </Link>
         </div>
 
         {openLeads.length === 0 ? (
-          <p>Aktuell sind keine offenen Anfragen vorhanden.</p>
+          <p>{copy.noOpenInquiries}</p>
         ) : (
           <div className={styles.openLeadList}>
             {openLeads.map((lead) => {
-              const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt";
+              const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || copy.unknownContact;
               const isNewLead = lead.status === "new";
 
               return (
@@ -283,13 +280,13 @@ export default async function DashboardPage() {
                   <div className={styles.openLeadTopRow}>
                     <strong className={styles.openLeadName}>{leadName}</strong>
                     <span className={`${styles.openLeadStatus} ${isNewLead ? styles.openLeadStatusNew : styles.openLeadStatusContacted}`}>
-                      {STATUS_LABELS[lead.status]}
+                      {statusLabels[lead.status]}
                     </span>
                   </div>
                   <div className={styles.openLeadMeta}>
                     {lead.phone ? <span>{lead.phone}</span> : null}
-                    <span>{lead.inquiry_type ?? "Nicht angegeben"}</span>
-                    <span>{formatCreatedAt(lead.created_at)}</span>
+                    <span>{lead.inquiry_type ?? copy.notProvided}</span>
+                    <span>{new Date(lead.created_at).toLocaleString(config.locale, { dateStyle: "short", timeStyle: "short" })}</span>
                   </div>
                 </Link>
               );

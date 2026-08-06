@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { openBillingPortalAction, startBillingCheckoutAction } from "@/features/billing/actions";
 import LegalFooter from "@/shared/ui/LegalFooter";
+import { BILLING_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 import {
   BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
@@ -62,13 +64,13 @@ const checkboxRowStyle = {
   color: "#4b5563",
 } as const;
 
-const formatDateTime = (value: string | null) => {
+const formatDateTimeByLocale = (value: string | null, locale: "de-DE" | "en-US") => {
   if (!value) {
-    return "—";
+    return "-";
   }
 
   try {
-    return new Date(value).toLocaleString("de-DE", {
+    return new Date(value).toLocaleString(locale, {
       dateStyle: "medium",
       timeStyle: "short",
     });
@@ -93,26 +95,17 @@ const getCompanyName = async (companyId: string) => {
   return data.name;
 };
 
-const getStatusText = (billingReason: string | null | undefined) => {
-  switch (billingReason) {
-    case "trial_expired":
-      return "Die Testphase ist abgelaufen. Bitte starten Sie jetzt Ihr Abonnement.";
-    case "payment_required":
-      return "Ihr Zugriff ist pausiert, bis Stripe wieder eine erfolgreiche Zahlung bestätigt.";
-    case "checkout_incomplete":
-      return "Der letzte Checkout wurde nicht abgeschlossen. Bitte starten Sie ihn erneut.";
-    case "subscription_paused":
-      return "Das Abonnement ist pausiert. Bitte prüfen Sie Ihr Stripe-Kundenportal.";
-    case "subscription_canceled":
-      return "Das Abonnement ist beendet. Bitte starten Sie ein neues Abonnement, um Varnito weiter zu nutzen.";
-    case "no_subscription":
-      return "Für diese Firma ist noch kein aktives Abonnement hinterlegt.";
-    default:
-      return "Verwalten Sie hier Testphase und Abonnement Ihrer Firma.";
+const getStatusText = (copy: (typeof BILLING_COPY)["de"], billingReason: string | null | undefined) => {
+  if (!billingReason) {
+    return copy.statusText.default;
   }
+
+  return copy.statusText[billingReason] ?? copy.statusText.default;
 };
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
+  const { market, config } = await getRequestMarket();
+  const copy = BILLING_COPY[market];
   const access = await requireUserCompanyAccess({
     allowMember: true,
     nextPath: BILLING_ROUTE,
@@ -136,26 +129,26 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
       <header style={{ display: "grid", gap: 8 }}>
         <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
-          ← Zurück
+          ← {copy.back}
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
           Billing
         </p>
         <h1 style={{ margin: 0 }}>{companyName}</h1>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          {getStatusText(resolvedSearchParams?.billing ?? billing.lockReason)}
+          {getStatusText(copy, resolvedSearchParams?.billing ?? billing.lockReason)}
         </p>
       </header>
 
       {resolvedSearchParams?.success ? (
         <section style={{ padding: 16, border: "1px solid #b7f0c6", borderRadius: 10, background: "#e6ffed" }}>
-          Stripe Checkout wurde erfolgreich abgeschlossen.
+          {copy.checkoutSuccess}
         </section>
       ) : null}
 
       {resolvedSearchParams?.canceled === "1" ? (
         <section style={{ padding: 16, border: "1px solid #f0e0b7", borderRadius: 10, background: "#fff8e6" }}>
-          Der Checkout wurde abgebrochen.
+          {copy.checkoutCanceled}
         </section>
       ) : null}
 
@@ -166,23 +159,23 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       ) : null}
 
       <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>Status</h2>
+        <h2 style={{ margin: 0 }}>{copy.statusHeading}</h2>
         <div style={{ display: "grid", gap: 10 }}>
           <div><strong>Produkt:</strong> Varnito Pro</div>
           <div><strong>Lookup Key:</strong> {BILLING_LOOKUP_KEY}</div>
           <div><strong>Status:</strong> {getBillingStatusLabel(billing.status)}</div>
-          <div><strong>Zugriff:</strong> {billing.hasAppAccess ? "Freigeschaltet" : "Gesperrt"}</div>
-          <div><strong>Testphase bis:</strong> {formatDateTime(billing.trialEndsAt)}</div>
-          <div><strong>Aktueller Zeitraum bis:</strong> {formatDateTime(billing.currentPeriodEnd)}</div>
-          <div><strong>Kündigung geplant:</strong> {cancellationPlanned ? "Ja" : "Nein"}</div>
-          <div><strong>Kündigungsdatum:</strong> {formatDateTime(plannedCancellationDate)}</div>
+          <div><strong>{market === "us" ? "Access:" : "Zugriff:"}</strong> {billing.hasAppAccess ? copy.statusAccessGranted : copy.statusAccessBlocked}</div>
+          <div><strong>{copy.statusTrialUntil}:</strong> {formatDateTimeByLocale(billing.trialEndsAt, config.locale)}</div>
+          <div><strong>{copy.statusCurrentPeriodUntil}:</strong> {formatDateTimeByLocale(billing.currentPeriodEnd, config.locale)}</div>
+          <div><strong>{copy.statusCancellationPlanned}:</strong> {cancellationPlanned ? copy.yes : copy.no}</div>
+          <div><strong>{copy.statusCancellationDate}:</strong> {formatDateTimeByLocale(plannedCancellationDate, config.locale)}</div>
         </div>
       </section>
 
       <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>Abonnement</h2>
+        <h2 style={{ margin: 0 }}>{copy.subscriptionHeading}</h2>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          299 EUR monatlich. Neue Firmen erhalten einmalig 30 Tage Testphase.
+          {copy.subscriptionText}
         </p>
 
         {access.isOwner ? (
@@ -191,10 +184,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               <label style={checkboxRowStyle}>
                 <input name="legal_acceptance" type="checkbox" required style={{ marginTop: 4 }} />
                 <span>
-                  Ich bestätige die <Link href="/agb">AGB</Link> und die <Link href="/datenschutz">Datenschutzerklärung</Link> für die Testphase und den Checkout.
+                  {copy.legalAcceptance}
                 </span>
               </label>
-              <button type="submit" style={primaryButtonStyle}>Abo starten</button>
+              <button type="submit" style={primaryButtonStyle}>{copy.startSubscription}</button>
             </form>
 
             <form action={openBillingPortalAction}>
@@ -203,13 +196,13 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
                 style={secondaryButtonStyle}
                 disabled={!billing.stripeCustomerId}
               >
-                Abonnement verwalten
+                {copy.manageSubscription}
               </button>
             </form>
           </div>
         ) : (
           <p style={{ margin: 0, color: "#555" }}>
-            Nur der Eigentümer kann Billing verwalten.
+            {copy.ownerOnly}
           </p>
         )}
       </section>

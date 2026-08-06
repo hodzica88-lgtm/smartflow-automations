@@ -13,6 +13,8 @@ import {
   getCompanyTeamMembers,
   getTeamMemberLabel,
 } from "@/features/team/service";
+import { TEAM_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 const actionStyle = {
   display: "inline-flex",
@@ -45,6 +47,8 @@ type TeamPageProps = {
 };
 
 export default async function TeamPage({ searchParams }: TeamPageProps) {
+  const { market } = await getRequestMarket();
+  const copy = TEAM_COPY[market];
   const access = await requireUserCompanyAccess({
     nextPath: "/dashboard/team",
   });
@@ -63,14 +67,14 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
     <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>
       <header style={{ display: "grid", gap: 8 }}>
         <Link href="/dashboard/leads" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
-          ← Zurück zu den Leads
+          ← {copy.backToLeads}
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
-          Mitarbeiter
+          {copy.sectionLabel}
         </p>
-        <h1 style={{ margin: 0 }}>Zugänge verwalten</h1>
+        <h1 style={{ margin: 0 }}>{copy.title}</h1>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          Mitarbeiter erhalten ausschließlich einen einfachen Zugang zur Lead-Bearbeitung.
+          {copy.description}
         </p>
       </header>
 
@@ -88,31 +92,31 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
 
       <section style={{ display: "grid", gap: 16, padding: 20, border: "1px solid #e2e8f0", borderRadius: 12, background: "#fff" }}>
         <div>
-          <h2 style={{ margin: 0 }}>Mitarbeiter einladen</h2>
+          <h2 style={{ margin: 0 }}>{copy.inviteTitle}</h2>
           <p style={{ margin: "6px 0 0", color: "#555" }}>
-            E-Mail-Adresse genügt. Der Mitarbeiter legt Name und Passwort selbst fest.
+            {copy.inviteDescription}
           </p>
         </div>
         <form action={inviteTeamMemberAction} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "end" }}>
           <label style={{ display: "grid", flex: "1 1 280px", gap: 6 }}>
-            E-Mail-Adresse
+            {copy.emailLabel}
             <input
               autoComplete="email"
               name="email"
               type="email"
               required
-              placeholder="mitarbeiter@unternehmen.de"
+              placeholder={copy.emailPlaceholder}
               style={{ minHeight: 44, padding: "0 12px", border: "1px solid #cbd5e0", borderRadius: 8 }}
             />
           </label>
           <button type="submit" style={actionStyle}>
-            Einladung senden
+            {copy.sendInvite}
           </button>
         </form>
       </section>
 
       <section style={{ display: "grid", gap: 14 }}>
-        <h2 style={{ margin: 0 }}>Zugänge</h2>
+        <h2 style={{ margin: 0 }}>{copy.accessTitle}</h2>
         {members.map((member) => {
           const isOwner = member.role === "owner";
           const isPending = member.status === "pending";
@@ -126,7 +130,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
                 <strong>{getTeamMemberLabel(member)}</strong>
                 <span style={{ color: "#555", overflowWrap: "anywhere" }}>{member.email}</span>
                 <span style={{ fontSize: 13, color: "#718096" }}>
-                  {isOwner ? "Inhaber" : isPending ? "Einladung offen" : "Aktiv"}
+                  {isOwner ? copy.ownerLabel : isPending ? copy.pendingLabel : copy.activeLabel}
                 </span>
               </div>
 
@@ -136,14 +140,14 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
                     <form action={resendTeamInvitationAction}>
                       <input type="hidden" name="member_id" value={member.id} />
                       <button type="submit" style={secondaryActionStyle}>
-                        Erneut senden
+                        {copy.resend}
                       </button>
                     </form>
                   ) : null}
                   <form action={removeTeamMemberAction}>
                     <input type="hidden" name="member_id" value={member.id} />
                     <button type="submit" style={dangerActionStyle}>
-                      Zugang entfernen
+                      {copy.removeAccess}
                     </button>
                   </form>
                 </div>
@@ -155,10 +159,10 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
 
       <AuditLogSection
         title="Audit Log"
-        description="Zeit, Benutzer und Aktion der wichtigsten Änderungen."
+        description={copy.auditDescription}
         entries={auditLog}
-        emptyTitle="Noch keine Ereignisse"
-        emptyMessage="Sobald Änderungen erfolgen, erscheinen sie hier."
+        emptyTitle={copy.auditEmptyTitle}
+        emptyMessage={copy.auditEmptyMessage}
       />
     </main>
   );

@@ -8,15 +8,17 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/features/notifications/service";
+import { NOTIFICATION_CENTER_COPY } from "@/shared/i18n/dashboard";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 const getString = (formData: FormData, key: string) => {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 };
 
-const formatDateTime = (value: string) => {
+const formatDateTimeByLocale = (value: string, locale: "de-DE" | "en-US") => {
   try {
-    return new Date(value).toLocaleString("de-DE", {
+    return new Date(value).toLocaleString(locale, {
       dateStyle: "short",
       timeStyle: "short",
     });
@@ -58,6 +60,8 @@ export async function markAllNotificationsReadAction() {
 }
 
 export default async function NotificationsPage() {
+  const { market, config } = await getRequestMarket();
+  const copy = NOTIFICATION_CENTER_COPY[market];
   const access = await requireUserCompanyAccess({
     allowMember: true,
     enforceBilling: false,
@@ -70,11 +74,11 @@ export default async function NotificationsPage() {
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 16 }}>
       <section>
         <p style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-          Benachrichtigungen
+          {copy.sectionLabel}
         </p>
-        <h1 style={{ margin: "6px 0" }}>Notification Center</h1>
+        <h1 style={{ margin: "6px 0" }}>{copy.heading}</h1>
         <p style={{ margin: 0, color: "#4b5563" }}>
-          Neue Anfrage, Team-Ereignisse und Billing-Hinweise an einem Ort.
+          {copy.subheading}
         </p>
       </section>
 
@@ -90,7 +94,7 @@ export default async function NotificationsPage() {
               cursor: "pointer",
             }}
           >
-            Alle als gelesen markieren
+            {copy.markAllRead}
           </button>
         </form>
 
@@ -105,13 +109,13 @@ export default async function NotificationsPage() {
             background: "#fff",
           }}
         >
-          Zurück zum Dashboard
+          {copy.backToDashboard}
         </Link>
       </div>
 
       {items.length === 0 ? (
         <section style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 20, background: "#fff" }}>
-          Noch keine Benachrichtigungen vorhanden.
+          {copy.empty}
         </section>
       ) : (
         <section style={{ display: "grid", gap: 10 }}>
@@ -129,12 +133,12 @@ export default async function NotificationsPage() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <strong>{item.title}</strong>
-                <span style={{ color: "#6b7280", fontSize: 13 }}>{formatDateTime(item.created_at)}</span>
+                <span style={{ color: "#6b7280", fontSize: 13 }}>{formatDateTimeByLocale(item.created_at, config.locale)}</span>
               </div>
               <p style={{ margin: 0, color: "#374151" }}>{item.message}</p>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ color: "#6b7280", fontSize: 12 }}>
-                  {item.is_read ? "Gelesen" : "Ungelesen"}
+                  {item.is_read ? copy.read : copy.unread}
                 </span>
                 {!item.is_read ? (
                   <form action={markNotificationReadAction}>
@@ -149,7 +153,7 @@ export default async function NotificationsPage() {
                         cursor: "pointer",
                       }}
                     >
-                      Als gelesen markieren
+                      {copy.markRead}
                     </button>
                   </form>
                 ) : null}
