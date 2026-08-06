@@ -43,6 +43,7 @@ const state = vi.hoisted(() => ({
   checkoutPayload: null as Record<string, unknown> | null,
   market: "de" as "de" | "us",
   priceCurrency: "eur" as "eur" | "usd",
+  priceRetrieveId: null as string | null,
   subscriptionsUpdatePayload: null as Record<string, unknown> | null,
 }));
 
@@ -118,15 +119,30 @@ vi.mock("@/shared/lib/stripe/server", () => ({
       },
     },
     prices: {
+      retrieve: vi.fn(async (priceId: string) => {
+        state.priceRetrieveId = priceId;
+        return {
+          active: true,
+          currency: state.priceCurrency,
+          id: priceId,
+          product: "prod_test_1",
+          recurring: {
+            interval: "month",
+          },
+          unit_amount: state.priceCurrency === "usd" ? 39900 : 29900,
+        };
+      }),
       list: vi.fn(async () => ({
         data: [
           {
+            active: true,
             currency: state.priceCurrency,
             id: "price_test_1",
             product: "prod_test_1",
             recurring: {
               interval: "month",
             },
+            unit_amount: state.priceCurrency === "usd" ? 39900 : 29900,
           },
         ],
       })),
@@ -196,6 +212,7 @@ describe("stripe billing checkout trial", () => {
   beforeEach(() => {
     state.market = "de";
     state.priceCurrency = "eur";
+    state.priceRetrieveId = null;
     state.billingSnapshot = {
       cancelAt: null,
       cancelAtPeriodEnd: false,
@@ -278,5 +295,6 @@ describe("stripe billing checkout trial", () => {
     expect(state.checkoutPayload?.cancel_url).toBe(
       "https://varnito.com/dashboard/billing?canceled=1",
     );
+    expect(state.priceRetrieveId).toBe("price_1U1WWGLWU9JjdD3HBrfEAezs");
   });
 });

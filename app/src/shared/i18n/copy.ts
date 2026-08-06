@@ -143,9 +143,9 @@ const COPY: Record<MarketCode, MarketCopy> = {
         { title: "Testphase und Abo", text: "Der Billing-Bereich regelt den Zugang transparent und ohne versteckte Zusatzoptionen." },
       ],
       pricingEyebrow: "Preis",
-      pricingTitle: "Varnito Pro fuer 299 EUR pro Monat.",
+      pricingTitle: "Varnito Pro Monatsabo.",
       pricingLabel: "Varnito Pro",
-      pricingValue: "299 EUR / Monat",
+      pricingValue: "Preis wird im Checkout geladen",
       pricingCopy: "Neue Firmen starten mit 30 Tagen kostenloser Testphase. Die erste Zahlung erfolgt erst, wenn die Testphase endet und Sie das Abo aktiv weiternutzen.",
       pricingMeta: [
         "Keine versteckten Gebuehren",
@@ -240,9 +240,9 @@ const COPY: Record<MarketCode, MarketCopy> = {
         { title: "Trial and billing", text: "Billing stays transparent with a clear trial and subscription workflow." },
       ],
       pricingEyebrow: "Pricing",
-      pricingTitle: "Varnito Pro at 299 USD per month.",
+      pricingTitle: "Varnito Pro monthly subscription.",
       pricingLabel: "Varnito Pro",
-      pricingValue: "299 USD / month",
+      pricingValue: "Price is loaded at checkout",
       pricingCopy: "New companies start with a 30-day free trial. First payment begins only after trial end if you continue using Varnito.",
       pricingMeta: [
         "No hidden fees",

@@ -12,13 +12,13 @@ describe("dashboard market copy", () => {
   it("keeps german dashboard labels", () => {
     expect(DASHBOARD_COPY.de.newLeads).toBe("Neue Anfragen");
     expect(TEAM_COPY.de.sectionLabel).toBe("Mitarbeiter");
-    expect(BILLING_COPY.de.subscriptionText).toContain("EUR");
+    expect(BILLING_COPY.de.subscriptionText).toContain("30 Tage Testphase");
   });
 
   it("provides english dashboard labels for US market", () => {
     expect(DASHBOARD_COPY.us.newLeads).toBe("New leads");
     expect(TEAM_COPY.us.sectionLabel).toBe("Team");
-    expect(BILLING_COPY.us.subscriptionText).toContain("USD");
+    expect(BILLING_COPY.us.subscriptionText).toContain("30-day trial");
     expect(NOTIFICATION_CENTER_COPY.us.sectionLabel).toBe("Notifications");
     expect(OPERATOR_COPY.us.title).toBe("System overview");
   });

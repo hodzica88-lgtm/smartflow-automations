@@ -7,14 +7,16 @@ describe("market copy", () => {
     const us = getMarketCopy("us").landing;
 
     expect(us.heroTitle).toBe("Never lose another lead.");
-    expect(us.pricingValue).toBe("299 USD / month");
+    expect(us.pricingTitle).toBe("Varnito Pro monthly subscription.");
+    expect(us.pricingValue).toBe("Price is loaded at checkout");
     expect(us.primaryCta).toBe("Start your 30-day free trial");
   });
 
   it("keeps germany landing pricing and CTA copy", () => {
     const de = getMarketCopy("de").landing;
 
-    expect(de.pricingValue).toBe("299 EUR / Monat");
+    expect(de.pricingTitle).toBe("Varnito Pro Monatsabo.");
+    expect(de.pricingValue).toBe("Preis wird im Checkout geladen");
     expect(de.primaryCta).toBe("30 Tage kostenlos testen");
   });
 });

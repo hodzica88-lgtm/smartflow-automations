@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { openBillingPortalAction, startBillingCheckoutAction } from "@/features/billing/actions";
+import { getFormattedStripeMonthlyPriceForMarket } from "@/features/billing/pricing";
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { BILLING_COPY } from "@/shared/i18n/dashboard";
 import { getRequestMarket } from "@/shared/i18n/request";
@@ -106,6 +107,7 @@ const getStatusText = (copy: (typeof BILLING_COPY)["de"], billingReason: string 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const { market, config } = await getRequestMarket();
   const copy = BILLING_COPY[market];
+  const pricing = await getFormattedStripeMonthlyPriceForMarket(market).catch(() => null);
   const access = await requireUserCompanyAccess({
     allowMember: true,
     nextPath: BILLING_ROUTE,
@@ -124,6 +126,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const companyName = await getCompanyName(access.companyId);
+  const subscriptionText = market === "us"
+    ? `${pricing?.label ?? "USD / month"}. ${copy.subscriptionText}`
+    : `${pricing?.label ?? "EUR / Monat"}. ${copy.subscriptionText}`;
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
@@ -175,7 +180,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       <section style={panelStyle}>
         <h2 style={{ margin: 0 }}>{copy.subscriptionHeading}</h2>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          {copy.subscriptionText}
+          {subscriptionText}
         </p>
 
         {access.isOwner ? (

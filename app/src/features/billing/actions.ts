@@ -10,10 +10,11 @@ import {
   requireUserCompanyAccess,
   getCompanyBillingSnapshot,
 } from "@/features/billing/service";
+import { getStripeMonthlyPriceForMarket } from "@/features/billing/pricing";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
-import { getMarketConfig, type MarketCode } from "@/shared/i18n/market";
+import { type MarketCode } from "@/shared/i18n/market";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
@@ -39,23 +40,6 @@ const canGrantCheckoutTrial = (
   }
 
   return true;
-};
-
-const getStripePrice = async (stripe: Stripe, expectedCurrency: "eur" | "usd") => {
-  const prices = await stripe.prices.list({
-    active: true,
-    expand: ["data.product"],
-    lookup_keys: [BILLING_LOOKUP_KEY],
-    limit: 1,
-  });
-
-  const price = prices.data[0];
-
-  if (!price || price.currency !== expectedCurrency || price.recurring?.interval !== "month") {
-    throw new Error("Der Stripe-Preis für Varnito Pro konnte nicht geladen werden.");
-  }
-
-  return price;
 };
 
 const getCompanyForBilling = async (companyId: string) => {
@@ -86,7 +70,6 @@ export async function startBillingCheckoutAction(formData: FormData) {
     // Fall back to existing environment URL outside request scope.
   }
 
-  const marketConfig = getMarketConfig(market);
   const access = await requireUserCompanyAccess({
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
@@ -119,7 +102,7 @@ export async function startBillingCheckoutAction(formData: FormData) {
 
   const stripe = createStripeServerClient();
   const [price, company, billing] = await Promise.all([
-    getStripePrice(stripe, marketConfig.currency),
+    getStripeMonthlyPriceForMarket(stripe, market),
     getCompanyForBilling(access.companyId),
     getCompanyBillingSnapshot(access.companyId),
   ]);
