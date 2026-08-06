@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 
+import { grantPrimaryOwnerOperatorAccess } from "@/features/auth/primary-account";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export const ensureUserProfile = async (user: User) => {
@@ -21,6 +22,7 @@ export const ensureUserProfile = async (user: User) => {
   }
 
   if (existingProfile) {
+    await grantPrimaryOwnerOperatorAccess(user);
     return;
   }
 
@@ -44,4 +46,6 @@ export const ensureUserProfile = async (user: User) => {
   if (insertError) {
     throw insertError;
   }
+
+  await grantPrimaryOwnerOperatorAccess(user);
 };

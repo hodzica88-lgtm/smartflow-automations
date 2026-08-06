@@ -18,6 +18,7 @@ type ServerEnv = PublicEnv & {
   supabaseServiceRoleKey: string;
   internalApiSecret?: string;
   operatorUserIds: string[];
+  operatorUserEmails: string[];
 };
 
 type RequiredEnvKey =
@@ -136,6 +137,9 @@ export const loadServerEnv = (): ServerEnv => {
     supabaseServiceRoleKey: getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
     internalApiSecret: getOptionalEnv("INTERNAL_API_SECRET"),
     operatorUserIds: getListEnv("OPERATOR_USER_IDS"),
+    operatorUserEmails: getListEnv("OPERATOR_USER_EMAILS").map((value) =>
+      value.toLowerCase(),
+    ),
   };
 };
 

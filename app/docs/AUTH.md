@@ -101,6 +101,23 @@ Expected flow:
 4. The app creates related `settings` and `subscriptions` rows for that company.
 5. `users.default_company_id` points to the owned company.
 
+## Primary Owner/Operator Account
+
+The primary administrative account is:
+
+- `hodzica88@gmail.com`
+
+Behavior:
+
+1. The app does not auto-register this user in Supabase Auth.
+2. After the first successful real registration/login, server-side profile preparation grants elevated access for this account.
+3. Existing data is preserved: only missing/required access flags are updated.
+4. Owner role is enforced on the `public.users` profile.
+5. Operator access is allowed for this email (and optionally via `OPERATOR_USER_EMAILS`).
+6. If the account already owns a company and has no default company, `default_company_id` is linked automatically.
+
+No demo account data is modified by this behavior.
+
 V1 does not include multi-user company membership. The schema keeps roles simple, but owner-scoped access is the primary V1 assumption.
 
 ## RLS Assumptions

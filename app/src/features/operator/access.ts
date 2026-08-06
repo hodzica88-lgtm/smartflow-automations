@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { isPrimaryOwnerOperatorAccount } from "@/features/auth/primary-account";
 import { loadServerEnv } from "@/shared/config/env";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
@@ -13,9 +14,14 @@ export const requireOperatorUser = async () => {
     redirect("/login?next=/operator");
   }
 
-  const { operatorUserIds } = loadServerEnv();
+  const { operatorUserEmails, operatorUserIds } = loadServerEnv();
+  const normalizedEmail = user.email?.trim().toLowerCase();
+  const isOperatorByEmail = normalizedEmail
+    ? isPrimaryOwnerOperatorAccount(normalizedEmail) ||
+      operatorUserEmails.includes(normalizedEmail)
+    : false;
 
-  if (!operatorUserIds.includes(user.id)) {
+  if (!operatorUserIds.includes(user.id) && !isOperatorByEmail) {
     notFound();
   }
 
