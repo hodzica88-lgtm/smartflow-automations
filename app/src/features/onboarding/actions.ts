@@ -8,6 +8,8 @@ import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { getMarketCopy } from "@/shared/i18n/copy";
+import { getRequestMarket } from "@/shared/i18n/request";
 import { INDUSTRY_OPTIONS, isSupportedIndustry } from "@/shared/config/inquiryTypes";
 import {
   createSupabaseServerClient,
@@ -47,6 +49,15 @@ const isValidWebsite = (website: string) => {
 };
 
 export const completeOnboardingAction = async (formData: FormData) => {
+  let market: "de" | "us" = "de";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Fallback to German defaults outside request scope.
+  }
+
+  const onboardingCopy = getMarketCopy(market).shared.auth;
   const trialStart = new Date();
   const trialEnd = new Date(trialStart.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const companyName = getStringValue(formData, "companyName");
@@ -62,33 +73,33 @@ export const completeOnboardingAction = async (formData: FormData) => {
   );
 
   if (!companyName || !contactPerson || !email || !phone || !timezone || !industry) {
-    redirectWithError("Bitte füllen Sie alle Pflichtfelder aus.");
+    redirectWithError(onboardingCopy.errors.missingRequired);
   }
 
   if (!averageOrderValue.ok) {
-    return redirectWithError(averageOrderValue.error);
+    return redirectWithError(onboardingCopy.errors.invalidAverageOrderValue);
   }
 
   if (averageOrderValue.cents === null) {
-    return redirectWithError("Bitte geben Sie einen ungefähren durchschnittlichen Auftragswert an.");
+    return redirectWithError(onboardingCopy.errors.missingAverageOrderValue);
   }
 
   const averageOrderValueCents = averageOrderValue.cents;
 
   if (!isValidEmail(email)) {
-    redirectWithError("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+    redirectWithError(onboardingCopy.errors.invalidEmail);
   }
 
   if (!timeZones.includes(timezone as (typeof timeZones)[number])) {
-    redirectWithError("Bitte wählen Sie eine gültige Zeitzone.");
+    redirectWithError(onboardingCopy.errors.invalidTimezone);
   }
 
   if (!industryOptions.includes(industry as (typeof industryOptions)[number]) || !isSupportedIndustry(industry)) {
-    redirectWithError("Bitte wählen Sie eine gültige Branche.");
+    redirectWithError(onboardingCopy.errors.invalidIndustry);
   }
 
   if (!isValidWebsite(website)) {
-    redirectWithError("Die Website muss mit http:// oder https:// beginnen.");
+    redirectWithError(onboardingCopy.errors.invalidWebsite);
   }
 
   const authClient = await createSupabaseServerClient();
@@ -103,7 +114,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
   try {
     await ensureUserProfile(user);
   } catch {
-    redirectWithError("Ihr Profil konnte nicht vorbereitet werden.");
+    redirectWithError(onboardingCopy.errors.profilePreparationFailed);
   }
 
   const existingCompany = await getUserCompanyState(user.id, { allowMember: true });
@@ -118,7 +129,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
     }
 
     await authClient.auth.signOut();
-    redirect("/login?error=Dieser+Mitarbeiterzugang+ist+nicht+mehr+aktiv.");
+      redirect(`/login?error=${encodeURIComponent(onboardingCopy.errors.inactiveMember)}`);
   }
 
   let createdCompanyId: string | null = null;
@@ -205,7 +216,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
       await supabase.from("companies").delete().eq("id", createdCompanyId);
     }
 
-    redirectWithError("Die Einrichtung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.");
+    redirectWithError(onboardingCopy.errors.onboardingFailed);
   }
 
   redirect("/dashboard");

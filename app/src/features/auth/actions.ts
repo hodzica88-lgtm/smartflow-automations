@@ -7,6 +7,7 @@ import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/ser
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
@@ -35,11 +36,20 @@ export const loginAction = async (formData: FormData) => {
   const email = getStringValue(formData, "email");
   const password = getStringValue(formData, "password");
   const nextPath = getSafePostLoginPath(getStringValue(formData, "next"));
+  let requestMarket: "de" | "us" = "de";
+
+  try {
+    requestMarket = (await getRequestMarket()).market;
+  } catch {
+    // Fallback to German defaults outside request scope.
+  }
+
+  const authCopy = getMarketCopy(requestMarket).shared.auth;
 
   if (!email || !password) {
     redirectWithError(
       "/login",
-      "Bitte geben Sie E-Mail-Adresse und Passwort ein.",
+      authCopy.errors.loginMissingCredentials,
       nextPath,
     );
   }
@@ -53,7 +63,7 @@ export const loginAction = async (formData: FormData) => {
   if (!loginRateLimit.allowed) {
     redirectWithError(
       "/login",
-      "Zu viele Login-Versuche. Bitte versuchen Sie es später erneut.",
+      authCopy.errors.loginRateLimited,
       nextPath,
     );
   }
@@ -67,7 +77,7 @@ export const loginAction = async (formData: FormData) => {
   if (error) {
     redirectWithError(
       "/login",
-      "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+      authCopy.errors.loginInvalidCredentials,
       nextPath,
     );
   }
@@ -75,16 +85,16 @@ export const loginAction = async (formData: FormData) => {
   if (!data.user) {
     redirectWithError(
       "/login",
-      "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+      authCopy.errors.loginInvalidCredentials,
       nextPath,
     );
   }
 
   const user = data.user!;
-  let market: "de" | "us" | "unknown" = "unknown";
+  let trackedMarket: "de" | "us" | "unknown" = "unknown";
 
   try {
-    market = (await getRequestMarket()).market;
+    trackedMarket = (await getRequestMarket()).market;
   } catch {
     // Keep market unknown when request context is unavailable.
   }
@@ -95,7 +105,7 @@ export const loginAction = async (formData: FormData) => {
     await supabase.auth.signOut();
     redirectWithError(
       "/login",
-      "Ihr Profil konnte nicht vorbereitet werden.",
+      authCopy.errors.loginProfilePreparationFailed,
       nextPath,
     );
   }
@@ -118,7 +128,7 @@ export const loginAction = async (formData: FormData) => {
       await supabase.auth.signOut();
       redirectWithError(
         "/login",
-        "Dieser Mitarbeiterzugang ist nicht mehr aktiv.",
+        authCopy.errors.inactiveMember,
       );
     }
 
@@ -129,7 +139,7 @@ export const loginAction = async (formData: FormData) => {
 
   trackAnalyticsEvent({
     eventName: "auth_login_success",
-    market,
+    market: trackedMarket,
     companyId: companyState.companyId,
     isAuthenticated: true,
     metadata: {
@@ -158,9 +168,18 @@ export const logoutAction = async () => {
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = getStringValue(formData, "email");
+  let requestMarket: "de" | "us" = "de";
+
+  try {
+    requestMarket = (await getRequestMarket()).market;
+  } catch {
+    // Fallback to German defaults outside request scope.
+  }
+
+  const authCopy = getMarketCopy(requestMarket).shared.auth;
 
   if (!email) {
-    redirectWithError("/forgot-password", "Bitte geben Sie Ihre E-Mail-Adresse ein.");
+    redirectWithError("/forgot-password", authCopy.errors.forgotMissingEmail);
   }
 
   const forgotRateLimit = await enforceActionRateLimit({
@@ -172,7 +191,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   if (!forgotRateLimit.allowed) {
     redirectWithError(
       "/forgot-password",
-      "Zu viele Anfragen zum Zurücksetzen des Passworts. Bitte versuchen Sie es später erneut.",
+      authCopy.errors.forgotRateLimited,
     );
   }
 

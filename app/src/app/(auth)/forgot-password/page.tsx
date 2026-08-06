@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { forgotPasswordAction } from "@/features/auth/actions";
+import { getMarketCopy } from "@/shared/i18n/copy";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 import styles from "../auth.module.css";
 
@@ -15,6 +17,8 @@ export default async function ForgotPasswordPage({
   searchParams,
 }: ForgotPasswordPageProps) {
   const { error, sent } = await searchParams;
+  const { market } = await getRequestMarket();
+  const copy = getMarketCopy(market).shared.auth;
 
   return (
     <main className={styles.shell}>
@@ -22,11 +26,10 @@ export default async function ForgotPasswordPage({
         <header className={styles.header}>
           <p className={styles.eyebrow}>AnfragePilot</p>
           <h1 className={styles.title} id="forgot-title">
-            Passwort zurücksetzen
+            {copy.forgotTitle}
           </h1>
           <p className={styles.copy}>
-            Geben Sie Ihre E-Mail-Adresse ein. Falls ein Konto existiert,
-            senden wir Ihnen Anweisungen zum Zurücksetzen des Passworts.
+            {copy.forgotLead}
           </p>
         </header>
 
@@ -36,13 +39,13 @@ export default async function ForgotPasswordPage({
 
         {sent ? (
           <p className={`${styles.message} ${styles.success}`}>
-            Prüfen Sie Ihr E-Mail-Postfach auf Anweisungen zum Zurücksetzen des Passworts.
+            {copy.forgotSent}
           </p>
         ) : null}
 
         <form action={forgotPasswordAction} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>E-Mail</span>
+            <span className={styles.label}>{market === "us" ? "Email" : "E-Mail"}</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -53,13 +56,13 @@ export default async function ForgotPasswordPage({
           </label>
 
           <button className={styles.button} type="submit">
-            E-Mail zum Zurücksetzen senden
+            {copy.forgotSubmit}
           </button>
         </form>
 
-        <nav className={styles.links} aria-label="Hilfe zum Zurücksetzen des Passworts">
+        <nav className={styles.links} aria-label={market === "us" ? "Password reset help" : "Hilfe zum Zurücksetzen des Passworts"}>
           <Link className={styles.link} href="/login">
-            Zurück zur Anmeldung
+            {copy.forgotBackToLogin}
           </Link>
         </nav>
       </section>

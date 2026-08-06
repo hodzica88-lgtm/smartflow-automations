@@ -3,16 +3,12 @@ import { redirect } from "next/navigation";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { completeOnboardingAction } from "@/features/onboarding/actions";
 import { INDUSTRY_OPTIONS } from "@/shared/config/inquiryTypes";
+import { getMarketCopy } from "@/shared/i18n/copy";
+import { getRequestMarket } from "@/shared/i18n/request";
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "./onboarding.module.css";
-
-const timeZones = [
-  { value: "Europe/Berlin", label: "Europe/Berlin — Deutschland" },
-  { value: "Europe/Vienna", label: "Europe/Vienna — Österreich" },
-  { value: "Europe/Zurich", label: "Europe/Zurich — Schweiz" },
-];
 
 type OnboardingPageProps = {
   searchParams: Promise<{
@@ -23,6 +19,8 @@ type OnboardingPageProps = {
 export default async function OnboardingPage({
   searchParams,
 }: OnboardingPageProps) {
+  const { market } = await getRequestMarket();
+  const copy = getMarketCopy(market).shared.auth;
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -42,7 +40,7 @@ export default async function OnboardingPage({
     redirect(
       companyState.teamStatus === "pending"
         ? "/team/accept"
-        : "/login?error=Dieser+Mitarbeiterzugang+ist+nicht+mehr+aktiv.",
+        : `/login?error=${encodeURIComponent(copy.errors.inactiveMember)}`,
     );
   }
 
@@ -52,12 +50,12 @@ export default async function OnboardingPage({
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="onboarding-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>AnfragePilot Einrichtung</p>
+          <p className={styles.eyebrow}>{copy.onboardingEyebrow}</p>
           <h1 className={styles.title} id="onboarding-title">
-            Unternehmen anlegen
+            {copy.onboardingTitle}
           </h1>
           <p className={styles.copy}>
-            Geben Sie die wichtigsten Daten ein, damit AnfragePilot Ihren Arbeitsbereich vorbereiten kann.
+            {copy.onboardingLead}
           </p>
         </header>
 
@@ -65,7 +63,7 @@ export default async function OnboardingPage({
 
         <form action={completeOnboardingAction} className={styles.form}>
           <label className={styles.field}>
-            <span className={styles.label}>Firmenname</span>
+            <span className={styles.label}>{copy.onboardingFields.companyName}</span>
             <input
               className={styles.input}
               name="companyName"
@@ -75,7 +73,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Ansprechpartner</span>
+            <span className={styles.label}>{copy.onboardingFields.contactPerson}</span>
             <input
               autoComplete="name"
               className={styles.input}
@@ -87,7 +85,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>E-Mail</span>
+            <span className={styles.label}>{copy.onboardingFields.email}</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -99,7 +97,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Telefon</span>
+            <span className={styles.label}>{copy.onboardingFields.phone}</span>
             <input
               autoComplete="tel"
               className={styles.input}
@@ -110,7 +108,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Website</span>
+            <span className={styles.label}>{copy.onboardingFields.website}</span>
             <input
               autoComplete="url"
               className={styles.input}
@@ -121,14 +119,14 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Zeitzone</span>
+            <span className={styles.label}>{copy.onboardingFields.timezone}</span>
             <select
               className={styles.select}
-              defaultValue="Europe/Berlin"
+              defaultValue={copy.onboardingTimeZones[0]?.value ?? "Europe/Berlin"}
               name="timezone"
               required
             >
-              {timeZones.map((timezone) => (
+              {copy.onboardingTimeZones.map((timezone) => (
                 <option key={timezone.value} value={timezone.value}>
                   {timezone.label}
                 </option>
@@ -137,7 +135,7 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Branche</span>
+            <span className={styles.label}>{copy.onboardingFields.industry}</span>
             <select
               className={styles.select}
               defaultValue=""
@@ -145,7 +143,7 @@ export default async function OnboardingPage({
               required
             >
               <option value="" disabled>
-                Bitte wählen
+                {copy.onboardingFields.industryPlaceholder}
               </option>
               {INDUSTRY_OPTIONS.map((industry) => (
                 <option key={industry} value={industry}>
@@ -156,34 +154,34 @@ export default async function OnboardingPage({
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Ungefährer durchschnittlicher Auftragswert in Euro</span>
+            <span className={styles.label}>{copy.onboardingFields.averageOrderValue}</span>
             <input
               className={styles.input}
               inputMode="decimal"
               max="10000000"
               min="0.01"
               name="averageOrderValue"
-              placeholder="zum Beispiel 500"
+              placeholder={market === "us" ? "e.g. 500" : "zum Beispiel 500"}
               required
               step="0.01"
               type="number"
             />
             <small>
-              Eine grobe Schätzung reicht. Varnito nutzt sie später automatisch, um den ungefähren Wert gewonnener Aufträge zu zeigen.
+              {copy.onboardingFields.averageOrderValueHint}
             </small>
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Geschäftszeiten</span>
+            <span className={styles.label}>{copy.onboardingFields.businessHours}</span>
             <textarea
               className={styles.textarea}
               name="businessHours"
-              placeholder="Montag-Freitag, 9:00-17:00"
+              placeholder={market === "us" ? "Monday-Friday, 9:00-17:00" : "Montag-Freitag, 9:00-17:00"}
             />
           </label>
 
           <button className={styles.button} type="submit">
-            Einrichtung abschließen
+            {copy.onboardingSubmit}
           </button>
         </form>
       </section>

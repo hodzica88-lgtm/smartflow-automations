@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { loginAction } from "@/features/auth/actions";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
+import { getMarketCopy } from "@/shared/i18n/copy";
+import { getRequestMarket } from "@/shared/i18n/request";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 import styles from "../auth.module.css";
@@ -16,6 +18,8 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const { error, next } = await searchParams;
+  const { market } = await getRequestMarket();
+  const copy = getMarketCopy(market).shared.auth;
   const nextPath = getSafePostLoginPath(next);
   const supabase = await createSupabaseServerClient();
   const {
@@ -32,10 +36,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <header className={styles.header}>
           <p className={styles.eyebrow}>Varnito</p>
           <h1 className={styles.title} id="login-title">
-            Anmelden
+            {copy.loginTitle}
           </h1>
           <p className={styles.copy}>
-            Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an.
+            {copy.loginLead}
           </p>
         </header>
 
@@ -47,7 +51,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           {nextPath ? <input name="next" type="hidden" value={nextPath} /> : null}
 
           <label className={styles.field}>
-            <span className={styles.label}>E-Mail</span>
+            <span className={styles.label}>{market === "us" ? "Email" : "E-Mail"}</span>
             <input
               autoComplete="email"
               className={styles.input}
@@ -58,7 +62,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </label>
 
           <label className={styles.field}>
-            <span className={styles.label}>Passwort</span>
+            <span className={styles.label}>{market === "us" ? "Password" : "Passwort"}</span>
             <input
               autoComplete="current-password"
               className={styles.input}
@@ -69,13 +73,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </label>
 
           <button className={styles.button} type="submit">
-            Anmelden
+            {copy.loginSubmit}
           </button>
         </form>
 
-        <nav className={styles.links} aria-label="Anmeldehilfe">
+        <nav className={styles.links} aria-label={market === "us" ? "Sign-in help" : "Anmeldehilfe"}>
           <Link className={styles.link} href="/forgot-password">
-            Passwort vergessen?
+            {copy.loginForgotPassword}
           </Link>
         </nav>
       </section>

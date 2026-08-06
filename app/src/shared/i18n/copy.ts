@@ -64,6 +64,67 @@ type SharedCopy = {
     withdrawal: string;
     contact: string;
   };
+  auth: {
+    registrationEyebrow: string;
+    registrationTitle: string;
+    registrationLead: string;
+    registrationLoginCta: string;
+    registrationHomeCta: string;
+    loginEyebrow: string;
+    loginTitle: string;
+    loginLead: string;
+    loginSubmit: string;
+    loginForgotPassword: string;
+    forgotEyebrow: string;
+    forgotTitle: string;
+    forgotLead: string;
+    forgotSubmit: string;
+    forgotBackToLogin: string;
+    forgotSent: string;
+    onboardingEyebrow: string;
+    onboardingTitle: string;
+    onboardingLead: string;
+    onboardingSubmit: string;
+    onboardingTimeZones: Array<{ value: string; label: string }>;
+    onboardingFields: {
+      companyName: string;
+      contactPerson: string;
+      email: string;
+      phone: string;
+      website: string;
+      timezone: string;
+      industry: string;
+      averageOrderValue: string;
+      averageOrderValueHint: string;
+      businessHours: string;
+      industryPlaceholder: string;
+      selectPlaceholder: string;
+    };
+    errors: {
+      missingRequired: string;
+      missingAverageOrderValue: string;
+        invalidAverageOrderValue: string;
+      invalidEmail: string;
+      invalidTimezone: string;
+      invalidIndustry: string;
+      invalidWebsite: string;
+      profilePreparationFailed: string;
+      onboardingFailed: string;
+      loginMissingCredentials: string;
+      loginRateLimited: string;
+      loginInvalidCredentials: string;
+      loginProfilePreparationFailed: string;
+      inactiveMember: string;
+      forgotMissingEmail: string;
+      forgotRateLimited: string;
+    };
+  };
+  contact: {
+    eyebrow: string;
+    title: string;
+    lead: string;
+    emailLabel: string;
+  };
 };
 
 type MarketCopy = {
@@ -84,6 +145,71 @@ const COPY: Record<MarketCode, MarketCopy> = {
         terms: "AGB",
         withdrawal: "Widerruf",
         contact: "Kontakt",
+      },
+      auth: {
+        registrationEyebrow: "Varnito",
+        registrationTitle: "Registrierung starten",
+        registrationLead: "Für den Testzugang melden Sie sich an und legen im Anschluss Ihre Firma an. Danach kann die 30-Tage-Testphase gestartet werden.",
+        registrationLoginCta: "Zum Login",
+        registrationHomeCta: "Zur Startseite",
+        loginEyebrow: "Varnito",
+        loginTitle: "Anmelden",
+        loginLead: "Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an.",
+        loginSubmit: "Anmelden",
+        loginForgotPassword: "Passwort vergessen?",
+        forgotEyebrow: "Varnito",
+        forgotTitle: "Passwort zurücksetzen",
+        forgotLead: "Geben Sie Ihre E-Mail-Adresse ein. Falls ein Konto existiert, senden wir Ihnen Anweisungen zum Zurücksetzen des Passworts.",
+        forgotSubmit: "E-Mail zum Zurücksetzen senden",
+        forgotBackToLogin: "Zurück zur Anmeldung",
+        forgotSent: "Prüfen Sie Ihr E-Mail-Postfach auf Anweisungen zum Zurücksetzen des Passworts.",
+        onboardingEyebrow: "Varnito Einrichtung",
+        onboardingTitle: "Unternehmen anlegen",
+        onboardingLead: "Geben Sie die wichtigsten Daten ein, damit Varnito Ihren Arbeitsbereich vorbereiten kann.",
+        onboardingSubmit: "Einrichtung abschließen",
+        onboardingTimeZones: [
+          { value: "Europe/Berlin", label: "Europe/Berlin — Deutschland" },
+          { value: "Europe/Vienna", label: "Europe/Vienna — Österreich" },
+          { value: "Europe/Zurich", label: "Europe/Zurich — Schweiz" },
+        ],
+        onboardingFields: {
+          companyName: "Firmenname",
+          contactPerson: "Ansprechpartner",
+          email: "E-Mail",
+          phone: "Telefon",
+          website: "Website",
+          timezone: "Zeitzone",
+          industry: "Branche",
+          averageOrderValue: "Ungefährer durchschnittlicher Auftragswert in Euro",
+          averageOrderValueHint: "Eine grobe Schätzung reicht. Varnito nutzt sie später automatisch, um den ungefähren Wert gewonnener Aufträge zu zeigen.",
+          businessHours: "Geschäftszeiten",
+          industryPlaceholder: "Bitte wählen",
+          selectPlaceholder: "Bitte wählen",
+        },
+        errors: {
+          missingRequired: "Bitte füllen Sie alle Pflichtfelder aus.",
+          missingAverageOrderValue: "Bitte geben Sie einen ungefähren durchschnittlichen Auftragswert an.",
+          invalidAverageOrderValue: "Bitte geben Sie einen gültigen durchschnittlichen Auftragswert ein.",
+          invalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+          invalidTimezone: "Bitte wählen Sie eine gültige Zeitzone.",
+          invalidIndustry: "Bitte wählen Sie eine gültige Branche.",
+          invalidWebsite: "Die Website muss mit http:// oder https:// beginnen.",
+          profilePreparationFailed: "Ihr Profil konnte nicht vorbereitet werden.",
+          onboardingFailed: "Die Einrichtung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+          loginMissingCredentials: "Bitte geben Sie E-Mail-Adresse und Passwort ein.",
+          loginRateLimited: "Zu viele Login-Versuche. Bitte versuchen Sie es später erneut.",
+          loginInvalidCredentials: "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+          loginProfilePreparationFailed: "Ihr Profil konnte nicht vorbereitet werden.",
+          inactiveMember: "Dieser Mitarbeiterzugang ist nicht mehr aktiv.",
+          forgotMissingEmail: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
+          forgotRateLimited: "Zu viele Anfragen zum Zurücksetzen des Passworts. Bitte versuchen Sie es später erneut.",
+        },
+      },
+      contact: {
+        eyebrow: "Kontakt",
+        title: "Kontakt aufnehmen",
+        lead: "Für Rückfragen zu Hodzic Digital Services - Almir Hodzic nutzen Sie bitte die zentrale Kontakt-E-Mail. Die finale Kontaktangabe muss vor dem Livegang geprüft und vervollständigt werden.",
+        emailLabel: "E-Mail",
       },
     },
     landing: {
@@ -181,6 +307,71 @@ const COPY: Record<MarketCode, MarketCopy> = {
         terms: "Terms",
         withdrawal: "Cancellation",
         contact: "Contact",
+      },
+      auth: {
+        registrationEyebrow: "Varnito",
+        registrationTitle: "Start registration",
+        registrationLead: "Sign in to create your company and start the 30-day free trial.",
+        registrationLoginCta: "Go to login",
+        registrationHomeCta: "Back to home",
+        loginEyebrow: "Varnito",
+        loginTitle: "Sign in",
+        loginLead: "Use your email address and password to continue.",
+        loginSubmit: "Sign in",
+        loginForgotPassword: "Forgot your password?",
+        forgotEyebrow: "Varnito",
+        forgotTitle: "Reset password",
+        forgotLead: "Enter your email address and we will send reset instructions if an account exists.",
+        forgotSubmit: "Send reset email",
+        forgotBackToLogin: "Back to login",
+        forgotSent: "Check your inbox for password reset instructions.",
+        onboardingEyebrow: "Varnito setup",
+        onboardingTitle: "Create your company",
+        onboardingLead: "Enter the details Varnito needs to set up your workspace.",
+        onboardingSubmit: "Finish setup",
+        onboardingTimeZones: [
+          { value: "Europe/Berlin", label: "Europe/Berlin — Germany" },
+          { value: "Europe/Vienna", label: "Europe/Vienna — Austria" },
+          { value: "Europe/Zurich", label: "Europe/Zurich — Switzerland" },
+        ],
+        onboardingFields: {
+          companyName: "Company name",
+          contactPerson: "Contact person",
+          email: "Email",
+          phone: "Phone",
+          website: "Website",
+          timezone: "Time zone",
+          industry: "Industry",
+          averageOrderValue: "Approximate average order value in USD",
+          averageOrderValueHint: "A rough estimate is enough. Varnito will use it later to show approximate won order value.",
+          businessHours: "Business hours",
+          industryPlaceholder: "Please select",
+          selectPlaceholder: "Please select",
+        },
+        errors: {
+          missingRequired: "Please complete all required fields.",
+          missingAverageOrderValue: "Please enter an approximate average order value.",
+          invalidAverageOrderValue: "Please enter a valid average order value.",
+          invalidEmail: "Please enter a valid email address.",
+          invalidTimezone: "Please choose a valid time zone.",
+          invalidIndustry: "Please choose a valid industry.",
+          invalidWebsite: "The website must start with http:// or https://.",
+          profilePreparationFailed: "Your profile could not be prepared.",
+          onboardingFailed: "The setup could not be completed. Please try again.",
+          loginMissingCredentials: "Please enter your email address and password.",
+          loginRateLimited: "Too many sign-in attempts. Please try again later.",
+          loginInvalidCredentials: "Invalid email address or password.",
+          loginProfilePreparationFailed: "Your profile could not be prepared.",
+          inactiveMember: "This team access is no longer active.",
+          forgotMissingEmail: "Please enter your email address.",
+          forgotRateLimited: "Too many password reset requests. Please try again later.",
+        },
+      },
+      contact: {
+        eyebrow: "Contact",
+        title: "Contact us",
+        lead: "For questions about Hodzic Digital Services - Almir Hodzic, use the central contact email. Final contact details must be reviewed before launch.",
+        emailLabel: "Email",
       },
     },
     landing: {
