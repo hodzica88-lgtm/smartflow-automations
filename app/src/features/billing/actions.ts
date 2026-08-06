@@ -15,6 +15,7 @@ import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
 import { getMarketConfig, type MarketCode } from "@/shared/i18n/market";
 import { getRequestMarket } from "@/shared/i18n/request";
+import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -90,6 +91,17 @@ export async function startBillingCheckoutAction(formData: FormData) {
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
   });
+
+  const checkoutRateLimit = await enforceActionRateLimit({
+    scope: "billing_checkout_start",
+    companyId: access.companyId,
+    maxSubmissions: 8,
+    windowMinutes: 15,
+  });
+
+  if (!checkoutRateLimit.allowed) {
+    redirectBillingError("Zu viele Checkout-Versuche. Bitte versuchen Sie es später erneut.");
+  }
 
   if (!access.isOwner) {
     redirectBillingError("Nur Eigentümer können ein Abonnement starten.");
@@ -215,6 +227,17 @@ export async function openBillingPortalAction() {
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
   });
+
+  const portalRateLimit = await enforceActionRateLimit({
+    scope: "billing_portal_open",
+    companyId: access.companyId,
+    maxSubmissions: 12,
+    windowMinutes: 10,
+  });
+
+  if (!portalRateLimit.allowed) {
+    redirectBillingError("Zu viele Portal-Anfragen. Bitte versuchen Sie es später erneut.");
+  }
 
   if (!access.isOwner) {
     redirectBillingError("Nur Eigentümer können das Abonnement verwalten.");

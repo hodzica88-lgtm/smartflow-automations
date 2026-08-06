@@ -8,6 +8,7 @@ import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getRequestMarket } from "@/shared/i18n/request";
+import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 const getStringValue = (formData: FormData, key: string) => {
@@ -39,6 +40,20 @@ export const loginAction = async (formData: FormData) => {
     redirectWithError(
       "/login",
       "Bitte geben Sie E-Mail-Adresse und Passwort ein.",
+      nextPath,
+    );
+  }
+
+  const loginRateLimit = await enforceActionRateLimit({
+    scope: "auth_login",
+    maxSubmissions: 12,
+    windowMinutes: 10,
+  });
+
+  if (!loginRateLimit.allowed) {
+    redirectWithError(
+      "/login",
+      "Zu viele Login-Versuche. Bitte versuchen Sie es später erneut.",
       nextPath,
     );
   }
@@ -146,6 +161,19 @@ export const forgotPasswordAction = async (formData: FormData) => {
 
   if (!email) {
     redirectWithError("/forgot-password", "Bitte geben Sie Ihre E-Mail-Adresse ein.");
+  }
+
+  const forgotRateLimit = await enforceActionRateLimit({
+    scope: "auth_forgot_password",
+    maxSubmissions: 6,
+    windowMinutes: 10,
+  });
+
+  if (!forgotRateLimit.allowed) {
+    redirectWithError(
+      "/forgot-password",
+      "Zu viele Anfragen zum Zurücksetzen des Passworts. Bitte versuchen Sie es später erneut.",
+    );
   }
 
   const { config } = await getRequestMarket();

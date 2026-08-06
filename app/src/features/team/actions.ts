@@ -8,6 +8,7 @@ import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getRequestMarket } from "@/shared/i18n/request";
+import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -175,6 +176,17 @@ export async function inviteTeamMemberAction(formData: FormData) {
   }
 
   const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
+  const inviteRateLimit = await enforceActionRateLimit({
+    scope: "team_invite",
+    companyId,
+    maxSubmissions: 10,
+    windowMinutes: 10,
+  });
+
+  if (!inviteRateLimit.allowed) {
+    return redirectTeamError("Zu viele Einladungsversuche. Bitte später erneut versuchen.");
+  }
+
   let market: "de" | "us" | "unknown" = "unknown";
 
   try {
@@ -227,6 +239,17 @@ export async function inviteTeamMemberAction(formData: FormData) {
 export async function resendTeamInvitationAction(formData: FormData) {
   const memberId = getStringValue(formData, "member_id");
   const { companyId } = await getOwnerAccess();
+  const resendRateLimit = await enforceActionRateLimit({
+    scope: "team_invite_resend",
+    companyId,
+    maxSubmissions: 10,
+    windowMinutes: 10,
+  });
+
+  if (!resendRateLimit.allowed) {
+    return redirectTeamError("Zu viele Versuche. Bitte später erneut versuchen.");
+  }
+
   let market: "de" | "us" | "unknown" = "unknown";
 
   try {
@@ -295,6 +318,17 @@ export async function resendTeamInvitationAction(formData: FormData) {
 export async function removeTeamMemberAction(formData: FormData) {
   const memberId = getStringValue(formData, "member_id");
   const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
+  const removeRateLimit = await enforceActionRateLimit({
+    scope: "team_member_remove",
+    companyId,
+    maxSubmissions: 10,
+    windowMinutes: 10,
+  });
+
+  if (!removeRateLimit.allowed) {
+    return redirectTeamError("Zu viele Entfernungsversuche. Bitte später erneut versuchen.");
+  }
+
   let market: "de" | "us" | "unknown" = "unknown";
 
   try {
@@ -362,6 +396,16 @@ export async function acceptTeamInvitationAction(formData: FormData) {
   }
 
   const authClient = await createSupabaseServerClient();
+  const acceptRateLimit = await enforceActionRateLimit({
+    scope: "team_invite_accept",
+    maxSubmissions: 8,
+    windowMinutes: 10,
+  });
+
+  if (!acceptRateLimit.allowed) {
+    redirect("/team/accept?error=Zu+viele+Versuche.+Bitte+später+erneut+versuchen.");
+  }
+
   let market: "de" | "us" | "unknown" = "unknown";
 
   try {

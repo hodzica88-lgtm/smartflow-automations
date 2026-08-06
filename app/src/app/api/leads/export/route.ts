@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { resolveMarketFromHost } from "@/shared/i18n/market";
+import { buildRateLimitedResponse, enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -113,6 +114,20 @@ export async function GET(request: Request) {
   const companyState = await getUserCompanyState(user.id, { allowMember: true });
   if (!companyState.companyId) {
     return new Response("Kein Firmenzugriff", { status: 403 });
+  }
+
+  const rateLimit = await enforceActionRateLimit({
+    scope: "leads_export",
+    companyId: companyState.companyId,
+    maxSubmissions: 10,
+    windowMinutes: 10,
+  });
+
+  if (!rateLimit.allowed) {
+    return buildRateLimitedResponse(
+      "Zu viele Exportanfragen. Bitte versuchen Sie es später erneut.",
+      rateLimit.retryAfterSeconds,
+    );
   }
 
   const url = new URL(request.url);
