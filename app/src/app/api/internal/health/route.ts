@@ -1,5 +1,4 @@
 import { loadServerEnv } from "@/shared/config/env";
-import { createErrorResponse } from "@/shared/lib/http/errors";
 import { createEventId, logServerEvent } from "@/shared/lib/observability/logger";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -41,11 +40,29 @@ export async function GET(request: Request) {
   const providedSecret = request.headers.get(INTERNAL_API_SECRET_HEADER);
 
   if (!providedSecret || providedSecret !== internalApiSecret) {
-    return createErrorResponse({
-      status: 401,
-      code: "UNAUTHORIZED",
-      message: "Unauthorized.",
+    const eventId = createEventId("internal_health");
+    logServerEvent("warn", {
+      eventId,
+      message: "Unauthorized internal health access attempt.",
     });
+
+    return jsonResponse(
+      {
+        ok: false,
+        app: "ok",
+        database: "error",
+        counts: {
+          pendingNotifications: 0,
+          failedNotificationsLast24h: 0,
+          staleProcessingNotifications: 0,
+        },
+        error: {
+          code: "UNAUTHORIZED",
+          eventId,
+        },
+      },
+      401,
+    );
   }
 
   const supabase = createSupabaseServiceRoleClient();
