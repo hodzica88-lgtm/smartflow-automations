@@ -1,4 +1,5 @@
-import { SITE_DOMAIN, SITE_NAME } from "@/shared/config/site";
+import { SITE_NAME } from "@/shared/config/site";
+import { getMarketConfig, type MarketCode } from "@/shared/i18n/market";
 
 export type EmailTemplate = {
   subject: string;
@@ -34,230 +35,100 @@ export type TransactionalEmailType =
 
 const FALLBACK_COLOR = "#0f766e";
 
-const EMAIL_TEMPLATES: Record<TransactionalEmailType, EmailTemplate> = {
+const EMAIL_TEMPLATES_DE: Record<TransactionalEmailType, EmailTemplate> = {
   welcome: {
     subject: "Willkommen bei Varnito",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "willkommen bei Varnito. Ihr Zugang ist vorbereitet.",
-      "",
-      "Zum Einstieg: {{dashboard_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "willkommen bei Varnito. Ihr Zugang ist vorbereitet.", "", "Zum Einstieg: {{dashboard_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   email_confirmation: {
     subject: "Bitte bestaetigen Sie Ihre E-Mail-Adresse",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "bitte bestaetigen Sie Ihre E-Mail-Adresse, damit Sie Varnito weiter nutzen koennen.",
-      "",
-      "Bestaetigung: {{confirmation_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "bitte bestaetigen Sie Ihre E-Mail-Adresse, damit Sie Varnito weiter nutzen koennen.", "", "Bestaetigung: {{confirmation_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   password_reset: {
     subject: "Passwort zuruecksetzen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Sie koennen Ihr Passwort ueber den folgenden Link zuruecksetzen:",
-      "{{reset_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Sie koennen Ihr Passwort ueber den folgenden Link zuruecksetzen:", "{{reset_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   password_changed: {
     subject: "Ihr Passwort wurde geaendert",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "das Passwort fuer Ihr Varnito-Konto wurde soeben geaendert.",
-      "Falls Sie das nicht waren, setzen Sie das Passwort sofort zurueck: {{reset_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "das Passwort fuer Ihr Varnito-Konto wurde soeben geaendert.", "Falls Sie das nicht waren, setzen Sie das Passwort sofort zurueck: {{reset_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   team_invited: {
     subject: "Sie wurden zu Varnito eingeladen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Sie wurden zu {{company_name}} in Varnito eingeladen.",
-      "Bitte bestaetigen Sie die Einladung und legen Sie Ihren Zugang an:",
-      "{{invite_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Sie wurden zu {{company_name}} in Varnito eingeladen.", "Bitte bestaetigen Sie die Einladung und legen Sie Ihren Zugang an:", "{{invite_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   invite_accepted: {
     subject: "Einladung angenommen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "{{full_name}} hat die Einladung angenommen und den Zugang aktiviert.",
-      "",
-      "Dashboard: {{dashboard_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "{{full_name}} hat die Einladung angenommen und den Zugang aktiviert.", "", "Dashboard: {{dashboard_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   new_inquiry: {
     subject: "Neue Anfrage fuer {{company_name}}",
-    body: [
-      "Neue Anfrage eingegangen.",
-      "",
-      "Name: {{lead_name}}",
-      "Telefon: {{lead_phone}}",
-      "E-Mail: {{lead_email}}",
-      "Anfrageart: {{lead_inquiry_type}}",
-      "Nachricht: {{lead_message}}",
-      "",
-      "Dashboard: {{dashboard_url}}",
-      "",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Neue Anfrage eingegangen.", "", "Name: {{lead_name}}", "Telefon: {{lead_phone}}", "E-Mail: {{lead_email}}", "Anfrageart: {{lead_inquiry_type}}", "Nachricht: {{lead_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n"),
   },
   customer_confirmation: {
     subject: "Ihre Anfrage bei {{company_name}} ist eingegangen",
-    body: [
-      "Hallo {{lead_name}},",
-      "",
-      "vielen Dank fuer Ihre Anfrage bei {{company_name}}. Wir melden uns zeitnah bei Ihnen.",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{lead_name}},", "", "vielen Dank fuer Ihre Anfrage bei {{company_name}}. Wir melden uns zeitnah bei Ihnen.", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   trial_started: {
     subject: "Ihre Testphase mit Varnito hat begonnen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihre 30-taegige Testphase mit Varnito wurde gestartet.",
-      "Die Verwaltung finden Sie hier: {{dashboard_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihre 30-taegige Testphase mit Varnito wurde gestartet.", "Die Verwaltung finden Sie hier: {{dashboard_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   trial_ends_7_days: {
     subject: "Ihre Testphase endet in 7 Tagen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihre Testphase fuer {{company_name}} endet in 7 Tagen.",
-      "Pruefen Sie Billing und Zugang hier: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihre Testphase fuer {{company_name}} endet in 7 Tagen.", "Pruefen Sie Billing und Zugang hier: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   trial_ends_tomorrow: {
     subject: "Ihre Testphase endet morgen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihre Testphase fuer {{company_name}} endet morgen.",
-      "Bitte pruefen Sie Ihren Zugang hier: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihre Testphase fuer {{company_name}} endet morgen.", "Bitte pruefen Sie Ihren Zugang hier: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   trial_ended: {
     subject: "Ihre Testphase ist beendet",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Die Testphase fuer {{company_name}} ist beendet.",
-      "Wenn Sie Varnito weiter nutzen moechten, oeffnen Sie Billing: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Die Testphase fuer {{company_name}} ist beendet.", "Wenn Sie Varnito weiter nutzen moechten, oeffnen Sie Billing: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   checkout_success: {
     subject: "Checkout erfolgreich abgeschlossen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "der Checkout fuer {{company_name}} wurde erfolgreich abgeschlossen.",
-      "Zum Billing-Bereich: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "der Checkout fuer {{company_name}} wurde erfolgreich abgeschlossen.", "Zum Billing-Bereich: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   payment_success: {
     subject: "Zahlung erfolgreich",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihre Zahlung wurde erfolgreich verarbeitet.",
-      "Billing: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihre Zahlung wurde erfolgreich verarbeitet.", "Billing: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   payment_failed: {
     subject: "Zahlung fehlgeschlagen",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Eine Zahlung fuer {{company_name}} konnte nicht verarbeitet werden.",
-      "Bitte pruefen Sie Ihre Zahlungsdaten im Billing-Bereich: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Eine Zahlung fuer {{company_name}} konnte nicht verarbeitet werden.", "Bitte pruefen Sie Ihre Zahlungsdaten im Billing-Bereich: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   subscription_canceled: {
     subject: "Abonnement gekuendigt",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihr Abonnement fuer {{company_name}} wurde gekuendigt.",
-      "Sie koennen es im Billing-Bereich ueberpruefen: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihr Abonnement fuer {{company_name}} wurde gekuendigt.", "Sie koennen es im Billing-Bereich ueberpruefen: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   subscription_reactivated: {
     subject: "Abonnement reaktiviert",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Ihr Abonnement fuer {{company_name}} wurde wieder aktiviert.",
-      "Billing: {{billing_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Ihr Abonnement fuer {{company_name}} wurde wieder aktiviert.", "Billing: {{billing_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
   member_removed: {
     subject: "Mitarbeiterzugang entfernt",
-    body: [
-      "Hallo {{name}},",
-      "",
-      "Der Zugang von {{member_name}} wurde entfernt.",
-      "Falls das nicht beabsichtigt war, pruefen Sie bitte die Teamverwaltung: {{dashboard_url}}",
-      "",
-      "Viele Gruesse",
-      "{{signature}}",
-    ].join("\n"),
+    body: ["Hallo {{name}},", "", "Der Zugang von {{member_name}} wurde entfernt.", "Falls das nicht beabsichtigt war, pruefen Sie bitte die Teamverwaltung: {{dashboard_url}}", "", "Viele Gruesse", "{{signature}}"].join("\n"),
   },
+};
+
+const EMAIL_TEMPLATES_US: Record<TransactionalEmailType, EmailTemplate> = {
+  welcome: { subject: "Welcome to Varnito", body: ["Hi {{name}},", "", "welcome to Varnito. Your account is ready.", "", "Get started: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  email_confirmation: { subject: "Please confirm your email address", body: ["Hi {{name}},", "", "please confirm your email address to continue using Varnito.", "", "Confirm here: {{confirmation_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  password_reset: { subject: "Reset your password", body: ["Hi {{name}},", "", "You can reset your password using this link:", "{{reset_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  password_changed: { subject: "Your password was changed", body: ["Hi {{name}},", "", "the password for your Varnito account was just changed.", "If this was not you, reset it immediately: {{reset_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  team_invited: { subject: "You were invited to Varnito", body: ["Hi {{name}},", "", "You were invited to {{company_name}} in Varnito.", "Accept your invitation and activate your access:", "{{invite_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  invite_accepted: { subject: "Invitation accepted", body: ["Hi {{name}},", "", "{{full_name}} accepted the invitation and activated access.", "", "Dashboard: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  new_inquiry: { subject: "New inquiry for {{company_name}}", body: ["A new inquiry was received.", "", "Name: {{lead_name}}", "Phone: {{lead_phone}}", "Email: {{lead_email}}", "Inquiry type: {{lead_inquiry_type}}", "Message: {{lead_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n") },
+  customer_confirmation: { subject: "Your inquiry at {{company_name}} was received", body: ["Hi {{lead_name}},", "", "thanks for contacting {{company_name}}. We will follow up shortly.", "", "Best regards", "{{signature}}"].join("\n") },
+  trial_started: { subject: "Your Varnito trial has started", body: ["Hi {{name}},", "", "Your 30-day Varnito trial has started.", "Manage your account here: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  trial_ends_7_days: { subject: "Your trial ends in 7 days", body: ["Hi {{name}},", "", "Your trial for {{company_name}} ends in 7 days.", "Review billing and access here: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  trial_ends_tomorrow: { subject: "Your trial ends tomorrow", body: ["Hi {{name}},", "", "Your trial for {{company_name}} ends tomorrow.", "Review your access here: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  trial_ended: { subject: "Your trial has ended", body: ["Hi {{name}},", "", "The trial for {{company_name}} has ended.", "To continue using Varnito, open billing: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  checkout_success: { subject: "Checkout completed successfully", body: ["Hi {{name}},", "", "Checkout for {{company_name}} completed successfully.", "Open billing here: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  payment_success: { subject: "Payment successful", body: ["Hi {{name}},", "", "Your payment was processed successfully.", "Billing: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  payment_failed: { subject: "Payment failed", body: ["Hi {{name}},", "", "A payment for {{company_name}} could not be processed.", "Please review payment details in billing: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  subscription_canceled: { subject: "Subscription canceled", body: ["Hi {{name}},", "", "Your subscription for {{company_name}} was canceled.", "You can review billing here: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  subscription_reactivated: { subject: "Subscription reactivated", body: ["Hi {{name}},", "", "Your subscription for {{company_name}} was reactivated.", "Billing: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },
+  member_removed: { subject: "Team member access removed", body: ["Hi {{name}},", "", "Access for {{member_name}} was removed.", "If this was not intended, review team management: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
 };
 
 const replaceTemplateVariables = (
@@ -284,7 +155,7 @@ const escapeHtml = (value: string) =>
 const bodyToHtml = (body: string) =>
   body
     .split("\n")
-    .map((line) => (line.trim().length > 0 ? `<p style="margin:0 0 12px;">${escapeHtml(line)}</p>` : "<div style=\"height:8px;\"></div>"))
+    .map((line) => (line.trim().length > 0 ? `<p style="margin:0 0 12px;">${escapeHtml(line)}</p>` : '<div style="height:8px;"></div>'))
     .join("");
 
 const resolveCompanyName = (branding?: EmailBranding | null) =>
@@ -293,25 +164,34 @@ const resolveCompanyName = (branding?: EmailBranding | null) =>
 const resolveSignature = (branding?: EmailBranding | null) =>
   branding?.signature?.trim() || SITE_NAME;
 
-export const getTransactionalEmailTemplate = (type: TransactionalEmailType) => {
-  return EMAIL_TEMPLATES[type];
+const getTemplatesForMarket = (market: MarketCode) =>
+  market === "us" ? EMAIL_TEMPLATES_US : EMAIL_TEMPLATES_DE;
+
+export const getTransactionalEmailTemplate = (
+  type: TransactionalEmailType,
+  market: MarketCode = "de",
+) => {
+  return getTemplatesForMarket(market)[type];
 };
 
 export const composeTransactionalEmail = (
   type: TransactionalEmailType,
   values: Record<string, string | null | undefined>,
   branding?: EmailBranding | null,
+  options?: { market?: MarketCode },
 ) => {
-  const template = getTransactionalEmailTemplate(type);
+  const market = options?.market ?? "de";
+  const marketConfig = getMarketConfig(market);
+  const template = getTransactionalEmailTemplate(type, market);
   const companyName = resolveCompanyName(branding);
   const signature = resolveSignature(branding);
   const nextValues = {
     company_name: companyName,
-    dashboard_url: `${SITE_DOMAIN}/dashboard`,
-    billing_url: `${SITE_DOMAIN}/dashboard/billing`,
-    confirmation_url: `${SITE_DOMAIN}/login`,
-    invite_url: `${SITE_DOMAIN}/team/accept`,
-    reset_url: `${SITE_DOMAIN}/forgot-password`,
+    dashboard_url: `${marketConfig.siteUrl}/dashboard`,
+    billing_url: `${marketConfig.siteUrl}/dashboard/billing`,
+    confirmation_url: `${marketConfig.siteUrl}/login`,
+    invite_url: `${marketConfig.siteUrl}/team/accept`,
+    reset_url: `${marketConfig.siteUrl}/forgot-password`,
     signature,
     ...values,
   };

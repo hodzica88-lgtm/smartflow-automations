@@ -3,6 +3,7 @@ import { loadServerEnv } from "@/shared/config/env";
 import { getCompanyBranding } from "@/features/branding/service";
 import { composeTransactionalEmail } from "@/features/email/service";
 import { sendLeadPushNotificationsForCompany } from "@/features/push/server";
+import { resolveMarketFromHost } from "@/shared/i18n/market";
 
 const INTERNAL_API_SECRET_HEADER = "x-internal-api-secret";
 const MAX_QUEUE_BATCH = 25;
@@ -209,6 +210,8 @@ const isTemporaryBrevoHttpFailure = (status: number) =>
 
 export async function POST(request: Request) {
   const serverEnv = loadServerEnv();
+  const requestHost = new URL(request.url).host;
+  const market = resolveMarketFromHost(requestHost);
   const internalApiSecret = serverEnv.internalApiSecret;
 
   if (!internalApiSecret) {
@@ -391,6 +394,7 @@ export async function POST(request: Request) {
             primaryColor: branding.primaryColor,
             signature: branding.signature,
           },
+          { market },
         );
 
         const replyToCandidate =
@@ -434,6 +438,7 @@ export async function POST(request: Request) {
             primaryColor: branding.primaryColor,
             signature: branding.signature,
           },
+          { market },
         );
 
         const ownerRecipientEmail =

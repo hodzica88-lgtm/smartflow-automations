@@ -50,4 +50,20 @@ describe("composeTransactionalEmail", () => {
     expect(email.textContent).toContain("Laura Beispiel");
     expect(email.htmlContent).toContain("Laura Beispiel");
   });
+
+  it("renders US email templates with varnito.com links", () => {
+    const email = composeTransactionalEmail(
+      "trial_started",
+      { name: "Alex" },
+      {
+        companyName: "Service Pros LLC",
+      },
+      { market: "us" },
+    );
+
+    expect(email.subject).toBe("Your Varnito trial has started");
+    expect(email.textContent).toContain("https://varnito.com/dashboard");
+    expect(email.htmlContent).toContain("https://varnito.com/dashboard");
+    expect(email.textContent).not.toContain("https://varnito.de");
+  });
 });
