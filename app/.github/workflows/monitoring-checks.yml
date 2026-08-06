@@ -1,0 +1,55 @@
+name: Monitoring Checks
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+jobs:
+  uptime-and-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check varnito.de
+        run: |
+          set -euo pipefail
+          URL="https://varnito.de"
+          HTTP_CODE=$(curl -sS -o /tmp/varnito-de.out -w "%{http_code}" --max-time 20 "$URL")
+          TIME_TOTAL=$(curl -sS -o /dev/null -w "%{time_total}" --max-time 20 "$URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "varnito.de check failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "varnito.de ok: HTTP $HTTP_CODE, ${TIME_TOTAL}s"
+
+      - name: Check varnito.com
+        run: |
+          set -euo pipefail
+          URL="https://varnito.com"
+          HTTP_CODE=$(curl -sS -o /tmp/varnito-com.out -w "%{http_code}" --max-time 20 "$URL")
+          TIME_TOTAL=$(curl -sS -o /dev/null -w "%{time_total}" --max-time 20 "$URL")
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 400 ]; then
+            echo "varnito.com check failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "varnito.com ok: HTTP $HTTP_CODE, ${TIME_TOTAL}s"
+
+      - name: Check /api/health on both domains
+        run: |
+          set -euo pipefail
+          for URL in "https://varnito.de/api/health" "https://varnito.com/api/health"; do
+            HTTP_CODE=$(curl -sS -o /tmp/health.out -w "%{http_code}" --max-time 20 "$URL")
+            if [ "$HTTP_CODE" -ne 200 ]; then
+              echo "$URL failed with HTTP $HTTP_CODE"
+              exit 1
+            fi
+
+            BODY=$(cat /tmp/health.out)
+            if ! echo "$BODY" | grep -Eq '"status"\s*:\s*"ok"'; then
+              echo "$URL returned unexpected body"
+              exit 1
+            fi
+
+            TIME_TOTAL=$(curl -sS -o /dev/null -w "%{time_total}" --max-time 20 "$URL")
+            echo "$URL ok: HTTP 200, ${TIME_TOTAL}s"
+          done
