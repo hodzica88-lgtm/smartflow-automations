@@ -69,7 +69,7 @@ export function DemoProvider({
             ...prev.team,
             {
               id: nextId,
-              fullName: cleanEmail.split("@")[0] ?? "Neues Teammitglied",
+              fullName: cleanEmail.split("@")[0] ?? (prev.market === "us" ? "New member" : "Neues Teammitglied"),
               email: cleanEmail,
               role: "member",
               status: "pending",

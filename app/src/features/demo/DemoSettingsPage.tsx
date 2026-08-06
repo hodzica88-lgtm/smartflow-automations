@@ -1,12 +1,17 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
+import { getDemoCopy } from "@/features/demo/copy";
 import { useDemo } from "@/features/demo/useDemo";
 import styles from "@/features/demo/demo.module.css";
 
 export default function DemoSettingsPage() {
   const { state, addInquiryType, toggleInquiryType, updateSettings } = useDemo();
+  const copy = getDemoCopy(state.market);
+  const searchParams = useSearchParams();
+  const isHighlighted = searchParams.get("highlight") === "settings";
   const [inquiryType, setInquiryType] = useState("");
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -31,58 +36,58 @@ export default function DemoSettingsPage() {
 
   return (
     <main className={styles.shell}>
-      <section className={styles.hero}>
-        <h1 style={{ margin: 0 }}>Einstellungen</h1>
-        <p className={styles.muted}>Firmendaten, Benachrichtigungen und Anfragearten werden live simuliert.</p>
+      <section className={`${styles.hero} ${isHighlighted ? styles.highlightedSection : ""}`}>
+        <h1 style={{ margin: 0 }}>{copy.settings.title}</h1>
+        <p className={styles.muted}>{copy.settings.description}</p>
       </section>
 
       <form className={styles.card} onSubmit={onSubmit}>
-        <h2 style={{ margin: 0 }}>Firma</h2>
+        <h2 style={{ margin: 0 }}>{copy.settings.company}</h2>
         <div className={`${styles.grid} ${styles.two}`}>
           <label>
-            <span>Ansprechpartner</span>
+            <span>{copy.settings.contactPerson}</span>
             <input className={styles.input} name="contact_person" defaultValue={state.settings.contactPerson} />
           </label>
           <label>
-            <span>E-Mail</span>
+            <span>{copy.settings.companyEmail}</span>
             <input className={styles.input} name="company_email" defaultValue={state.settings.companyEmail} />
           </label>
           <label>
-            <span>Benachrichtigungs-E-Mail</span>
+            <span>{copy.settings.notificationEmail}</span>
             <input className={styles.input} name="notification_email" defaultValue={state.settings.notificationEmail} />
           </label>
           <label>
-            <span>Telefon</span>
+            <span>{copy.settings.phone}</span>
             <input className={styles.input} name="phone" defaultValue={state.settings.phone} />
           </label>
           <label>
-            <span>Website</span>
+            <span>{copy.settings.website}</span>
             <input className={styles.input} name="website_url" defaultValue={state.settings.websiteUrl} />
           </label>
           <label>
-            <span>Zeitzone</span>
+            <span>{copy.settings.timezone}</span>
             <input className={styles.input} name="timezone" defaultValue={state.settings.timezone} />
           </label>
         </div>
 
         <label>
-          <span>Business Hours</span>
+          <span>{copy.settings.businessHours}</span>
           <textarea className={styles.textarea} name="business_hours" defaultValue={state.settings.businessHours} />
         </label>
 
-        <button type="submit" className={styles.button}>Aenderungen simulieren</button>
+        <button type="submit" className={styles.button}>{copy.settings.saveSimulation}</button>
       </form>
 
       <section className={styles.card}>
-        <h2 style={{ margin: 0 }}>Anfragearten</h2>
+        <h2 style={{ margin: 0 }}>{copy.settings.inquiryTypes}</h2>
         <form className={styles.row} onSubmit={onAddInquiryType}>
           <input
             className={styles.input}
             value={inquiryType}
             onChange={(event) => setInquiryType(event.target.value)}
-            placeholder="Neue Anfrageart"
+            placeholder={copy.settings.newInquiryType}
           />
-          <button type="submit" className={styles.buttonSecondary}>Hinzufuegen</button>
+          <button type="submit" className={styles.buttonSecondary}>{copy.settings.add}</button>
         </form>
 
         <div className={styles.grid}>
@@ -90,7 +95,7 @@ export default function DemoSettingsPage() {
             <article key={entry.id} className={styles.row} style={{ justifyContent: "space-between" }}>
               <strong>{entry.name}</strong>
               <button type="button" className={styles.buttonSecondary} onClick={() => toggleInquiryType(entry.id)}>
-                {entry.active ? "Aktiv" : "Inaktiv"}
+                {entry.active ? copy.settings.active : copy.settings.inactive}
               </button>
             </article>
           ))}

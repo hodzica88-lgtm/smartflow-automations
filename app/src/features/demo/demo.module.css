@@ -156,6 +156,95 @@
   margin: 0;
 }
 
+.highlightedSection {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.guideRoot {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 50;
+}
+
+.guideToggle {
+  min-height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e0;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.guidePanel {
+  width: min(24rem, calc(100vw - 2rem));
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.625rem;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.2);
+}
+
+.guideHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guideSuggestions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.suggestion {
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.guideMessages {
+  max-height: 16rem;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.4rem;
+  padding-right: 0.2rem;
+}
+
+.assistantMsg,
+.userMsg {
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.assistantMsg {
+  background: #eef2ff;
+  color: #1f2937;
+}
+
+.userMsg {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.guideInputRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
 @media (max-width: 640px) {
   .shell {
     padding: 1rem 0.75rem 5rem;
@@ -165,5 +254,16 @@
     left: 0.75rem;
     right: 0.75rem;
     width: auto;
+    bottom: 4.8rem;
+  }
+
+  .guideRoot {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+
+  .guidePanel {
+    width: 100%;
   }
 }

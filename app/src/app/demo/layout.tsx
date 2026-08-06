@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import DemoBanner from "@/features/demo/DemoBanner";
+import DemoGuide from "@/features/demo/DemoGuide";
 import { DemoProvider } from "@/features/demo/DemoProvider";
 import DemoTour from "@/features/demo/DemoTour";
+import { getDemoCopy } from "@/features/demo/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 
 const navStyle = {
@@ -23,10 +25,12 @@ const linkStyle = {
 } as const;
 
 export default async function DemoLayout({ children }: { children: React.ReactNode }) {
-  const { market } = await getRequestMarket();
+  const { market, config } = await getRequestMarket();
+  const copy = getDemoCopy(market);
+  const registerHref = `${config.siteUrl}/registrierung`;
 
   return (
-    <DemoProvider market={market}>
+    <DemoProvider key={market} market={market}>
       <DemoBanner />
       <header
         style={{
@@ -50,21 +54,22 @@ export default async function DemoLayout({ children }: { children: React.ReactNo
           }}
         >
           <div style={navStyle}>
-            <Link href="/demo/dashboard" style={linkStyle}>Dashboard</Link>
-            <Link href="/demo/leads" style={linkStyle}>Leads</Link>
-            <Link href="/demo/team" style={linkStyle}>Team</Link>
-            <Link href="/demo/billing" style={linkStyle}>Billing</Link>
-            <Link href="/demo/settings" style={linkStyle}>Einstellungen</Link>
+            <Link href="/demo/dashboard" style={linkStyle}>{copy.nav.dashboard}</Link>
+            <Link href="/demo/leads" style={linkStyle}>{copy.nav.leads}</Link>
+            <Link href="/demo/team" style={linkStyle}>{copy.nav.team}</Link>
+            <Link href="/demo/billing" style={linkStyle}>{copy.nav.billing}</Link>
+            <Link href="/demo/settings" style={linkStyle}>{copy.nav.settings}</Link>
           </div>
 
-          <Link href="/registrierung" style={linkStyle}>
-            Jetzt kostenlos starten
+          <Link href={registerHref} style={linkStyle}>
+            {copy.startFreeButton}
           </Link>
         </div>
       </header>
 
       {children}
-      <DemoTour market={market} />
+      <DemoTour market={market} registerHref={registerHref} />
+      <DemoGuide />
     </DemoProvider>
   );
 }

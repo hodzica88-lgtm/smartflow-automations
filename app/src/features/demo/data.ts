@@ -132,7 +132,7 @@ const getTeam = (market: DemoMarket): DemoTeamMember[] => {
 };
 
 export const createDemoState = (market: DemoMarket): DemoState => {
-  const companyName = market === "us" ? "Smith Roofing LLC" : "Mueller Bedachungen GmbH";
+  const companyName = market === "us" ? "Smith Roofing LLC" : "Müller Bedachungen GmbH";
 
   return {
     market,
