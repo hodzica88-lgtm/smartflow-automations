@@ -6,7 +6,7 @@ import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/ser
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { SITE_DOMAIN } from "@/shared/config/site";
+import { getRequestMarket } from "@/shared/i18n/request";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 const getStringValue = (formData: FormData, key: string) => {
@@ -129,9 +129,10 @@ export const forgotPasswordAction = async (formData: FormData) => {
     redirectWithError("/forgot-password", "Bitte geben Sie Ihre E-Mail-Adresse ein.");
   }
 
+  const { config } = await getRequestMarket();
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${SITE_DOMAIN}/login`,
+    redirectTo: `${config.siteUrl}/login`,
   });
 
   redirect("/forgot-password?sent=1");

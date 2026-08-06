@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { SITE_DOMAIN } from "@/shared/config/site";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 const DISALLOWED_PATHS = [
   "/api/",
@@ -13,7 +13,9 @@ const DISALLOWED_PATHS = [
   "/c/",
 ] as const;
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const { config } = await getRequestMarket();
+
   return {
     rules: [
       {
@@ -22,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [...DISALLOWED_PATHS],
       },
     ],
-    sitemap: `${SITE_DOMAIN}/sitemap.xml`,
-    host: SITE_DOMAIN,
+    sitemap: `${config.siteUrl}/sitemap.xml`,
+    host: config.siteUrl,
   };
 }

@@ -1,12 +1,28 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/shared/i18n/request", () => ({
+  getRequestMarket: async () => ({
+    market: "de",
+    host: "varnito.de",
+    config: {
+      code: "de",
+      domain: "varnito.de",
+      language: "de",
+      locale: "de-DE",
+      currency: "eur",
+      siteUrl: "https://varnito.de",
+      legalContactEmail: "kontakt@varnito.de",
+    },
+  }),
+}));
 
 import robots from "./robots";
 import sitemap from "./sitemap";
 import { SEO_INDEXABLE_PAGES, SITE_DOMAIN } from "@/shared/config/site";
 
 describe("technical SEO routes", () => {
-  it("publishes the varnito.de sitemap and blocks internal areas", () => {
-    const robotsConfig = robots();
+  it("publishes the varnito.de sitemap and blocks internal areas", async () => {
+    const robotsConfig = await robots();
     const [rule] = robotsConfig.rules as Array<{
       allow?: string | string[];
       disallow?: string | string[];
@@ -35,8 +51,8 @@ describe("technical SEO routes", () => {
     ]);
   });
 
-  it("lists only the public indexable varnito.de pages in the sitemap", () => {
-    const entries = sitemap();
+  it("lists only the public indexable varnito.de pages in the sitemap", async () => {
+    const entries = await sitemap();
 
     expect(entries).toHaveLength(SEO_INDEXABLE_PAGES.length);
     expect(entries.map((entry) => entry.url)).toEqual(

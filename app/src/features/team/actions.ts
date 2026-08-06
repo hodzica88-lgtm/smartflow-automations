@@ -6,7 +6,7 @@ import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/ser
 import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
-import { SITE_DOMAIN } from "@/shared/config/site";
+import { getRequestMarket } from "@/shared/i18n/request";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -113,6 +113,7 @@ const getOwnerAccess = async () => {
 
 const createPendingMember = async (companyId: string, emailInput: string) => {
   const email = emailInput.trim().toLowerCase();
+  const { config } = await getRequestMarket();
   const supabase = createSupabaseServiceRoleClient();
 
   await cleanupPendingMemberByEmail(companyId, email, supabase);
@@ -123,7 +124,7 @@ const createPendingMember = async (companyId: string, emailInput: string) => {
         varnito_company_id: companyId,
         varnito_role: "member",
       },
-      redirectTo: `${SITE_DOMAIN}/team/accept`,
+      redirectTo: `${config.siteUrl}/team/accept`,
     });
 
   if (inviteError || !invited.user) {

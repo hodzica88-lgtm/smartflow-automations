@@ -1,12 +1,14 @@
 import type { MetadataRoute } from "next";
 
-import { SEO_INDEXABLE_PAGES, SITE_DOMAIN } from "@/shared/config/site";
+import { SEO_INDEXABLE_PAGES } from "@/shared/config/site";
+import { getRequestMarket } from "@/shared/i18n/request";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { config } = await getRequestMarket();
   const updatedAt = new Date();
 
   return SEO_INDEXABLE_PAGES.map((path) => ({
-    url: `${SITE_DOMAIN}${path}`,
+    url: `${config.siteUrl}${path}`,
     lastModified: updatedAt,
     changeFrequency: path === "/" ? "weekly" : "yearly",
     priority: path === "/" ? 1 : 0.6,
