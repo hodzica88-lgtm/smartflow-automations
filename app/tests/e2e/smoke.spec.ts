@@ -54,3 +54,15 @@ test("health endpoint responds", async ({ request }) => {
   expect(payload).toHaveProperty("counts");
   expect(payload).toHaveProperty("ok");
 });
+
+test("public health endpoint responds with minimal payload", async ({ request }) => {
+  const response = await request.get("/api/health");
+
+  expect([200, 503]).toContain(response.status());
+  const payload = (await response.json()) as {
+    status?: unknown;
+  };
+
+  expect(payload).toHaveProperty("status");
+  expect(["ok", "degraded"]).toContain(payload.status);
+});
