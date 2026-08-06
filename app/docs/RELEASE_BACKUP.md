@@ -42,7 +42,9 @@ bash scripts/backup-release.sh v1.1.0
 ./scripts/backup-release.sh --dry-run v1.1.0
 ```
 
-Dry-Run fuehrt alle Prüfungen aus und zeigt geplante Schritte an, erzeugt aber keine Tags, pusht nichts und schreibt keine Dateien.
+Dry-Run fuehrt alle gefahrlosen Pruefungen aus und zeigt geplante Schritte an, erzeugt aber keine Tags, pusht nichts und schreibt keine Dateien.
+
+Wenn serverseitige Ressourcen lokal nicht vorhanden sind (z. B. `/opt/anfragepilot`, Docker-Image oder `/home/varnitoadmin/backups/releases`), aktiviert das Skript automatisch einen klar gekennzeichneten Simulationsmodus. Die echte Ausfuehrung ohne `--dry-run` ueberspringt diese Pruefungen niemals.
 
 ## Was gesichert wird
 

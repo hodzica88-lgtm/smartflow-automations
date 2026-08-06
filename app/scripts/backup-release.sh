@@ -9,13 +9,28 @@ ENV_FILE="${APP_DIR}/.env.production"
 DOCKER_IMAGE="anfragepilot-app:latest"
 BACKUP_BASE_DIR="/home/varnitoadmin/backups/releases"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 RELEASE_DIR=""
 RELEASE_DIR_CREATED=0
 DRY_RUN=0
 VERSION=""
+SIMULATION_MODE=0
+SIMULATION_NOTES=""
+GIT_CONTEXT_ROOT="${PROJECT_ROOT}"
+HAS_SERVER_PROJECT=0
+HAS_SERVER_ENV=0
+HAS_SERVER_DOCKER_IMAGE=0
+HAS_SERVER_BACKUP_BASE=0
+HAS_DOCKER_COMMAND=0
 
 log() {
   printf '[INFO] %s\n' "$1"
+}
+
+warn() {
+  printf '[WARN] %s\n' "$1" >&2
 }
 
 fail() {
@@ -45,9 +60,36 @@ Version must match: vMAJOR.MINOR.PATCH (example: v1.1.0)
 USAGE
 }
 
+append_simulation_note() {
+  local note="$1"
+  SIMULATION_MODE=1
+  if [[ -z "${SIMULATION_NOTES}" ]]; then
+    SIMULATION_NOTES="${note}"
+  else
+    SIMULATION_NOTES="${SIMULATION_NOTES}; ${note}"
+  fi
+}
+
 require_command() {
   local cmd="$1"
   command -v "$cmd" >/dev/null 2>&1 || fail "Required command not found: ${cmd}"
+}
+
+require_command_or_simulate() {
+  local cmd="$1"
+  local note="$2"
+
+  if command -v "$cmd" >/dev/null 2>&1; then
+    return
+  fi
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Missing command ${cmd}"
+    warn "[DRY-RUN][SIMULATION] ${note}"
+    return
+  fi
+
+  fail "Required command not found: ${cmd}"
 }
 
 require_path_exists() {
@@ -77,21 +119,32 @@ validate_version() {
 
 ensure_git_clean() {
   local status
-  status="$(git -C "${PROJECT_ROOT}" status --porcelain)"
-  [[ -z "${status}" ]] || fail "Git working tree is not clean in ${PROJECT_ROOT}."
+  status="$(git -C "${GIT_CONTEXT_ROOT}" status --porcelain)"
+
+  if [[ -z "${status}" ]]; then
+    return
+  fi
+
+  if [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Git working tree not clean in ${GIT_CONTEXT_ROOT}"
+    warn "[DRY-RUN][SIMULATION] Git working tree is not clean in ${GIT_CONTEXT_ROOT}."
+    return
+  fi
+
+  fail "Git working tree is not clean in ${GIT_CONTEXT_ROOT}."
 }
 
 ensure_remote_reachable() {
-  git -C "${PROJECT_ROOT}" ls-remote --exit-code origin >/dev/null 2>&1 || fail "Git remote origin is not reachable."
+  git -C "${GIT_CONTEXT_ROOT}" ls-remote --exit-code origin >/dev/null 2>&1 || fail "Git remote origin is not reachable."
 }
 
 resolve_remote_tag_commit() {
   local version="$1"
   local remote_commit
 
-  remote_commit="$(git -C "${PROJECT_ROOT}" ls-remote --tags origin "refs/tags/${version}^{}" | awk 'NR==1{print $1}')"
+  remote_commit="$(git -C "${GIT_CONTEXT_ROOT}" ls-remote --tags origin "refs/tags/${version}^{}" | awk 'NR==1{print $1}')"
   if [[ -z "${remote_commit}" ]]; then
-    remote_commit="$(git -C "${PROJECT_ROOT}" ls-remote --tags origin "refs/tags/${version}" | awk 'NR==1{print $1}')"
+    remote_commit="$(git -C "${GIT_CONTEXT_ROOT}" ls-remote --tags origin "refs/tags/${version}" | awk 'NR==1{print $1}')"
   fi
 
   printf '%s' "${remote_commit}"
@@ -102,8 +155,8 @@ ensure_tag_state() {
   local local_tag_commit=""
   local remote_tag_commit=""
 
-  if git -C "${PROJECT_ROOT}" rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
-    local_tag_commit="$(git -C "${PROJECT_ROOT}" rev-list -n1 "${VERSION}")"
+  if git -C "${GIT_CONTEXT_ROOT}" rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
+    local_tag_commit="$(git -C "${GIT_CONTEXT_ROOT}" rev-list -n1 "${VERSION}")"
     if [[ "${local_tag_commit}" != "${commit_sha}" ]]; then
       fail "Local tag ${VERSION} exists but points to ${local_tag_commit}, not ${commit_sha}."
     fi
@@ -130,15 +183,73 @@ create_or_verify_tag() {
     return
   fi
 
-  if ! git -C "${PROJECT_ROOT}" rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
-    git -C "${PROJECT_ROOT}" tag "${VERSION}" "${commit_sha}"
+  if ! git -C "${GIT_CONTEXT_ROOT}" rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null 2>&1; then
+    git -C "${GIT_CONTEXT_ROOT}" tag "${VERSION}" "${commit_sha}"
     log "Created tag ${VERSION} on ${commit_sha}."
   else
     log "Tag ${VERSION} already exists locally on ${commit_sha}."
   fi
 
-  git -C "${PROJECT_ROOT}" push origin "refs/tags/${VERSION}"
+  git -C "${GIT_CONTEXT_ROOT}" push origin "refs/tags/${VERSION}"
   log "Pushed tag ${VERSION} to origin."
+}
+
+detect_or_simulate_server_prerequisites() {
+  if [[ -d "${PROJECT_ROOT}" ]]; then
+    HAS_SERVER_PROJECT=1
+  elif [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Missing ${PROJECT_ROOT}"
+    warn "[DRY-RUN][SIMULATION] Required path not found: ${PROJECT_ROOT}"
+  else
+    fail "Required path not found: ${PROJECT_ROOT}"
+  fi
+
+  if [[ -f "${ENV_FILE}" ]]; then
+    HAS_SERVER_ENV=1
+  elif [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Missing ${ENV_FILE}"
+    warn "[DRY-RUN][SIMULATION] Required env file not found: ${ENV_FILE}"
+  else
+    fail "Missing env file: ${ENV_FILE}"
+  fi
+
+  if [[ "${HAS_DOCKER_COMMAND}" -eq 1 ]]; then
+    if docker image inspect "${DOCKER_IMAGE}" >/dev/null 2>&1; then
+      HAS_SERVER_DOCKER_IMAGE=1
+    elif [[ "${DRY_RUN}" -eq 1 ]]; then
+      append_simulation_note "Missing Docker image ${DOCKER_IMAGE}"
+      warn "[DRY-RUN][SIMULATION] Docker image not found: ${DOCKER_IMAGE}"
+    else
+      fail "Docker image not found: ${DOCKER_IMAGE}"
+    fi
+  elif [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Missing docker command"
+    warn "[DRY-RUN][SIMULATION] Docker command not found; image check simulated."
+  else
+    fail "Required command not found: docker"
+  fi
+
+  if [[ -d "${BACKUP_BASE_DIR}" ]]; then
+    HAS_SERVER_BACKUP_BASE=1
+    if [[ "${DRY_RUN}" -eq 0 ]]; then
+      ensure_writable "${BACKUP_BASE_DIR}"
+    fi
+  elif [[ "${DRY_RUN}" -eq 1 ]]; then
+    append_simulation_note "Missing ${BACKUP_BASE_DIR}"
+    warn "[DRY-RUN][SIMULATION] Backup base directory not found: ${BACKUP_BASE_DIR}"
+  else
+    fail "Required path not found: ${BACKUP_BASE_DIR}"
+  fi
+
+  if [[ "${HAS_SERVER_PROJECT}" -eq 1 && -d "${PROJECT_ROOT}/.git" ]]; then
+    GIT_CONTEXT_ROOT="${PROJECT_ROOT}"
+  elif [[ "${DRY_RUN}" -eq 1 ]]; then
+    GIT_CONTEXT_ROOT="${LOCAL_REPO_ROOT}"
+    append_simulation_note "Using local git context ${LOCAL_REPO_ROOT}"
+    warn "[DRY-RUN][SIMULATION] Using local git context: ${LOCAL_REPO_ROOT}"
+  else
+    fail "Git repository not found at ${PROJECT_ROOT}"
+  fi
 }
 
 build_release_dir() {
@@ -223,36 +334,36 @@ main() {
   validate_version
 
   require_command git
-  require_command tar
-  require_command docker
+  require_command_or_simulate tar "tar command not found; archive creation checks are simulated."
+  require_command_or_simulate docker "docker command not found; docker image checks are simulated."
   require_command stat
   require_command hostname
   require_command date
 
-  require_path_exists "${PROJECT_ROOT}"
-  require_path_exists "${ENV_FILE}"
-  require_path_exists "${BACKUP_BASE_DIR}"
+  if command -v docker >/dev/null 2>&1; then
+    HAS_DOCKER_COMMAND=1
+  fi
 
-  [[ -d "${PROJECT_ROOT}" ]] || fail "Project root is not a directory: ${PROJECT_ROOT}"
-  [[ -f "${ENV_FILE}" ]] || fail "Missing env file: ${ENV_FILE}"
-  ensure_writable "${BACKUP_BASE_DIR}"
-
-  docker image inspect "${DOCKER_IMAGE}" >/dev/null 2>&1 || fail "Docker image not found: ${DOCKER_IMAGE}"
+  detect_or_simulate_server_prerequisites
 
   ensure_git_clean
   ensure_remote_reachable
 
   local commit_sha branch timestamp image_id host_value
-  commit_sha="$(git -C "${PROJECT_ROOT}" rev-parse HEAD)"
-  branch="$(git -C "${PROJECT_ROOT}" rev-parse --abbrev-ref HEAD)"
+  commit_sha="$(git -C "${GIT_CONTEXT_ROOT}" rev-parse HEAD)"
+  branch="$(git -C "${GIT_CONTEXT_ROOT}" rev-parse --abbrev-ref HEAD)"
   timestamp="$(date '+%Y-%m-%d_%H-%M-%S')"
-  image_id="$(docker image inspect --format '{{.Id}}' "${DOCKER_IMAGE}")"
+  if [[ "${HAS_SERVER_DOCKER_IMAGE}" -eq 1 ]]; then
+    image_id="$(docker image inspect --format '{{.Id}}' "${DOCKER_IMAGE}")"
+  else
+    image_id="SIMULATED-DOCKER-IMAGE-ID"
+  fi
   host_value="$(hostname)"
 
   ensure_tag_state "${commit_sha}"
 
   if [[ "${DRY_RUN}" -eq 0 ]]; then
-    ensure_writable "${PROJECT_ROOT}/.git"
+    ensure_writable "${GIT_CONTEXT_ROOT}/.git"
   fi
 
   create_or_verify_tag "${commit_sha}"
@@ -265,6 +376,9 @@ main() {
   info_file="${RELEASE_DIR}/release-info.txt"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
+    if [[ "${SIMULATION_MODE}" -eq 1 ]]; then
+      log "Dry-run simulation mode active: ${SIMULATION_NOTES}"
+    fi
     log "[DRY-RUN] Would create source archive: ${source_archive}"
     log "[DRY-RUN] Would create docker archive: ${docker_archive}"
     log "[DRY-RUN] Would copy env file to: ${env_backup}"
@@ -274,7 +388,7 @@ main() {
   fi
 
   log "Creating source archive..."
-  tar -czf "${source_archive}" -C /opt anfragepilot
+  tar -czf "${source_archive}" -C "$(dirname "${PROJECT_ROOT}")" "$(basename "${PROJECT_ROOT}")"
 
   log "Creating docker image archive..."
   docker save -o "${docker_archive}" "${DOCKER_IMAGE}"
