@@ -1,0 +1,169 @@
+.shell {
+  display: grid;
+  gap: 1.5rem;
+  width: min(100%, 70rem);
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.hero {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.two {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.three {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.input,
+.select,
+.textarea {
+  min-height: 2.5rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+  width: 100%;
+}
+
+.textarea {
+  min-height: 7rem;
+  padding: 0.625rem 0.75rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  border-radius: 8px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 0 1rem;
+  cursor: pointer;
+}
+
+.buttonSecondary {
+  composes: button;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #1f2937;
+}
+
+.notice {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #fff7ed;
+  color: #9a3412;
+  border-bottom: 1px solid #fed7aa;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tourOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 60;
+  padding: 1rem;
+}
+
+.tourCard {
+  width: min(100%, 32rem);
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tourActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.ctaWrap {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 55;
+  width: min(100% - 2rem, 20rem);
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  padding: 0.875rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.kpi {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.muted {
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 1rem 0.75rem 5rem;
+  }
+
+  .ctaWrap {
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+  }
+}

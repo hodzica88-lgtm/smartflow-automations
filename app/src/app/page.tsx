@@ -50,6 +50,9 @@ export default async function Home() {
             <Link className={styles.primaryButton} href="/registrierung">
               {copy.primaryCta}
             </Link>
+            <Link className={styles.secondaryButton} href="/demo/dashboard">
+              Produkt-Demo starten
+            </Link>
             <a className={styles.secondaryButton} href="#so-funktioniert">
               {copy.secondaryCta}
             </a>
