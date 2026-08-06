@@ -1,4 +1,6 @@
 import { loadServerEnv } from "@/shared/config/env";
+import { createErrorResponse } from "@/shared/lib/http/errors";
+import { createEventId, logServerEvent } from "@/shared/lib/observability/logger";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 const INTERNAL_API_SECRET_HEADER = "x-internal-api-secret";
@@ -16,6 +18,11 @@ export async function GET(request: Request) {
   const internalApiSecret = serverEnv.internalApiSecret;
 
   if (!internalApiSecret) {
+    logServerEvent("error", {
+      eventId: createEventId("internal_health"),
+      message: "Internal health secret missing.",
+    });
+
     return jsonResponse(
       {
         ok: false,
@@ -34,19 +41,11 @@ export async function GET(request: Request) {
   const providedSecret = request.headers.get(INTERNAL_API_SECRET_HEADER);
 
   if (!providedSecret || providedSecret !== internalApiSecret) {
-    return jsonResponse(
-      {
-        ok: false,
-        app: "ok",
-        database: "error",
-        counts: {
-          pendingNotifications: 0,
-          failedNotificationsLast24h: 0,
-          staleProcessingNotifications: 0,
-        },
-      },
-      401,
-    );
+    return createErrorResponse({
+      status: 401,
+      code: "UNAUTHORIZED",
+      message: "Unauthorized.",
+    });
   }
 
   const supabase = createSupabaseServiceRoleClient();
@@ -72,6 +71,16 @@ export async function GET(request: Request) {
     ]);
 
     if (pendingResult.error || failedResult.error || staleResult.error) {
+      logServerEvent("warn", {
+        eventId: createEventId("internal_health"),
+        message: "Internal health degraded due to queue query error.",
+        context: {
+          pendingError: pendingResult.error ? true : false,
+          failedError: failedResult.error ? true : false,
+          staleError: staleResult.error ? true : false,
+        },
+      });
+
       return jsonResponse(
         {
           ok: false,
@@ -106,7 +115,13 @@ export async function GET(request: Request) {
       },
       hasStaleProcessing ? 503 : 200,
     );
-  } catch {
+  } catch (error) {
+    logServerEvent("error", {
+      eventId: createEventId("internal_health"),
+      message: "Internal health endpoint failed.",
+      error,
+    });
+
     return jsonResponse(
       {
         ok: false,

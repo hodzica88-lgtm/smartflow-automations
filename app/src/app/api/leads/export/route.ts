@@ -3,6 +3,8 @@ import * as XLSX from "xlsx";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { resolveMarketFromHost } from "@/shared/i18n/market";
+import { createErrorResponse } from "@/shared/lib/http/errors";
+import { createEventId, logServerEvent } from "@/shared/lib/observability/logger";
 import { buildRateLimitedResponse, enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import {
   createSupabaseServerClient,
@@ -108,12 +110,20 @@ export async function GET(request: Request) {
   } = await authClient.auth.getUser();
 
   if (!user) {
-    return new Response("Nicht angemeldet", { status: 401 });
+    return createErrorResponse({
+      status: 401,
+      code: "UNAUTHORIZED",
+      message: "Nicht angemeldet.",
+    });
   }
 
   const companyState = await getUserCompanyState(user.id, { allowMember: true });
   if (!companyState.companyId) {
-    return new Response("Kein Firmenzugriff", { status: 403 });
+    return createErrorResponse({
+      status: 403,
+      code: "FORBIDDEN",
+      message: "Kein Firmenzugriff.",
+    });
   }
 
   const rateLimit = await enforceActionRateLimit({
@@ -166,7 +176,21 @@ export async function GET(request: Request) {
 
   const { data, error } = await query;
   if (error) {
-    return new Response("Export fehlgeschlagen", { status: 500 });
+    const eventId = createEventId("leads_export");
+    logServerEvent("error", {
+      eventId,
+      message: "Lead export query failed.",
+      context: {
+        companyId: companyState.companyId,
+      },
+      error,
+    });
+
+    return createErrorResponse({
+      status: 500,
+      code: "INTERNAL_ERROR",
+      message: "Export fehlgeschlagen.",
+    });
   }
 
   const rows: ExportLeadRow[] = (data ?? []).map((lead) => ({

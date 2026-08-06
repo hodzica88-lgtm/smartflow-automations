@@ -1,15 +1,9 @@
-export const buildRateLimitedResponse = (message: string, retryAfterSeconds: number) => {
-  const safeRetryAfterSeconds =
-    Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
-      ? Math.floor(retryAfterSeconds)
-      : 60;
+import { createErrorResponse } from "@/shared/lib/http/errors";
 
-  return new Response(message, {
+export const buildRateLimitedResponse = (message: string, retryAfterSeconds: number) =>
+  createErrorResponse({
     status: 429,
-    headers: {
-      "retry-after": String(safeRetryAfterSeconds),
-      "cache-control": "no-store",
-      "content-type": "text/plain; charset=utf-8",
-    },
+    code: "RATE_LIMITED",
+    message,
+    retryAfterSeconds,
   });
-};
