@@ -8,7 +8,7 @@ import { resolveMarketFromHost } from "@/shared/i18n/market";
 const INTERNAL_API_SECRET_HEADER = "x-internal-api-secret";
 const MAX_QUEUE_BATCH = 25;
 const BREVO_SMTP_EMAIL_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
-const BLOCKED_OWNER_NOTIFICATION_RECIPIENT = "test@smartflow.local";
+const BLOCKED_OWNER_NOTIFICATION_RECIPIENT = "blocked-owner@internal.local";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TOTAL_ATTEMPTS = 5;
 const RETRY_DELAY_MINUTES_BY_ATTEMPT: Record<number, number> = {

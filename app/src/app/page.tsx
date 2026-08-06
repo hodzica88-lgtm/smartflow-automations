@@ -4,7 +4,6 @@ import Link from "next/link";
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { SITE_NAME } from "@/shared/config/site";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
-import { getFormattedStripeMonthlyPriceForMarket } from "@/features/billing/pricing";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 
@@ -37,7 +36,6 @@ export const generateMetadata = async (): Promise<Metadata> => {
 export default async function Home() {
   const { market, config } = await getRequestMarket();
   const copy = getMarketCopy(config.code).landing;
-  const pricing = await getFormattedStripeMonthlyPriceForMarket(market).catch(() => null);
 
   trackAnalyticsEvent({
     eventName: "landing_view",
@@ -194,7 +192,8 @@ export default async function Home() {
         <article className={styles.pricingCard}>
           <div>
             <p className={styles.pricingLabel}>{copy.pricingLabel}</p>
-            <strong className={styles.price}>{pricing?.label ?? copy.pricingValue}</strong>
+            <strong className={styles.price}>{copy.pricingValue}</strong>
+            <p className={styles.pricingCopy}>{copy.pricingTaxNote}</p>
             <p className={styles.pricingCopy}>
               {copy.pricingCopy}
             </p>

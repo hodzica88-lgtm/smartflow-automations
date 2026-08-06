@@ -12,7 +12,7 @@ type InquiryShareSectionProps = {
 const subscribeToLocationOrigin = () => () => {};
 const getServerOriginSnapshot = () => "";
 const getBrowserOriginSnapshot = () => window.location.origin;
-const QR_CODE_FILE_NAME = "anfragepilot-qr-code.png";
+const QR_CODE_FILE_NAME = "company-inquiry-qr-code.png";
 
 export default function InquiryShareSection({ companyId }: InquiryShareSectionProps) {
   const origin = useSyncExternalStore(

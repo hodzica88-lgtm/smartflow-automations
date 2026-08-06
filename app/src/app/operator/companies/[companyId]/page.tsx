@@ -3,11 +3,14 @@ import { notFound } from "next/navigation";
 
 import AuditLogSection from "@/features/audit-log/AuditLogSection";
 import { getCompanyAuditLog } from "@/features/audit-log/service";
+import { createUsCheckoutTaxPreviewAction } from "@/features/operator/actions";
 import { requireOperatorUser } from "@/features/operator/access";
 import {
   getOperatorCompanyDetailData,
   type OperatorCompanyDetailData,
 } from "@/features/operator/data";
+import { isStripeTestMode } from "@/features/billing/tax-preview";
+import { loadServerEnv } from "@/shared/config/env";
 
 import styles from "../../operator.module.css";
 
@@ -116,13 +119,41 @@ const getLeadName = (firstName: string | null, lastName: string | null) =>
 
 type OperatorCompanyDetailPageProps = {
   params: Promise<{ companyId: string }>;
+  searchParams?: Promise<{
+    taxPreviewSubtotal?: string;
+    taxPreviewTax?: string;
+    taxPreviewTotal?: string;
+    taxPreviewUrl?: string;
+    taxPreviewExpiresAt?: string;
+    taxPreviewError?: string;
+  }>;
+};
+
+const formatMoney = (valueInCents: string | null | undefined) => {
+  if (!valueInCents) {
+    return "—";
+  }
+
+  const parsed = Number(valueInCents);
+  if (!Number.isFinite(parsed)) {
+    return valueInCents;
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(parsed / 100);
 };
 
 export default async function OperatorCompanyDetailPage({
   params,
+  searchParams,
 }: OperatorCompanyDetailPageProps) {
   const operator = await requireOperatorUser();
   const { companyId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const serverEnv = loadServerEnv();
+  const taxPreviewAvailable = isStripeTestMode(serverEnv.stripeSecretKey);
   const [data, auditLog] = await Promise.all([
     getOperatorCompanyDetailData(companyId),
     getCompanyAuditLog(companyId),
@@ -459,6 +490,81 @@ export default async function OperatorCompanyDetailPage({
             </table>
           </div>
         )}
+      </section>
+
+      <section className={styles.companySection} aria-labelledby="tax-preview-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="tax-preview-title">US Checkout Preview</h2>
+            <p>Internal preview for the monthly US checkout total, including Stripe Tax.</p>
+          </div>
+        </div>
+
+        {!taxPreviewAvailable ? (
+          <div className={styles.alert} role="alert">
+            <strong>Tax preview is only available in Stripe test mode.</strong>
+            <p>Switch to a test secret key before generating a preview.</p>
+          </div>
+        ) : null}
+
+        {resolvedSearchParams?.taxPreviewError ? (
+          <div className={styles.alert} role="alert">
+            <strong>Preview error</strong>
+            <p>{resolvedSearchParams.taxPreviewError}</p>
+          </div>
+        ) : null}
+
+        <form action={createUsCheckoutTaxPreviewAction} style={{ display: "grid", gap: 12 }}>
+          <input type="hidden" name="company_id" value={data.company.id} />
+          <label>
+            Address line 1
+            <input name="address_line1" required placeholder="920 5th Ave" />
+          </label>
+          <label>
+            City
+            <input name="city" required placeholder="Seattle" />
+          </label>
+          <label>
+            State
+            <input name="state" required placeholder="WA" maxLength={2} />
+          </label>
+          <label>
+            ZIP code
+            <input name="postal_code" required placeholder="98104" />
+          </label>
+          <button type="submit" className={styles.primaryButton} disabled={!taxPreviewAvailable}>
+            Generate Stripe test checkout preview
+          </button>
+        </form>
+
+        {resolvedSearchParams?.taxPreviewSubtotal || resolvedSearchParams?.taxPreviewTax || resolvedSearchParams?.taxPreviewTotal ? (
+          <div className={styles.detailCard} style={{ marginTop: 16 }}>
+            <h3 style={{ marginTop: 0 }}>Preview result</h3>
+            <dl className={styles.definitionGrid}>
+              <div>
+                <dt>Subtotal</dt>
+                <dd>{formatMoney(resolvedSearchParams.taxPreviewSubtotal)}</dd>
+              </div>
+              <div>
+                <dt>Tax</dt>
+                <dd>{formatMoney(resolvedSearchParams.taxPreviewTax)}</dd>
+              </div>
+              <div>
+                <dt>Total per month</dt>
+                <dd>{formatMoney(resolvedSearchParams.taxPreviewTotal)}</dd>
+              </div>
+              <div>
+                <dt>Preview expires</dt>
+                <dd>{resolvedSearchParams.taxPreviewExpiresAt ? formatDateTime(resolvedSearchParams.taxPreviewExpiresAt) : "—"}</dd>
+              </div>
+            </dl>
+            {resolvedSearchParams.taxPreviewUrl ? (
+              <a href={resolvedSearchParams.taxPreviewUrl} target="_blank" rel="noreferrer">
+                Open Stripe test checkout
+              </a>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       <section className={styles.companySection} aria-label="Audit Log">

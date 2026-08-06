@@ -1,12 +1,10 @@
 import Link from "next/link";
 
 import { openBillingPortalAction, startBillingCheckoutAction } from "@/features/billing/actions";
-import { getFormattedStripeMonthlyPriceForMarket } from "@/features/billing/pricing";
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { BILLING_COPY } from "@/shared/i18n/dashboard";
 import { getRequestMarket } from "@/shared/i18n/request";
 import {
-  BILLING_LOOKUP_KEY,
   BILLING_ROUTE,
   getCompanyBillingSnapshot,
   getPlannedCancellationDate,
@@ -80,7 +78,7 @@ const formatDateTimeByLocale = (value: string | null, locale: "de-DE" | "en-US")
   }
 };
 
-const getCompanyName = async (companyId: string) => {
+const getCompanyName = async (companyId: string, market: "de" | "us") => {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("companies")
@@ -90,7 +88,7 @@ const getCompanyName = async (companyId: string) => {
     .maybeSingle();
 
   if (error || !data) {
-    return "Varnito";
+    return market === "us" ? "Your company" : "Ihr Unternehmen";
   }
 
   return data.name;
@@ -107,7 +105,6 @@ const getStatusText = (copy: (typeof BILLING_COPY)["de"], billingReason: string 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const { market, config } = await getRequestMarket();
   const copy = BILLING_COPY[market];
-  const pricing = await getFormattedStripeMonthlyPriceForMarket(market).catch(() => null);
   const access = await requireUserCompanyAccess({
     allowMember: true,
     nextPath: BILLING_ROUTE,
@@ -125,10 +122,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const cancellationPlanned = isCancellationPlanned(billing);
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const companyName = await getCompanyName(access.companyId);
-  const subscriptionText = market === "us"
-    ? `${pricing?.label ?? "USD / month"}. ${copy.subscriptionText}`
-    : `${pricing?.label ?? "EUR / Monat"}. ${copy.subscriptionText}`;
+  const companyName = await getCompanyName(access.companyId, market);
 
   return (
     <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
@@ -167,7 +161,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <h2 style={{ margin: 0 }}>{copy.statusHeading}</h2>
         <div style={{ display: "grid", gap: 10 }}>
           <div><strong>Produkt:</strong> Varnito Pro</div>
-          <div><strong>Lookup Key:</strong> {BILLING_LOOKUP_KEY}</div>
           <div><strong>Status:</strong> {getBillingStatusLabel(billing.status)}</div>
           <div><strong>{market === "us" ? "Access:" : "Zugriff:"}</strong> {billing.hasAppAccess ? copy.statusAccessGranted : copy.statusAccessBlocked}</div>
           <div><strong>{copy.statusTrialUntil}:</strong> {formatDateTimeByLocale(billing.trialEndsAt, config.locale)}</div>
@@ -179,8 +172,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
       <section style={panelStyle}>
         <h2 style={{ margin: 0 }}>{copy.subscriptionHeading}</h2>
+        <p style={{ margin: 0, fontWeight: 700, color: "#111827" }}>{copy.subscriptionPrice}</p>
+        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>{copy.subscriptionTaxNote}</p>
         <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
-          {subscriptionText}
+          {copy.subscriptionText}
         </p>
 
         {access.isOwner ? (

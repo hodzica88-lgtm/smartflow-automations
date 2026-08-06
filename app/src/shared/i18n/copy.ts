@@ -44,6 +44,7 @@ type LandingCopy = {
   pricingTitle: string;
   pricingLabel: string;
   pricingValue: string;
+  pricingTaxNote: string;
   pricingCopy: string;
   pricingMeta: string[];
   faqEyebrow: string;
@@ -68,6 +69,8 @@ type SharedCopy = {
     registrationEyebrow: string;
     registrationTitle: string;
     registrationLead: string;
+    registrationPrice: string;
+    registrationTaxNote: string;
     registrationLoginCta: string;
     registrationHomeCta: string;
     loginEyebrow: string;
@@ -150,6 +153,8 @@ const COPY: Record<MarketCode, MarketCopy> = {
         registrationEyebrow: "Varnito",
         registrationTitle: "Registrierung starten",
         registrationLead: "Für den Testzugang melden Sie sich an und legen im Anschluss Ihre Firma an. Danach kann die 30-Tage-Testphase gestartet werden.",
+        registrationPrice: "299 € / Monat",
+        registrationTaxNote: "zzgl. gesetzlicher Umsatzsteuer",
         registrationLoginCta: "Zum Login",
         registrationHomeCta: "Zur Startseite",
         loginEyebrow: "Varnito",
@@ -271,12 +276,13 @@ const COPY: Record<MarketCode, MarketCopy> = {
       pricingEyebrow: "Preis",
       pricingTitle: "Varnito Pro Monatsabo.",
       pricingLabel: "Varnito Pro",
-      pricingValue: "Preis wird im Checkout geladen",
+      pricingValue: "299 € / Monat",
+      pricingTaxNote: "zzgl. gesetzlicher Umsatzsteuer",
       pricingCopy: "Neue Firmen starten mit 30 Tagen kostenloser Testphase. Die erste Zahlung erfolgt erst, wenn die Testphase endet und Sie das Abo aktiv weiternutzen.",
       pricingMeta: [
         "Keine versteckten Gebuehren",
         "Abrechnung transparent im Billing-Bereich",
-        "Umsatzsteuer wird entsprechend der tatsaechlichen Preislogik ausgewiesen",
+        "Umsatzsteuer wird im Checkout und auf der Rechnung separat ausgewiesen",
       ],
       faqEyebrow: "FAQ",
       faqTitle: "Haeufige Fragen.",
@@ -284,9 +290,10 @@ const COPY: Record<MarketCode, MarketCopy> = {
         { question: "Was ist Varnito?", answer: "Varnito ist eine schlanke Software fuer Betriebe mit Website-Anfragen. Sie hilft dabei, Anfragen zu sichern, zuzuordnen und im Team zu bearbeiten." },
         { question: "Ist Varnito ein CRM?", answer: "Nein. Varnito bleibt bewusst einfach und ersetzt kein klassisches CRM-System." },
         { question: "Wie funktioniert die 30-Tage-Testphase?", answer: "Sie legen ein Konto an, starten die Testphase und koennen Varnito 30 Tage ohne Anfangszahlung pruefen. Die erste Zahlung erfolgt erst nach dem Testende, wenn Sie aktiv weiternutzen." },
+        { question: "Sind die Preise netto oder brutto?", answer: "Alle Preise verstehen sich zzgl. der gesetzlichen Umsatzsteuer. Die Umsatzsteuer wird im Checkout sowie auf der Rechnung separat ausgewiesen." },
         { question: "Muss ich meine Website ersetzen?", answer: "Nein. Varnito wird neben Ihrer bestehenden Website eingesetzt und ergaenzt den bestehenden Anfrageprozess." },
         { question: "Koennen Mitarbeiter mitarbeiten?", answer: "Ja. Mitarbeiter koennen eingeladen werden und im Team mitarbeiten." },
-        { question: "Kann ich jederzeit kuendigen?", answer: "Ja. Sie kuendigen im Billing-Bereich oder im Stripe-Kundenportal. Die Nutzung bleibt bis zum Ende der laufenden Periode verfuegbar." },
+        { question: "Kann ich jederzeit kuendigen?", answer: "Ja. Sie kuendigen im Billing-Bereich oder im Kundenportal. Die Nutzung bleibt bis zum Ende der laufenden Periode verfuegbar." },
         { question: "Was passiert nach einer Kuendigung?", answer: "Ihr Zugriff endet nach der gebuchten Periode. Ihre Daten bleiben nicht durch Marketing geloescht, sondern folgen den geltenden Aufbewahrungs- und Loeschregeln." },
         { question: "Wie werden meine Daten geschuetzt?", answer: "Varnito nutzt Mandantentrennung, Supabase, Stripe und technisch notwendige Authentifizierung. Es werden keine unnoetigen Tracking-Dienste eingesetzt." },
       ],
@@ -312,6 +319,8 @@ const COPY: Record<MarketCode, MarketCopy> = {
         registrationEyebrow: "Varnito",
         registrationTitle: "Start registration",
         registrationLead: "Sign in to create your company and start the 30-day free trial.",
+        registrationPrice: "$399 / month",
+        registrationTaxNote: "Taxes calculated at checkout where applicable.",
         registrationLoginCta: "Go to login",
         registrationHomeCta: "Back to home",
         loginEyebrow: "Varnito",
@@ -433,12 +442,13 @@ const COPY: Record<MarketCode, MarketCopy> = {
       pricingEyebrow: "Pricing",
       pricingTitle: "Varnito Pro monthly subscription.",
       pricingLabel: "Varnito Pro",
-      pricingValue: "Price is loaded at checkout",
+      pricingValue: "$399 / month",
+      pricingTaxNote: "Taxes calculated at checkout where applicable.",
       pricingCopy: "New companies start with a 30-day free trial. First payment begins only after trial end if you continue using Varnito.",
       pricingMeta: [
         "No hidden fees",
         "Billing remains transparent",
-        "Taxes are handled according to your actual pricing setup",
+        "Applicable taxes are calculated at checkout based on customer location",
       ],
       faqEyebrow: "FAQ",
       faqTitle: "Common questions.",
@@ -446,9 +456,10 @@ const COPY: Record<MarketCode, MarketCopy> = {
         { question: "What is Varnito?", answer: "Varnito is a lightweight lead workflow system for service businesses that get inquiries through their website." },
         { question: "Is Varnito a CRM?", answer: "No. Varnito stays intentionally focused and does not try to replace a full CRM." },
         { question: "How does the 30-day trial work?", answer: "Create your account, start the trial, and evaluate the platform for 30 days before any subscription payment begins." },
+        { question: "Do prices include taxes?", answer: "No. Applicable taxes are calculated during checkout based on the customer's location." },
         { question: "Do I need to replace my website?", answer: "No. Varnito works alongside your current website and lead forms." },
         { question: "Can team members collaborate?", answer: "Yes. You can invite staff and manage follow-up as a team." },
-        { question: "Can I cancel anytime?", answer: "Yes. You can cancel from billing or in the Stripe customer portal." },
+        { question: "Can I cancel anytime?", answer: "Yes. You can cancel from billing or in the customer portal." },
         { question: "What happens after cancellation?", answer: "Access remains available through the paid period, then ends based on subscription state." },
         { question: "How is data protected?", answer: "Varnito uses tenant isolation, Supabase, Stripe, and required authentication flows." },
       ],

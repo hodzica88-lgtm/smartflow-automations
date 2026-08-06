@@ -1,4 +1,4 @@
-# AnfragePilot App
+# Varnito App
 
 ## Setup
 

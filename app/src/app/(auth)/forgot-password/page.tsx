@@ -24,7 +24,7 @@ export default async function ForgotPasswordPage({
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="forgot-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>AnfragePilot</p>
+          <p className={styles.eyebrow}>Varnito</p>
           <h1 className={styles.title} id="forgot-title">
             {copy.forgotTitle}
           </h1>

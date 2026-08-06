@@ -51,6 +51,8 @@ type BillingCopy = {
   yes: string;
   no: string;
   subscriptionHeading: string;
+  subscriptionPrice: string;
+  subscriptionTaxNote: string;
   subscriptionText: string;
   legalAcceptance: string;
   startSubscription: string;
@@ -206,18 +208,20 @@ export const BILLING_COPY: Record<MarketCode, BillingCopy> = {
     yes: "Ja",
     no: "Nein",
     subscriptionHeading: "Abonnement",
+    subscriptionPrice: "299 € / Monat",
+    subscriptionTaxNote: "zzgl. gesetzlicher Umsatzsteuer",
     subscriptionText: "Neue Firmen erhalten einmalig 30 Tage Testphase.",
     legalAcceptance: "Ich bestaetige die AGB und die Datenschutzerklaerung fuer die Testphase und den Checkout.",
     startSubscription: "Abo starten",
     manageSubscription: "Abonnement verwalten",
     ownerOnly: "Nur der Eigentuemer kann Billing verwalten.",
-    checkoutSuccess: "Stripe Checkout wurde erfolgreich abgeschlossen.",
+    checkoutSuccess: "Der Billing-Checkout wurde erfolgreich abgeschlossen.",
     checkoutCanceled: "Der Checkout wurde abgebrochen.",
     statusText: {
       trial_expired: "Die Testphase ist abgelaufen. Bitte starten Sie jetzt Ihr Abonnement.",
-      payment_required: "Ihr Zugriff ist pausiert, bis Stripe wieder eine erfolgreiche Zahlung bestaetigt.",
+      payment_required: "Ihr Zugriff ist pausiert, bis eine erfolgreiche Zahlung bestaetigt wurde.",
       checkout_incomplete: "Der letzte Checkout wurde nicht abgeschlossen. Bitte starten Sie ihn erneut.",
-      subscription_paused: "Das Abonnement ist pausiert. Bitte pruefen Sie Ihr Stripe-Kundenportal.",
+      subscription_paused: "Das Abonnement ist pausiert. Bitte pruefen Sie Ihr Kundenportal.",
       subscription_canceled: "Das Abonnement ist beendet. Bitte starten Sie ein neues Abonnement, um Varnito weiter zu nutzen.",
       no_subscription: "Fuer diese Firma ist noch kein aktives Abonnement hinterlegt.",
       default: "Verwalten Sie hier Testphase und Abonnement Ihrer Firma.",
@@ -235,18 +239,20 @@ export const BILLING_COPY: Record<MarketCode, BillingCopy> = {
     yes: "Yes",
     no: "No",
     subscriptionHeading: "Subscription",
+    subscriptionPrice: "$399 / month",
+    subscriptionTaxNote: "Taxes calculated at checkout where applicable.",
     subscriptionText: "New companies receive a one-time 30-day trial.",
     legalAcceptance: "I confirm the Terms and Privacy Notice for the trial and checkout flow.",
     startSubscription: "Start subscription",
     manageSubscription: "Manage subscription",
     ownerOnly: "Only the owner can manage billing.",
-    checkoutSuccess: "Stripe checkout completed successfully.",
+    checkoutSuccess: "The billing checkout completed successfully.",
     checkoutCanceled: "Checkout was canceled.",
     statusText: {
       trial_expired: "Your trial has ended. Start your subscription to continue.",
-      payment_required: "Access is paused until Stripe confirms a successful payment.",
+      payment_required: "Access is paused until a successful payment is confirmed.",
       checkout_incomplete: "The last checkout was not completed. Please try again.",
-      subscription_paused: "The subscription is paused. Please review your Stripe customer portal.",
+      subscription_paused: "The subscription is paused. Please review your customer portal.",
       subscription_canceled: "The subscription has ended. Start a new subscription to continue using Varnito.",
       no_subscription: "No active subscription is currently stored for this company.",
       default: "Manage your trial and subscription settings here.",

@@ -28,6 +28,8 @@ export default async function RegistrationPage() {
         <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.7 }}>
           {copy.registrationLead}
         </p>
+        <p style={{ margin: 0, fontWeight: 700, color: "#111827" }}>{copy.registrationPrice}</p>
+        <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.6 }}>{copy.registrationTaxNote}</p>
       </section>
 
       <section style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

@@ -23,6 +23,7 @@ import {
   isSupportedIndustry,
 } from "@/shared/config/inquiryTypes";
 import { isValidVapidSubject, loadServerEnv, publicEnv } from "@/shared/config/env";
+import { getRequestMarket } from "@/shared/i18n/request";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -504,6 +505,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const success = resolvedSearchParams?.success ?? null;
   const error = resolvedSearchParams?.error ?? null;
   const companyId = await getCompanyId();
+  const { market } = await getRequestMarket();
   const [serverEnv, company] = await Promise.all([loadServerEnv(), getCompany(companyId)]);
 
   if (!company) {
@@ -528,7 +530,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   const [inquiryTypes, branding, templates] = await Promise.all([
     getCompanyInquiryTypes({ supabase, companyId }),
-    getCompanyBranding(companyId, company.name ?? "Varnito"),
+    getCompanyBranding(companyId, company.name ?? (market === "us" ? "Your company" : "Ihr Unternehmen")),
     getCompanyEmailTemplates(companyId),
   ]);
 
@@ -540,7 +542,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </p>
         <h1 style={{ margin: 0 }}>Firmeninformationen</h1>
         <p style={{ marginTop: 8, color: "#555" }}>
-          Aktualisieren Sie die Grunddaten Ihres Unternehmens für SmartFlow.
+          Aktualisieren Sie die Grunddaten Ihres Unternehmens für Varnito.
         </p>
         <Link href="/dashboard/billing" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
           Billing öffnen

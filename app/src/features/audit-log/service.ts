@@ -36,6 +36,7 @@ const actionLabels: Record<string, string> = {
   invite_accepted: "Einladung angenommen",
   billing_checkout_started: "Billing Checkout gestartet",
   billing_portal_opened: "Billing Portal geöffnet",
+  us_checkout_tax_preview_created: "US-Steuervorschau erstellt",
 };
 
 export const getAuditLogActionLabel = (action: string) => actionLabels[action] ?? action;
