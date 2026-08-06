@@ -210,8 +210,14 @@ const isTemporaryBrevoHttpFailure = (status: number) =>
 
 export async function POST(request: Request) {
   const serverEnv = loadServerEnv();
-  const requestHost = new URL(request.url).host;
-  const market = resolveMarketFromHost(requestHost);
+  const forwarded = request.headers.get("forwarded");
+  const forwardedHostMatch = forwarded?.match(/(?:^|[;,\s])host=([^;\s,]+)/i);
+  const requestHostHeader =
+    request.headers.get("x-forwarded-host") ??
+    forwardedHostMatch?.[1] ??
+    request.headers.get("x-original-host") ??
+    request.headers.get("host");
+  const market = resolveMarketFromHost(requestHostHeader);
   const internalApiSecret = serverEnv.internalApiSecret;
 
   if (!internalApiSecret) {

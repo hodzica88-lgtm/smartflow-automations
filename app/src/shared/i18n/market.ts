@@ -35,17 +35,47 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 export const getMarketConfig = (market: MarketCode): MarketConfig => MARKET_CONFIG[market];
 
-const normalizeHost = (input: string | null | undefined) => {
+export const normalizeHostForMarket = (input: string | null | undefined) => {
   if (!input) {
     return "";
   }
 
-  const trimmed = input.trim().toLowerCase();
-  return trimmed.includes(":") ? trimmed.split(":")[0] ?? trimmed : trimmed;
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  // Reverse proxies can forward multiple hosts: "public.example.com, internal:3000".
+  let candidate = trimmed.split(",")[0]?.trim() ?? "";
+
+  if (!candidate) {
+    return "";
+  }
+
+  candidate = candidate.replace(/^host=/i, "").replace(/^"|"$/g, "");
+
+  if (candidate.startsWith("http://") || candidate.startsWith("https://")) {
+    try {
+      const parsed = new URL(candidate);
+      return parsed.hostname.toLowerCase();
+    } catch {
+      // Fall back to manual parsing below.
+    }
+  }
+
+  if (candidate.startsWith("[")) {
+    const end = candidate.indexOf("]");
+    if (end > 0) {
+      return candidate.slice(1, end).toLowerCase();
+    }
+  }
+
+  const lower = candidate.toLowerCase();
+  return lower.includes(":") ? lower.split(":")[0] ?? lower : lower;
 };
 
 export const resolveMarketFromHost = (host: string | null | undefined): MarketCode => {
-  const normalized = normalizeHost(host);
+  const normalized = normalizeHostForMarket(host);
 
   if (!normalized || LOCAL_HOSTS.has(normalized)) {
     return "de";

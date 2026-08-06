@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getMarketConfig, resolveMarketFromHost } from "@/shared/i18n/market";
+import {
+  getMarketConfig,
+  normalizeHostForMarket,
+  resolveMarketFromHost,
+} from "@/shared/i18n/market";
 
 describe("market resolution", () => {
   it("resolves germany market for varnito.de", () => {
@@ -12,6 +16,8 @@ describe("market resolution", () => {
   it("resolves us market for varnito.com", () => {
     expect(resolveMarketFromHost("varnito.com")).toBe("us");
     expect(resolveMarketFromHost("www.varnito.com:443")).toBe("us");
+    expect(resolveMarketFromHost("varnito.com, 127.0.0.1:3000")).toBe("us");
+    expect(resolveMarketFromHost("host=varnito.com")).toBe("us");
     expect(getMarketConfig("us").currency).toBe("usd");
   });
 
@@ -19,5 +25,11 @@ describe("market resolution", () => {
     expect(resolveMarketFromHost("localhost:3000")).toBe("de");
     expect(resolveMarketFromHost("127.0.0.1")).toBe("de");
     expect(resolveMarketFromHost("unknown-host"))?.toBe("de");
+  });
+
+  it("normalizes proxy host values consistently", () => {
+    expect(normalizeHostForMarket("varnito.com:443, 10.0.0.2:3000")).toBe("varnito.com");
+    expect(normalizeHostForMarket("host=varnito.de")).toBe("varnito.de");
+    expect(normalizeHostForMarket("https://varnito.com")).toBe("varnito.com");
   });
 });
