@@ -9,6 +9,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
   const copy = getMarketCopy(market).shared.contact;
   return {
     title: `${copy.title} | Varnito`,
+    description: copy.lead,
     alternates: { canonical: `${config.siteUrl}/kontakt` },
     robots: { index: true, follow: true },
   };

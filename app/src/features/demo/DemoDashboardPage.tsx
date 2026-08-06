@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
+import { resolveGuideResponse } from "@/features/demo/guide";
 import { useDemo } from "@/features/demo/useDemo";
 import styles from "@/features/demo/demo.module.css";
 
@@ -16,6 +17,11 @@ export default function DemoDashboardPage() {
   const searchParams = useSearchParams();
   const locale = state.market === "us" ? "en-US" : "de-DE";
   const isHighlighted = searchParams.get("highlight") === "dashboard";
+  const guideMessage = searchParams.get("guide");
+  const dashboardGuideAnswer = resolveGuideResponse(
+    state.market,
+    state.market === "us" ? "What does the dashboard show?" : "Was zeigt das Dashboard?",
+  ).answer;
 
   const totals = state.leads.reduce(
     (acc, lead) => {
@@ -33,6 +39,8 @@ export default function DemoDashboardPage() {
         <p className={styles.badge} style={{ margin: 0 }}>{copy.demoCompanyLabel}</p>
         <h1 style={{ margin: 0 }}>{state.companyName}</h1>
         <p className={styles.muted}>{copy.dashboard.description}</p>
+        {isHighlighted ? <p className={styles.muted}>{dashboardGuideAnswer}</p> : null}
+        {guideMessage ? <p className={styles.assistantMsg}>{guideMessage}</p> : null}
         <div className={styles.row}>
           <Link className={styles.button} href="/demo/leads">{copy.dashboard.toLeads}</Link>
           <Link className={styles.buttonSecondary} href="/demo/settings">{copy.dashboard.toSettings}</Link>

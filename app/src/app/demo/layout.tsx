@@ -1,9 +1,8 @@
 import Link from "next/link";
 
+import DemoAssistants from "@/features/demo/DemoAssistants";
 import DemoBanner from "@/features/demo/DemoBanner";
-import DemoGuide from "@/features/demo/DemoGuide";
 import { DemoProvider } from "@/features/demo/DemoProvider";
-import DemoTour from "@/features/demo/DemoTour";
 import { getDemoCopy } from "@/features/demo/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
@@ -73,8 +72,7 @@ export default async function DemoLayout({ children }: { children: React.ReactNo
       </header>
 
       {children}
-      <DemoTour market={market} registerHref={registerHref} />
-      <DemoGuide />
+      <DemoAssistants market={market} registerHref={registerHref} />
     </DemoProvider>
   );
 }

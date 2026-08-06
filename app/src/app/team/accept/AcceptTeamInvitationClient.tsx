@@ -95,7 +95,12 @@ export default function AcceptTeamInvitationClient({
   }, [supabase]);
 
   if (sessionState === "loading") {
-    return <p>Einladung wird geprüft …</p>;
+    return (
+      <div style={{ display: "grid", gap: 12 }}>
+        <h1>Zugang einrichten</h1>
+        <p>Einladung wird geprüft …</p>
+      </div>
+    );
   }
 
   if (sessionState === "missing") {

@@ -23,14 +23,14 @@ export default async function AgbPage() {
         <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>Rechtliches</p>
         <h1 style={{ margin: 0, fontSize: 40, lineHeight: 1.05 }}>Allgemeine Geschäftsbedingungen</h1>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Diese AGB-Seite ist als technische Grundlage vorbereitet und muss vor dem Livegang durch einen spezialisierten Rechtstext-Anbieter geprüft und finalisiert werden.
+          Diese AGB beschreiben das aktuelle B2B-Angebot von Varnito auf Basis der technisch umgesetzten Produkt- und Billing-Flows.
         </p>
       </header>
 
       <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Geltungsbereich</h2>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Varnito richtet sich an Unternehmen. Die AGB müssen vor Veröffentlichung auf die tatsächliche Vertragsstruktur, Leistungsbeschreibung, Laufzeiten, Kündigung und Haftungsregeln angepasst werden.
+          Varnito richtet sich ausschließlich an Unternehmer im Sinne von § 14 BGB sowie an vergleichbare gewerbliche Nutzer in anderen Rechtsordnungen. Verbraucherangebote sind nicht Bestandteil des aktuellen Produkts.
         </p>
       </section>
 
@@ -45,12 +45,12 @@ export default async function AgbPage() {
       </section>
 
       <section style={{ display: "grid", gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Wichtige Platzhalter</h2>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Leistung und Laufzeit</h2>
         <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7, color: "var(--muted)" }}>
-          <li>Leistungsumfang und Verfügbarkeit</li>
-          <li>Preislogik, Steuerhinweis und Abrechnungszeitpunkt</li>
-          <li>Kündigungsfristen und Vertragsende</li>
-          <li>Haftung, Gewährleistung und Supportprozesse</li>
+          <li>Varnito wird als cloudbasierte Software zur Lead-Erfassung und Team-Bearbeitung bereitgestellt.</li>
+          <li>Neue Firmen starten mit einer Testphase entsprechend der jeweils ausgewiesenen Angebotsseite.</li>
+          <li>Nach Ablauf der Testphase läuft das gewählte Abonnement monatlich weiter, bis es fristgerecht beendet wird.</li>
+          <li>Kündigungen wirken zum Ende der laufenden Abrechnungsperiode; bereits bezahlte Zeiträume werden nicht anteilig erstattet, sofern keine zwingenden gesetzlichen Gründe entgegenstehen.</li>
         </ul>
       </section>
 
@@ -66,7 +66,7 @@ export default async function AgbPage() {
       <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Prüfhinweis {LEGAL_DOC_VERSION}</h2>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Vor dem Verkauf müssen die AGB und die zugehörigen Rechtstexte juristisch geprüft werden.
+          Änderungen an Produktumfang, Abrechnung oder Zielgruppe müssen in diesen AGB sowie den übrigen Rechtstexten nachgeführt werden.
         </p>
       </section>
 

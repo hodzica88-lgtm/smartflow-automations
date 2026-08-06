@@ -1,7 +1,7 @@
 import type { DemoLead, DemoMarket, DemoState, DemoTeamMember } from "@/features/demo/types";
 
-const now = new Date();
-const minusHours = (h: number) => new Date(now.getTime() - h * 60 * 60 * 1000).toISOString();
+const DEMO_BASE_TIME = Date.parse("2026-08-06T12:00:00.000Z");
+const minusHours = (h: number) => new Date(DEMO_BASE_TIME - h * 60 * 60 * 1000).toISOString();
 
 const deLeads: DemoLead[] = [
   {
@@ -142,7 +142,7 @@ export const createDemoState = (market: DemoMarket): DemoState => {
     billing: {
       hasSubscription: market === "us",
       planLabel: "Varnito Pro",
-      nextInvoiceAt: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      nextInvoiceAt: new Date(DEMO_BASE_TIME + 14 * 24 * 60 * 60 * 1000).toISOString(),
     },
     settings: {
       contactPerson: market === "us" ? "Ava Smith" : "Jana Mueller",

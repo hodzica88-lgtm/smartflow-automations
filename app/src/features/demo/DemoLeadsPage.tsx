@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
+import { resolveGuideResponse } from "@/features/demo/guide";
 import { useDemo } from "@/features/demo/useDemo";
 import type { DemoLeadStatus } from "@/features/demo/types";
 import styles from "@/features/demo/demo.module.css";
@@ -16,12 +17,17 @@ export default function DemoLeadsPage() {
   const searchParams = useSearchParams();
   const isHighlighted = searchParams.get("highlight") === "leads";
   const activeTeam = state.team.filter((member) => member.status === "active");
+  const highlightAnswer = resolveGuideResponse(
+    state.market,
+    state.market === "us" ? "How does lead management work?" : "Wie funktioniert die Lead-Verwaltung?",
+  ).answer;
 
   return (
     <main className={styles.shell}>
       <section className={`${styles.hero} ${isHighlighted ? styles.highlightedSection : ""}`}>
         <h1 style={{ margin: 0 }}>Leads</h1>
         <p className={styles.muted}>{copy.leads.description}</p>
+        {isHighlighted ? <p className={styles.muted}>{highlightAnswer}</p> : null}
       </section>
 
       <section className={styles.grid}>

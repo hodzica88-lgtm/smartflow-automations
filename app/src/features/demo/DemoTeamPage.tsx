@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
+import { resolveGuideResponse } from "@/features/demo/guide";
 import { useDemo } from "@/features/demo/useDemo";
 import styles from "@/features/demo/demo.module.css";
 
@@ -13,6 +14,10 @@ export default function DemoTeamPage() {
   const searchParams = useSearchParams();
   const isHighlighted = searchParams.get("highlight") === "team";
   const [email, setEmail] = useState("");
+  const highlightAnswer = resolveGuideResponse(
+    state.market,
+    state.market === "us" ? "Show me the team." : "Zeig mir das Team.",
+  ).answer;
 
   const onInvite = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -25,6 +30,7 @@ export default function DemoTeamPage() {
       <section className={`${styles.hero} ${isHighlighted ? styles.highlightedSection : ""}`}>
         <h1 style={{ margin: 0 }}>{copy.nav.team}</h1>
         <p className={styles.muted}>{copy.team.description}</p>
+        {isHighlighted ? <p className={styles.muted}>{highlightAnswer}</p> : null}
       </section>
 
       <section className={styles.card}>

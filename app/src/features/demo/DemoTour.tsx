@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
@@ -11,16 +10,22 @@ import styles from "@/features/demo/demo.module.css";
 export default function DemoTour({
   market,
   registerHref,
+  open,
+  setOpen,
+  completed,
+  setCompleted,
 }: {
   market: DemoMarket;
   registerHref: string;
+  open: boolean;
+  setOpen: (value: boolean) => void;
+  completed: boolean;
+  setCompleted: (value: boolean) => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const copy = getDemoCopy(market);
   const steps = copy.tour.steps;
-  const [open, setOpen] = useState(true);
-  const [completed, setCompleted] = useState(false);
   const stepIndex = Math.max(
     0,
     steps.findIndex((step) => pathname.startsWith(step.route)),

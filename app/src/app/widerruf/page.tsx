@@ -5,6 +5,7 @@ import { SITE_DOMAIN } from "@/shared/config/site";
 
 export const metadata: Metadata = {
   title: "Widerruf | Varnito",
+  description: "Hinweis zum Widerrufsrecht für das aktuelle B2B-Angebot von Varnito.",
   alternates: { canonical: `${SITE_DOMAIN}/widerruf` },
   robots: { index: true, follow: true },
 };
@@ -16,14 +17,14 @@ export default function WiderrufPage() {
         <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>Rechtliches</p>
         <h1 style={{ margin: 0, fontSize: 40, lineHeight: 1.05 }}>Widerruf</h1>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Varnito richtet sich nach dem aktuellen Produktstand an Unternehmen. Ein Widerrufsrecht ist daher vor Veröffentlichung rechtlich zu prüfen und nur dann bereitzustellen, wenn tatsächlich ein Verbraucherangebot entsteht.
+          Varnito richtet sich im aktuellen Angebotsmodell ausschließlich an Unternehmen. Für dieses B2B-Angebot besteht daher kein gesetzliches Widerrufsrecht für Verbraucherbestellungen.
         </p>
       </header>
 
       <section style={{ display: "grid", gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 20 }}>Hinweis</h2>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Geltungsbereich</h2>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Diese Seite ist als Platzhalter vorhanden, damit sie bei Bedarf schnell aktiviert werden kann. Vor einem Livegang muss sie von einer rechtlichen Fachstelle bewertet werden.
+          Sollte Varnito künftig gegenüber Verbrauchern angeboten werden, müssen Widerrufsbelehrung, Muster-Widerrufsformular und die zugehörigen Prozesse vor Freischaltung dieses Angebots ergänzt werden.
         </p>
       </section>
 

@@ -2,6 +2,8 @@ const CACHE_NAME = "varnito-push-v1";
 const PUSH_DEFAULT_TITLE = "Neue Varnito-Anfrage";
 const PUSH_DEFAULT_BODY = "Eine neue Anfrage wartet auf Bearbeitung.";
 const PUSH_FALLBACK_URL = "/dashboard";
+const OFFLINE_URL = "/offline.html";
+const APP_SHELL_ASSETS = [OFFLINE_URL, "/manifest.webmanifest", "/favicon.svg", "/icons/varnito-icon-192.png", "/icons/varnito-icon-512.png", "/apple-touch-icon.png"];
 
 const isAllowedLeadDetailsPath = (value) => /^\/dashboard\/leads\/[^/]+$/.test(value);
 
@@ -62,7 +64,13 @@ const parsePayload = (raw) => {
 };
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(APP_SHELL_ASSETS);
+      await self.skipWaiting();
+    })(),
+  );
 });
 
 self.addEventListener("activate", (event) => {
@@ -100,6 +108,30 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, notificationOptions),
   );
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      (async () => {
+        try {
+          return await fetch(event.request);
+        } catch {
+          const cache = await caches.open(CACHE_NAME);
+          return (await cache.match(OFFLINE_URL)) ?? Response.error();
+        }
+      })(),
+    );
+  }
 });
 
 self.addEventListener("notificationclick", (event) => {

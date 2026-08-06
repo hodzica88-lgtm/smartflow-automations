@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
 import { resolveGuideResponse } from "@/features/demo/guide";
@@ -14,72 +14,96 @@ type GuideMessage = {
 };
 
 export default function DemoGuide() {
-  const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { state } = useDemo();
   const copy = useMemo(() => getDemoCopy(state.market), [state.market]);
 
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<GuideMessage[]>([
-    { role: "assistant", content: copy.guide.welcome },
-  ]);
-
-  const ask = (question: string) => {
-    const response = resolveGuideResponse(state.market, question);
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: question },
-      { role: "assistant", content: response.answer },
-    ]);
-
-    if (response.route) {
-      const isSameRoute = pathname === response.route;
-      const target = response.highlight
-        ? `${response.route}?highlight=${encodeURIComponent(response.highlight)}`
-        : response.route;
-      router.push(target);
-
-      if (isSameRoute) {
-        router.refresh();
-      }
-    }
-  };
-
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const question = input.trim();
-    if (!question) {
-      return;
-    }
-
-    ask(question);
-    setInput("");
-  };
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const messages: GuideMessage[] = [{ role: "assistant", content: copy.guide.welcome }];
+  const primaryActions = copy.guide.suggestions.filter(
+    (suggestion) => /team\.|billing\./i.test(suggestion),
+  );
+  const secondaryActions = copy.guide.suggestions.filter(
+    (suggestion) => !/team\.|billing\./i.test(suggestion),
+  );
 
   return (
     <aside className={styles.guideRoot} aria-label={copy.guide.name}>
-      {open ? (
+      <button type="button" className={styles.guideToggle} onClick={() => setIsCollapsed(false)}>
+        {copy.guide.name} - {copy.guide.open}
+      </button>
+      <div className={styles.guideSuggestions}>
+        {primaryActions.map((suggestion) => {
+          const suggestionResponse = resolveGuideResponse(state.market, suggestion);
+          const target = suggestionResponse.route
+            ? suggestionResponse.highlight
+              ? `${suggestionResponse.route}?highlight=${encodeURIComponent(suggestionResponse.highlight)}`
+              : suggestionResponse.route
+            : null;
+
+          if (target) {
+            return (
+              <a key={suggestion} href={target} className={styles.suggestion} role="button">
+                {suggestion}
+              </a>
+            );
+          }
+
+          return (
+            <button
+              key={suggestion}
+              type="button"
+              className={styles.suggestion}
+              onClick={() => undefined}
+            >
+              {suggestion}
+            </button>
+          );
+        })}
+      </div>
+
+      {!isCollapsed ? (
         <div className={styles.guidePanel}>
           <div className={styles.guideHeader}>
             <strong>{copy.guide.name}</strong>
-            <button type="button" className={styles.buttonSecondary} onClick={() => setOpen(false)}>
+            <button
+              type="button"
+              className={styles.buttonSecondary}
+              onClick={() => setIsCollapsed(true)}
+            >
               {copy.guide.close}
             </button>
           </div>
 
           <div className={styles.guideSuggestions}>
-            {copy.guide.suggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                className={styles.suggestion}
-                onClick={() => ask(suggestion)}
-              >
-                {suggestion}
-              </button>
-            ))}
+            {secondaryActions.map((suggestion) => {
+              const suggestionResponse = resolveGuideResponse(state.market, suggestion);
+              const target = suggestionResponse.route
+                ? suggestionResponse.highlight
+                  ? `${suggestionResponse.route}?highlight=${encodeURIComponent(suggestionResponse.highlight)}`
+                  : suggestionResponse.route
+                : null;
+
+              if (target) {
+                return (
+                  <a key={suggestion} href={target} className={styles.suggestion} role="button">
+                    {suggestion}
+                  </a>
+                );
+              }
+
+              return (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className={styles.suggestion}
+                  onClick={() => undefined}
+                >
+                  {suggestion}
+                </button>
+              );
+            })}
           </div>
 
           <div className={styles.guideMessages}>
@@ -91,24 +115,21 @@ export default function DemoGuide() {
                 {message.content}
               </p>
             ))}
+            {!searchParams.get("guide") ? <p className={styles.assistantMsg}>{copy.guide.safety}</p> : null}
           </div>
 
-          <form onSubmit={onSubmit} className={styles.guideInputRow}>
-            <input
-              className={styles.input}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder={copy.guide.placeholder}
-              aria-label={copy.guide.placeholder}
-            />
-            <button type="submit" className={styles.button}>{copy.guide.send}</button>
-          </form>
         </div>
-      ) : (
-        <button type="button" className={styles.guideToggle} onClick={() => setOpen(true)}>
-          {copy.guide.name} - {copy.guide.open}
-        </button>
-      )}
+      ) : null}
+      <form action="/demo/guide" method="get" className={styles.guideInputRow}>
+        <input type="hidden" name="returnTo" value={pathname} />
+        <input
+          className={styles.input}
+          name="q"
+          placeholder={copy.guide.placeholder}
+          aria-label={copy.guide.placeholder}
+        />
+        <button type="submit" className={styles.button}>{copy.guide.send}</button>
+      </form>
     </aside>
   );
 }

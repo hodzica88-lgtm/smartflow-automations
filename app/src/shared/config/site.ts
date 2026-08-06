@@ -10,7 +10,8 @@ export const SITE_DESCRIPTION = getMarketCopy(DEFAULT_MARKET).siteDescription;
 export const LEGAL_ENTITY_NAME = "Hodzic Digital Services - Almir Hodzic";
 export const LEGAL_CONTACT_EMAIL = getMarketConfig(DEFAULT_MARKET).legalContactEmail;
 export const LEGAL_CONTACT_PATH = "/kontakt";
-export const LEGAL_DOC_VERSION = "2026-08-06";
+export const LEGAL_REPRESENTATIVE = "Almir Hodzic";
+export const LEGAL_DOC_VERSION = "2026-08-07";
 
 export const SEO_INDEXABLE_PAGES = [
   "/",

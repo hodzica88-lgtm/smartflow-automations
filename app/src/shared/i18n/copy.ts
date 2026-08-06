@@ -213,7 +213,7 @@ const COPY: Record<MarketCode, MarketCopy> = {
       contact: {
         eyebrow: "Kontakt",
         title: "Kontakt aufnehmen",
-        lead: "Für Rückfragen zu Hodzic Digital Services - Almir Hodzic nutzen Sie bitte die zentrale Kontakt-E-Mail. Die finale Kontaktangabe muss vor dem Livegang geprüft und vervollständigt werden.",
+        lead: "Für Rückfragen zu Varnito nutzen Sie bitte die zentrale Kontakt-E-Mail. Wir antworten auf Produkt-, Datenschutz- und Vertragsanfragen über diesen Kanal.",
         emailLabel: "E-Mail",
       },
     },
@@ -379,7 +379,7 @@ const COPY: Record<MarketCode, MarketCopy> = {
       contact: {
         eyebrow: "Contact",
         title: "Contact us",
-        lead: "For questions about Hodzic Digital Services - Almir Hodzic, use the central contact email. Final contact details must be reviewed before launch.",
+        lead: "For questions about Varnito, please use the central contact email. Product, privacy, and contract requests are handled through this channel.",
         emailLabel: "Email",
       },
     },

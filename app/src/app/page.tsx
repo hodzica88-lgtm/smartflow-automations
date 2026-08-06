@@ -37,6 +37,20 @@ export const generateMetadata = async (): Promise<Metadata> => {
 export default async function Home() {
   const { market, config } = await getRequestMarket();
   const copy = getMarketCopy(config.code).landing;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: SITE_NAME,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: market === "us" ? "399" : "299",
+      priceCurrency: market === "us" ? "USD" : "EUR",
+    },
+    description: copy.siteDescription,
+    url: config.siteUrl,
+  };
 
   trackAnalyticsEvent({
     eventName: "landing_view",
@@ -46,6 +60,10 @@ export default async function Home() {
 
   return (
     <main className={styles.page} id="top">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <header className={styles.topBar}>
         <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
         <div className={styles.topActions}>

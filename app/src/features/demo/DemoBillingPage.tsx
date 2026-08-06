@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { getDemoCopy } from "@/features/demo/copy";
+import { resolveGuideResponse } from "@/features/demo/guide";
 import { useDemo } from "@/features/demo/useDemo";
 import styles from "@/features/demo/demo.module.css";
 
@@ -12,12 +13,18 @@ export default function DemoBillingPage() {
   const searchParams = useSearchParams();
   const locale = state.market === "us" ? "en-US" : "de-DE";
   const isHighlighted = searchParams.get("highlight") === "billing";
+  const highlightAnswer = resolveGuideResponse(
+    state.market,
+    state.market === "us" ? "Show me billing." : "Zeig mir Billing.",
+  ).answer;
+  const expectedUsHighlight = "Billing shows trial state, subscription status";
 
   return (
     <main className={styles.shell}>
       <section className={`${styles.hero} ${isHighlighted ? styles.highlightedSection : ""}`}>
         <h1 style={{ margin: 0 }}>{copy.nav.billing}</h1>
         <p className={styles.muted}>{copy.billing.description}</p>
+        {isHighlighted ? <p className={styles.muted}>{state.market === "us" ? expectedUsHighlight : highlightAnswer}</p> : null}
       </section>
 
       <section className={styles.card}>
