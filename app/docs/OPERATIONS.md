@@ -1,6 +1,18 @@
 # Betrieb und Monitoring
 
-Dieses Dokument beschreibt den minimalen Betriebsablauf fuer AnfragePilot in der aktuellen Phase.
+Dieses Dokument beschreibt den Betriebsablauf fuer Varnito nach dem Hardening-Rollout.
+
+## 0) Kostenlose Betriebswerkzeuge
+
+Verwendete kostenlose Komponenten:
+- GitHub Actions (Monitoring, Security, Pentest-Baseline)
+- curl
+- OWASP ZAP Baseline Action
+- Trivy
+- Gitleaks
+- CodeQL (GitHub Advanced Security kostenlos fuer Public Repos)
+
+Keine kostenpflichtigen Monitoring- oder Security-Tools sind zwingend erforderlich.
 
 ## 1) Gesundheitsstatus der Anwendung pruefen
 
@@ -19,6 +31,14 @@ Erwartung:
 - HTTP 503: Datenbankproblem oder processing-Queue-Eintraege aelter als 10 Minuten.
 
 Die Antwort ist absichtlich kompakt und enthaelt nur Status plus Zaehlerwerte.
+
+Zusatzendpunkt fuer externes Monitoring:
+- GET /api/health
+- Erwartete Antwort: `{ "status": "ok" }`
+
+Readiness-Endpunkt (intern):
+- GET /api/ready
+- Header erforderlich: `x-internal-api-secret`
 
 ## 2) Fehlgeschlagene Benachrichtigungen pruefen
 
@@ -74,6 +94,24 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/internal/notifications/process
 Produktionsautomation:
 - Ein geplanter Job/Scheduler fuer den Worker ist noch offen und muss vor Go-Live eingerichtet werden.
 
+## 4.1) Read-only Operations-Skripte
+
+Lokaler/CI-Check aller relevanten Endpunkte:
+
+```bash
+INTERNAL_API_SECRET=... bash scripts/operations/check-system-health.sh
+```
+
+Queue-Diagnose fuer ein Zielsystem:
+
+```bash
+BASE_URL=https://varnito.de INTERNAL_API_SECRET=... bash scripts/operations/check-notification-queue.sh
+```
+
+Hinweise:
+- Beide Skripte sind read-only.
+- Ohne `INTERNAL_API_SECRET` werden interne Checks uebersprungen oder sauber abgebrochen.
+
 ## 5) Backup-Strategie
 
 - Primar auf Supabase Managed Backups setzen.
@@ -106,6 +144,17 @@ Bei planmaessiger Rotation oder Verdacht auf Leak:
 2. Bei kritischen Fehlern auf letzten stabilen Stand zurueckrollen.
 3. Danach Worker/Queue pruefen (pending, failed, stale processing).
 4. Incident kurz dokumentieren: Ursache, Impact, Gegenmassnahme.
+
+## 8.1) Monitoring-Workflows
+
+Aktive Workflows:
+- `.github/workflows/monitoring-checks.yml`
+- `.github/workflows/security-scans.yml`
+- `.github/workflows/pentest-suite.yml`
+
+Empfehlung:
+- Repository-Benachrichtigungen fuer Workflow-Fehler aktivieren.
+- Fehler immer mit Event-ID aus API-Responses korrelieren.
 
 ## 9) Vorgehen bei E-Mail-Ausfall
 
