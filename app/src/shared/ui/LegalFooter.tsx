@@ -1,6 +1,7 @@
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import Link from "next/link";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 export default async function LegalFooter() {
   const { market, config } = await getRequestMarket();
@@ -14,18 +15,21 @@ export default async function LegalFooter() {
   ] as const;
 
   return (
-    <footer style={{ width: "min(100%, 72rem)", margin: "0 auto", padding: "1.5rem 1rem 2rem", color: "#667085" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e5e7eb", paddingTop: 16 }}>
+    <footer style={{ width: "min(100%, 78rem)", margin: "0 auto", padding: "2.5rem 1.25rem 2rem", color: "var(--muted)" }}>
+      <div style={{ display: "grid", gap: 16, borderTop: "1px solid var(--border)", paddingTop: 20 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between", alignItems: "center" }}>
+          <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
+          <a href={`mailto:${config.legalContactEmail}`} style={{ color: "var(--gold)", fontWeight: 700 }}>
+            {config.legalContactEmail}
+          </a>
+        </div>
         <nav aria-label={copy.shared.legalNavLabel} style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           {legalLinks.map((entry) => (
-            <Link key={entry.href} href={entry.href} style={{ color: "#0f766e", fontWeight: 700 }}>
+            <Link key={entry.href} href={entry.href} style={{ color: "var(--text)", fontWeight: 600, border: "1px solid var(--border)", borderRadius: 999, padding: "8px 12px", background: "rgba(255,255,255,0.02)" }}>
               {entry.label}
             </Link>
           ))}
         </nav>
-        <a href={`mailto:${config.legalContactEmail}`} style={{ color: "#0f766e", fontWeight: 700 }}>
-          {config.legalContactEmail}
-        </a>
       </div>
     </footer>
   );

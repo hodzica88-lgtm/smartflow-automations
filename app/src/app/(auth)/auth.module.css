@@ -7,101 +7,114 @@
 
 .panel {
   display: grid;
-  width: min(100%, 28rem);
-  gap: 1.5rem;
+  width: min(100%, 30rem);
+  gap: 1.4rem;
   margin-inline: auto;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  padding: 1.3rem;
+  box-shadow: var(--shadow-xl);
 }
 
 .header {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--accent);
-  font-size: 0.875rem;
+  color: var(--gold);
+  font-size: 0.82rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .title {
   margin: 0;
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 6vw, 2.8rem);
   line-height: 1;
 }
 
 .copy {
   margin: 0;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.65;
 }
 
 .form {
   display: grid;
-  gap: 1rem;
+  gap: 0.95rem;
 }
 
 .field {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .label {
-  font-weight: 700;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--foreground);
-  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 84%, black 16%);
+  color: var(--text);
+  padding: 0.8rem 0.95rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
 }
 
 .button {
-  min-height: 3rem;
-  border: 0;
-  border-radius: 8px;
-  background: var(--accent);
-  color: #ffffff;
+  min-height: 2.9rem;
+  border: 1px solid var(--gold);
+  border-radius: 12px;
+  background: var(--gold);
+  color: #111;
   cursor: pointer;
   font-weight: 700;
 }
 
 .button:hover {
-  background: var(--accent-strong);
+  background: var(--gold-hover);
+  border-color: var(--gold-hover);
+  transform: translateY(-1px);
 }
 
 .message {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   margin: 0;
-  padding: 0.875rem 1rem;
-  color: var(--foreground);
+  padding: 0.8rem 0.95rem;
+  color: var(--text);
   line-height: 1.5;
 }
 
 .error {
-  border-color: #fca5a5;
-  background: #fff1f2;
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: rgba(231, 76, 60, 0.12);
 }
 
 .success {
-  border-color: #99f6e4;
-  background: #f0fdfa;
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+  background: rgba(46, 204, 113, 0.12);
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  color: var(--muted);
 }
 
 .link {
-  color: var(--accent-strong);
+  color: var(--gold);
   font-weight: 700;
 }
 
@@ -110,7 +123,7 @@
     padding: 4rem 2rem;
   }
 
-  .title {
-    font-size: 3.25rem;
+  .panel {
+    padding: 1.6rem;
   }
 }

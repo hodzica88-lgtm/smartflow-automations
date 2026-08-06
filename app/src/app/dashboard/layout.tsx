@@ -4,6 +4,7 @@ import { requireUserCompanyAccess } from "@/features/billing/service";
 import { getCompanyUnreadNotificationCount } from "@/features/notifications/service";
 import { DASHBOARD_COPY } from "@/shared/i18n/dashboard";
 import { getRequestMarket } from "@/shared/i18n/request";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 const navStyle = {
   display: "flex",
@@ -12,12 +13,12 @@ const navStyle = {
 } as const;
 
 const linkStyle = {
-  color: "#1f2937",
+  color: "var(--text)",
   textDecoration: "none",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 999,
-  padding: "8px 12px",
-  background: "#fff",
+  padding: "10px 14px",
+  background: "rgba(255,255,255,0.02)",
   fontWeight: 600,
   fontSize: 14,
 } as const;
@@ -43,8 +44,9 @@ export default async function DashboardLayout({
           position: "sticky",
           top: 0,
           zIndex: 20,
-          background: "#f8fafc",
-          borderBottom: "1px solid #e5e7eb",
+          background: "rgba(11,11,13,0.88)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid var(--border)",
         }}
       >
         <div
@@ -59,11 +61,14 @@ export default async function DashboardLayout({
             flexWrap: "wrap",
           }}
         >
-          <div style={navStyle}>
-            <Link href="/dashboard" style={linkStyle}>Dashboard</Link>
-            <Link href="/dashboard/leads" style={linkStyle}>Leads</Link>
-            <Link href="/dashboard/settings" style={linkStyle}>{copy.navSettings}</Link>
-            <Link href="/dashboard/help" style={linkStyle}>{copy.navHelp}</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <VarnitoLogo href="/dashboard" subtitle={market === "us" ? "Workspace" : "Workspace"} />
+            <div style={navStyle}>
+              <Link href="/dashboard" style={linkStyle}>Dashboard</Link>
+              <Link href="/dashboard/leads" style={linkStyle}>Leads</Link>
+              <Link href="/dashboard/settings" style={linkStyle}>{copy.navSettings}</Link>
+              <Link href="/dashboard/help" style={linkStyle}>{copy.navHelp}</Link>
+            </div>
           </div>
 
           <Link href="/dashboard/notifications" style={linkStyle} aria-label={copy.navNotifications}>

@@ -1,15 +1,23 @@
 .shell {
   display: grid;
-  gap: 1.5rem;
-  width: min(100%, 70rem);
+  gap: 1.3rem;
+  width: min(100%, 72rem);
   margin: 0 auto;
   padding: 1.25rem;
 }
 
-.hero {
+.hero,
+.card,
+.tourCard,
+.guidePanel,
+.ctaWrap {
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.01));
+  box-shadow: var(--shadow-xl);
+}
+
+.hero {
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -25,9 +33,9 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
+  border: 1px solid color-mix(in srgb, var(--gold) 60%, var(--border));
+  background: rgba(212, 175, 55, 0.14);
+  color: var(--gold);
   border-radius: 999px;
   padding: 0.35rem 0.75rem;
   font-size: 0.8125rem;
@@ -35,9 +43,6 @@
 }
 
 .card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -59,11 +64,13 @@
 .input,
 .select,
 .textarea {
-  min-height: 2.5rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
+  min-height: 2.7rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 0 0.75rem;
   width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
 }
 
 .textarea {
@@ -75,30 +82,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.5rem;
-  border-radius: 8px;
-  border: 0;
-  background: var(--accent);
-  color: #fff;
+  min-height: 2.6rem;
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: #111;
   font-weight: 700;
   padding: 0 1rem;
   cursor: pointer;
 }
 
+.button:hover {
+  background: var(--gold-hover);
+}
+
 .buttonSecondary {
   composes: button;
   border: 1px solid var(--border);
-  background: #fff;
-  color: #1f2937;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
 }
 
 .notice {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: #fff7ed;
-  color: #9a3412;
-  border-bottom: 1px solid #fed7aa;
+  background: rgba(243, 156, 18, 0.14);
+  color: var(--warning);
+  border-bottom: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border));
   padding: 0.65rem 1rem;
   font-weight: 700;
   text-align: center;
@@ -107,7 +118,7 @@
 .tourOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(0, 0, 0, 0.58);
   display: grid;
   place-items: center;
   z-index: 60;
@@ -116,9 +127,6 @@
 
 .tourCard {
   width: min(100%, 32rem);
-  border-radius: 14px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -137,9 +145,6 @@
   bottom: 1rem;
   z-index: 55;
   width: min(100% - 2rem, 20rem);
-  border: 1px solid #bfdbfe;
-  border-radius: 12px;
-  background: #eff6ff;
   padding: 0.875rem;
   display: grid;
   gap: 0.5rem;
@@ -152,13 +157,13 @@
 }
 
 .muted {
-  color: #6b7280;
+  color: var(--muted);
   margin: 0;
 }
 
 .highlightedSection {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  border-color: color-mix(in srgb, var(--gold) 65%, var(--border));
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
 
 .guideRoot {
@@ -171,9 +176,9 @@
 .guideToggle {
   min-height: 2.75rem;
   border-radius: 999px;
-  border: 1px solid #cbd5e0;
-  background: #ffffff;
-  color: #111827;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
   font-weight: 700;
   padding: 0 1rem;
   cursor: pointer;
@@ -181,13 +186,9 @@
 
 .guidePanel {
   width: min(24rem, calc(100vw - 2rem));
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  background: #ffffff;
   padding: 0.75rem;
   display: grid;
   gap: 0.625rem;
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.2);
 }
 
 .guideHeader {
@@ -204,8 +205,9 @@
 }
 
 .suggestion {
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
   border-radius: 999px;
   padding: 0.25rem 0.65rem;
   font-size: 0.8125rem;
@@ -230,13 +232,13 @@
 }
 
 .assistantMsg {
-  background: #eef2ff;
-  color: #1f2937;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--text);
 }
 
 .userMsg {
-  background: #f3f4f6;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
 }
 
 .guideInputRow {

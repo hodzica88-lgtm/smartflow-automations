@@ -28,9 +28,10 @@ const panelStyle = {
   display: "grid",
   gap: 16,
   padding: 20,
-  borderRadius: 12,
-  border: "1px solid #e2e8f0",
-  background: "#fff",
+  borderRadius: 18,
+  border: "1px solid var(--border)",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0.01))",
+  boxShadow: "var(--shadow-xl)",
 } as const;
 
 const primaryButtonStyle = {
@@ -40,19 +41,19 @@ const primaryButtonStyle = {
   minHeight: "2.75rem",
   width: "fit-content",
   padding: "12px 18px",
-  borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
-  border: "none",
+  borderRadius: 12,
+  background: "var(--gold)",
+  color: "#111",
+  border: "1px solid var(--gold)",
   cursor: "pointer",
   fontWeight: 700,
 } as const;
 
 const secondaryButtonStyle = {
   ...primaryButtonStyle,
-  background: "#fff",
-  color: "#1a202c",
-  border: "1px solid #cbd5e0",
+  background: "rgba(255,255,255,0.03)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
 } as const;
 
 const checkboxRowStyle = {
@@ -60,7 +61,7 @@ const checkboxRowStyle = {
   gap: 12,
   alignItems: "flex-start",
   lineHeight: 1.5,
-  color: "#4b5563",
+  color: "var(--muted)",
 } as const;
 
 const formatDateTimeByLocale = (value: string | null, locale: "de-DE" | "en-US") => {
@@ -125,34 +126,34 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const companyName = await getCompanyName(access.companyId, market);
 
   return (
-    <main style={{ padding: 24, maxWidth: 900, margin: "0 auto", display: "grid", gap: 20 }}>
+    <main style={{ padding: 24, maxWidth: 920, margin: "0 auto", display: "grid", gap: 20 }}>
       <header style={{ display: "grid", gap: 8 }}>
-        <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+        <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
           ← {copy.back}
         </Link>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase", color: "var(--gold)", letterSpacing: "0.08em" }}>
           Billing
         </p>
         <h1 style={{ margin: 0 }}>{companyName}</h1>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
           {getStatusText(copy, resolvedSearchParams?.billing ?? billing.lockReason)}
         </p>
       </header>
 
       {resolvedSearchParams?.success ? (
-        <section style={{ padding: 16, border: "1px solid #b7f0c6", borderRadius: 10, background: "#e6ffed" }}>
+        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--success) 40%, var(--border))", borderRadius: 12, background: "rgba(46,204,113,0.12)" }}>
           {copy.checkoutSuccess}
         </section>
       ) : null}
 
       {resolvedSearchParams?.canceled === "1" ? (
-        <section style={{ padding: 16, border: "1px solid #f0e0b7", borderRadius: 10, background: "#fff8e6" }}>
+        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--warning) 45%, var(--border))", borderRadius: 12, background: "rgba(243,156,18,0.12)" }}>
           {copy.checkoutCanceled}
         </section>
       ) : null}
 
       {resolvedSearchParams?.error ? (
-        <section style={{ padding: 16, border: "1px solid #f0b7b7", borderRadius: 10, background: "#ffe6e6" }}>
+        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 12, background: "rgba(231,76,60,0.12)" }}>
           {resolvedSearchParams.error}
         </section>
       ) : null}
@@ -172,9 +173,9 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
       <section style={panelStyle}>
         <h2 style={{ margin: 0 }}>{copy.subscriptionHeading}</h2>
-        <p style={{ margin: 0, fontWeight: 700, color: "#111827" }}>{copy.subscriptionPrice}</p>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>{copy.subscriptionTaxNote}</p>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontWeight: 700, color: "var(--text)" }}>{copy.subscriptionPrice}</p>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>{copy.subscriptionTaxNote}</p>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
           {copy.subscriptionText}
         </p>
 
@@ -201,7 +202,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             </form>
           </div>
         ) : (
-          <p style={{ margin: 0, color: "#555" }}>
+          <p style={{ margin: 0, color: "var(--muted)" }}>
             {copy.ownerOnly}
           </p>
         )}

@@ -6,6 +6,7 @@ import { getSafePostLoginPath } from "@/features/auth/redirects";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 import styles from "../auth.module.css";
 
@@ -34,7 +35,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="login-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>Varnito</p>
+          <VarnitoLogo subtitle={market === "us" ? "Secure Sign In" : "Sicherer Zugang"} />
           <h1 className={styles.title} id="login-title">
             {copy.loginTitle}
           </h1>

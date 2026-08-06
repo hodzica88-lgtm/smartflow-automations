@@ -6,6 +6,7 @@ import { SITE_NAME } from "@/shared/config/site";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 import styles from "./page.module.css";
 
@@ -45,6 +46,18 @@ export default async function Home() {
 
   return (
     <main className={styles.page} id="top">
+      <header className={styles.topBar}>
+        <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
+        <div className={styles.topActions}>
+          <Link className={styles.secondaryButton} href="/login">
+            {market === "us" ? "Sign in" : "Anmelden"}
+          </Link>
+          <Link className={styles.primaryButton} href="/registrierung">
+            {copy.primaryCta}
+          </Link>
+        </div>
+      </header>
+
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
           <p className={styles.kicker}>{copy.kicker}</p>
@@ -58,7 +71,7 @@ export default async function Home() {
               {copy.primaryCta}
             </Link>
             <Link className={styles.secondaryButton} href="/demo/dashboard">
-              Produkt-Demo starten
+              {market === "us" ? "Open product demo" : "Produkt-Demo starten"}
             </Link>
             <a className={styles.secondaryButton} href="#so-funktioniert">
               {copy.secondaryCta}

@@ -1,11 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
+
 :root {
-  --background: #f8fafc;
-  --foreground: #111827;
-  --muted: #667085;
-  --surface: #ffffff;
-  --border: #d0d5dd;
-  --accent: #0f766e;
-  --accent-strong: #134e4a;
+  --background: #0b0b0d;
+  --surface: #17181c;
+  --card: #20242a;
+  --border: #2e323a;
+  --gold: #d4af37;
+  --gold-hover: #e4c454;
+  --white: #ffffff;
+  --text: #e8e8e8;
+  --muted: #a7aab0;
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --ring: rgba(212, 175, 55, 0.32);
+  --shadow-xl: 0 26px 70px rgba(0, 0, 0, 0.42);
+  --radius-xl: 24px;
+  --radius-md: 14px;
+  --duration-fast: 200ms;
+  --duration-base: 260ms;
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -21,14 +35,12 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 24%),
+    radial-gradient(circle at 10% -10%, rgba(212, 175, 55, 0.18), transparent 28%),
+    radial-gradient(circle at 100% 0%, rgba(212, 175, 55, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%),
     var(--background);
-  color: var(--foreground);
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
+  color: var(--text);
+  font-family: "Poppins", sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -46,6 +58,125 @@ select {
   font: inherit;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    border-color var(--duration-fast) var(--ease-premium),
+    background-color var(--duration-fast) var(--ease-premium),
+    color var(--duration-fast) var(--ease-premium),
+    box-shadow var(--duration-fast) var(--ease-premium),
+    transform var(--duration-fast) var(--ease-premium),
+    opacity var(--duration-fast) var(--ease-premium);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 ::selection {
-  background: rgba(15, 118, 110, 0.18);
+  background: rgba(212, 175, 55, 0.28);
+}
+
+.premium-card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.premium-input,
+.premium-select,
+.premium-textarea {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, black 14%);
+  color: var(--text);
+  padding: 0 14px;
+}
+
+.premium-textarea {
+  min-height: 128px;
+  padding: 12px 14px;
+}
+
+.premium-input::placeholder,
+.premium-textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 84%, transparent);
+}
+
+.premium-input:focus,
+.premium-select:focus,
+.premium-textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
+  outline: none;
+}
+
+.premium-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 1px solid var(--gold);
+  background: var(--gold);
+  color: #111;
+  padding: 0 18px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.premium-button:hover {
+  transform: translateY(-1px) scale(1.01);
+  border-color: var(--gold-hover);
+  background: var(--gold-hover);
+  box-shadow: 0 14px 30px rgba(212, 175, 55, 0.22);
+}
+
+.premium-button-secondary {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+}
+
+.premium-button-secondary:hover {
+  border-color: color-mix(in srgb, var(--gold) 50%, var(--border));
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.premium-fade-in {
+  animation: premium-fade-in var(--duration-base) var(--ease-premium);
+}
+
+@keyframes premium-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

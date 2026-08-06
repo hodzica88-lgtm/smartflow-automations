@@ -3,6 +3,7 @@ import Link from "next/link";
 import { forgotPasswordAction } from "@/features/auth/actions";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 import styles from "../auth.module.css";
 
@@ -24,7 +25,7 @@ export default async function ForgotPasswordPage({
     <main className={styles.shell}>
       <section className={styles.panel} aria-labelledby="forgot-title">
         <header className={styles.header}>
-          <p className={styles.eyebrow}>Varnito</p>
+          <VarnitoLogo subtitle={market === "us" ? "Password Recovery" : "Passworthilfe"} />
           <h1 className={styles.title} id="forgot-title">
             {copy.forgotTitle}
           </h1>

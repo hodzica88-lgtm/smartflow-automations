@@ -6,6 +6,7 @@ import { DemoProvider } from "@/features/demo/DemoProvider";
 import DemoTour from "@/features/demo/DemoTour";
 import { getDemoCopy } from "@/features/demo/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 const navStyle = {
   display: "flex",
@@ -14,12 +15,12 @@ const navStyle = {
 } as const;
 
 const linkStyle = {
-  color: "#1f2937",
+  color: "var(--text)",
   textDecoration: "none",
-  border: "1px solid #d1d5db",
+  border: "1px solid var(--border)",
   borderRadius: 999,
-  padding: "8px 12px",
-  background: "#fff",
+  padding: "9px 13px",
+  background: "rgba(255,255,255,0.03)",
   fontWeight: 600,
   fontSize: 14,
 } as const;
@@ -37,8 +38,9 @@ export default async function DemoLayout({ children }: { children: React.ReactNo
           position: "sticky",
           top: 45,
           zIndex: 20,
-          background: "#f8fafc",
-          borderBottom: "1px solid #e5e7eb",
+          background: "rgba(11,11,13,0.9)",
+          backdropFilter: "blur(10px)",
+          borderBottom: "1px solid var(--border)",
         }}
       >
         <div
@@ -53,12 +55,15 @@ export default async function DemoLayout({ children }: { children: React.ReactNo
             flexWrap: "wrap",
           }}
         >
-          <div style={navStyle}>
-            <Link href="/demo/dashboard" style={linkStyle}>{copy.nav.dashboard}</Link>
-            <Link href="/demo/leads" style={linkStyle}>{copy.nav.leads}</Link>
-            <Link href="/demo/team" style={linkStyle}>{copy.nav.team}</Link>
-            <Link href="/demo/billing" style={linkStyle}>{copy.nav.billing}</Link>
-            <Link href="/demo/settings" style={linkStyle}>{copy.nav.settings}</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <VarnitoLogo href="/demo/dashboard" subtitle="Demo" />
+            <div style={navStyle}>
+              <Link href="/demo/dashboard" style={linkStyle}>{copy.nav.dashboard}</Link>
+              <Link href="/demo/leads" style={linkStyle}>{copy.nav.leads}</Link>
+              <Link href="/demo/team" style={linkStyle}>{copy.nav.team}</Link>
+              <Link href="/demo/billing" style={linkStyle}>{copy.nav.billing}</Link>
+              <Link href="/demo/settings" style={linkStyle}>{copy.nav.settings}</Link>
+            </div>
           </div>
 
           <Link href={registerHref} style={linkStyle}>
