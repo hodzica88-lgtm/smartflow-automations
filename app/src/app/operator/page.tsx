@@ -54,6 +54,16 @@ const formatSubscription = (company: OperatorCompany) => {
   return `${plan} · ${company.subscriptionStatus}`;
 };
 
+const formatCurrency = (value: number, currency: "EUR" | "USD") => {
+  const locale = currency === "EUR" ? "de-DE" : "en-US";
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+};
+
 type OperatorPageProps = {
   searchParams?: Promise<{ q?: string; success?: string; error?: string }>;
 };
@@ -147,6 +157,46 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
         </article>
       </section>
 
+      <section className={styles.companySection} aria-labelledby="owner-kpis-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="owner-kpis-title">Owner KPIs</h2>
+            <p>Geschäftsrelevante Kennzahlen für Subscription- und Umsatzentwicklung (DE/US getrennt).</p>
+          </div>
+        </div>
+
+        <div className={styles.metrics}>
+          <article className={styles.metricCard}>
+            <p>Aktive Abos</p>
+            <strong>{metrics.owner.activeSubscriptions}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Trialing</p>
+            <strong>{metrics.owner.trialingSubscriptions}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Zahlungsrisiko (past_due/unpaid)</p>
+            <strong>{metrics.owner.paymentRiskSubscriptions}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Kündigung zum Periodenende</p>
+            <strong>{metrics.owner.scheduledCancellationSubscriptions}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Geschätztes MRR (EUR)</p>
+            <strong>{formatCurrency(metrics.owner.estimatedMrrEur, "EUR")}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Geschätztes MRR (USD)</p>
+            <strong>{formatCurrency(metrics.owner.estimatedMrrUsd, "USD")}</strong>
+          </article>
+          <article className={styles.metricCard}>
+            <p>Firmen ohne Leads (30 Tage)</p>
+            <strong>{metrics.owner.companiesWithNoLeads30d}</strong>
+          </article>
+        </div>
+      </section>
+
       {metrics.staleProcessingNotifications > 0 ? (
         <section className={styles.alert} role="alert">
           <strong>Kritischer Queue-Hinweis</strong>
@@ -225,12 +275,15 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
               <thead>
                 <tr>
                   <th>Unternehmen</th>
+                  <th>Markt</th>
                   <th>Systemstatus</th>
                   <th>Benutzer</th>
                   <th>Leads</th>
                   <th>Letzter Lead</th>
                   <th>Benachrichtigungen</th>
                   <th>Abonnement</th>
+                  <th>Trial-Ende</th>
+                  <th>MRR (Schätzung)</th>
                   <th>Erstellt</th>
                   <th>Aktionen</th>
                 </tr>
@@ -249,6 +302,13 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
                           {company.name}
                         </Link>
                         <span className={styles.subtle}>{company.email}</span>
+                      </td>
+                      <td>
+                        {company.market === "de"
+                          ? "DE"
+                          : company.market === "us"
+                            ? "US"
+                            : "-"}
                       </td>
                       <td>
                         <span className={`${styles.badge} ${styles[status.tone]}`}>
@@ -271,6 +331,14 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
                             Bis {formatDateTime(company.currentPeriodEnd)}
                           </span>
                         ) : null}
+                      </td>
+                      <td>{formatDateTime(company.trialEndsAt ?? null)}</td>
+                      <td>
+                        {company.market === "de"
+                          ? formatCurrency(company.estimatedMrr ?? 0, "EUR")
+                          : company.market === "us"
+                            ? formatCurrency(company.estimatedMrr ?? 0, "USD")
+                            : "-"}
                       </td>
                       <td>{formatDateTime(company.createdAt)}</td>
                       <td>

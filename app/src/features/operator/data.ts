@@ -4,6 +4,7 @@ export type OperatorCompany = {
   id: string;
   name: string;
   email: string;
+  market?: "de" | "us" | "unknown";
   createdAt: string;
   deletedAt: string | null;
   userCount: number;
@@ -15,6 +16,8 @@ export type OperatorCompany = {
   subscriptionPlan: string | null;
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
+  trialEndsAt?: string | null;
+  estimatedMrr?: number;
 };
 
 export type OperatorDashboardData = {
@@ -40,6 +43,15 @@ export type OperatorDashboardData = {
       checkoutStartsLast30d: number;
       publicLeadsLast30d: number;
       exportsLast30d: number;
+    };
+    owner: {
+      activeSubscriptions: number;
+      trialingSubscriptions: number;
+      paymentRiskSubscriptions: number;
+      scheduledCancellationSubscriptions: number;
+      estimatedMrrEur: number;
+      estimatedMrrUsd: number;
+      companiesWithNoLeads30d: number;
     };
   };
   companies: OperatorCompany[];
@@ -145,6 +157,19 @@ type RawCompanyOverview = {
   current_period_end: string | null;
 };
 
+type RawSubscriptionSummary = {
+  company_id: string;
+  status: string | null;
+  trial_ends_at: string | null;
+  cancel_at_period_end: boolean | null;
+};
+
+type RawCompanyMarketEvent = {
+  company_id: string | null;
+  market: "de" | "us" | "unknown";
+  occurred_at: string;
+};
+
 type RawCompanyDetail = {
   id: string;
   owner_user_id: string;
@@ -240,6 +265,16 @@ const mapCompanyOverview = (company: RawCompanyOverview): OperatorCompany => ({
   currentPeriodEnd: company.current_period_end,
 });
 
+const ESTIMATED_MONTHLY_MRR_BY_MARKET = {
+  de: 99,
+  us: 119,
+} as const;
+
+const getMarketForCompany = (
+  companyId: string,
+  marketByCompanyId: Map<string, "de" | "us" | "unknown">,
+) => marketByCompanyId.get(companyId) ?? "unknown";
+
 export const getOperatorDashboardData = async (): Promise<OperatorDashboardData> => {
   const supabase = createSupabaseServiceRoleClient();
   const now = new Date();
@@ -264,6 +299,8 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
     analyticsCheckoutStartsLast30d,
     analyticsPublicLeadsLast30d,
     analyticsExportsLast30d,
+    subscriptionsResult,
+    marketEventsResult,
   ] = await Promise.all([
     supabase
       .from("operator_company_overview")
@@ -354,21 +391,100 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
         .eq("event_name", "leads_export_requested")
         .gte("occurred_at", last30Days),
     ),
+    supabase
+      .from("subscriptions")
+      .select("company_id, status, trial_ends_at, cancel_at_period_end"),
+    supabase
+      .from("analytics_events")
+      .select("company_id, market, occurred_at")
+      .not("company_id", "is", null)
+      .order("occurred_at", { ascending: false })
+      .limit(5000),
   ]);
 
   if (companyOverviewResult.error) {
     throw companyOverviewResult.error;
   }
 
-  const companies = ((companyOverviewResult.data ?? []) as RawCompanyOverview[]).map(
-    mapCompanyOverview,
+  if (subscriptionsResult.error) {
+    throw subscriptionsResult.error;
+  }
+
+  if (marketEventsResult.error) {
+    throw marketEventsResult.error;
+  }
+
+  const subscriptions = (subscriptionsResult.data ?? []) as RawSubscriptionSummary[];
+  const latestCompanyMarkets = new Map<string, "de" | "us" | "unknown">();
+
+  for (const entry of (marketEventsResult.data ?? []) as RawCompanyMarketEvent[]) {
+    if (!entry.company_id || latestCompanyMarkets.has(entry.company_id)) {
+      continue;
+    }
+
+    latestCompanyMarkets.set(entry.company_id, entry.market);
+  }
+
+  const subscriptionsByCompanyId = new Map<string, RawSubscriptionSummary>(
+    subscriptions.map((subscription) => [subscription.company_id, subscription]),
   );
+
+  const companies = ((companyOverviewResult.data ?? []) as RawCompanyOverview[]).map((entry) => {
+    const overview = mapCompanyOverview(entry);
+    const market = getMarketForCompany(overview.id, latestCompanyMarkets);
+    const subscription = subscriptionsByCompanyId.get(overview.id);
+
+    const estimatedMrr =
+      (overview.subscriptionStatus === "active" || overview.subscriptionStatus === "trialing") &&
+      market !== "unknown"
+        ? ESTIMATED_MONTHLY_MRR_BY_MARKET[market]
+        : 0;
+
+    return {
+      ...overview,
+      market,
+      trialEndsAt: subscription?.trial_ends_at ?? null,
+      estimatedMrr,
+    };
+  });
 
   const companiesNeedingAttention = companies.filter(
     (company) =>
       company.deletedAt === null &&
       (company.failedNotifications7d > 0 || company.staleProcessingNotifications > 0),
   ).length;
+
+  const activeSubscriptions = subscriptions.filter(
+    (subscription) => subscription.status === "active",
+  ).length;
+  const trialingSubscriptions = subscriptions.filter(
+    (subscription) => subscription.status === "trialing",
+  ).length;
+  const paymentRiskSubscriptions = subscriptions.filter(
+    (subscription) =>
+      subscription.status === "past_due" || subscription.status === "unpaid",
+  ).length;
+  const scheduledCancellationSubscriptions = subscriptions.filter(
+    (subscription) => subscription.cancel_at_period_end === true,
+  ).length;
+
+  const estimatedMrrEur = companies
+    .filter((company) => company.market === "de")
+    .reduce((sum, company) => sum + (company.estimatedMrr ?? 0), 0);
+  const estimatedMrrUsd = companies
+    .filter((company) => company.market === "us")
+    .reduce((sum, company) => sum + (company.estimatedMrr ?? 0), 0);
+  const companyOverviewById = new Map<string, RawCompanyOverview>(
+    ((companyOverviewResult.data ?? []) as RawCompanyOverview[]).map((entry) => [entry.id, entry]),
+  );
+  const companiesWithNoLeads30d = companies.filter((company) => {
+    if (company.deletedAt !== null) {
+      return false;
+    }
+
+    const rawOverview = companyOverviewById.get(company.id);
+    return toNumber(rawOverview?.lead_count ?? 0) > 0 && company.lastLeadAt === null;
+  }).length;
 
   return {
     metrics: {
@@ -393,6 +509,15 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
         checkoutStartsLast30d: analyticsCheckoutStartsLast30d,
         publicLeadsLast30d: analyticsPublicLeadsLast30d,
         exportsLast30d: analyticsExportsLast30d,
+      },
+      owner: {
+        activeSubscriptions,
+        trialingSubscriptions,
+        paymentRiskSubscriptions,
+        scheduledCancellationSubscriptions,
+        estimatedMrrEur,
+        estimatedMrrUsd,
+        companiesWithNoLeads30d,
       },
     },
     companies,
