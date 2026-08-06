@@ -12,6 +12,8 @@ import {
 } from "@/features/billing/service";
 import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
+import { getMarketConfig, type MarketCode } from "@/shared/i18n/market";
+import { getRequestMarket } from "@/shared/i18n/request";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -37,7 +39,7 @@ const canGrantCheckoutTrial = (
   return true;
 };
 
-const getStripePrice = async (stripe: Stripe) => {
+const getStripePrice = async (stripe: Stripe, expectedCurrency: "eur" | "usd") => {
   const prices = await stripe.prices.list({
     active: true,
     expand: ["data.product"],
@@ -47,7 +49,7 @@ const getStripePrice = async (stripe: Stripe) => {
 
   const price = prices.data[0];
 
-  if (!price || price.currency !== "eur" || price.recurring?.interval !== "month") {
+  if (!price || price.currency !== expectedCurrency || price.recurring?.interval !== "month") {
     throw new Error("Der Stripe-Preis für Varnito Pro konnte nicht geladen werden.");
   }
 
@@ -71,6 +73,18 @@ const getCompanyForBilling = async (companyId: string) => {
 };
 
 export async function startBillingCheckoutAction(formData: FormData) {
+  let market: MarketCode = "de";
+  let siteUrl = publicEnv.appUrl;
+
+  try {
+    const requestMarket = await getRequestMarket();
+    market = requestMarket.market;
+    siteUrl = requestMarket.config.siteUrl;
+  } catch {
+    // Fall back to existing environment URL outside request scope.
+  }
+
+  const marketConfig = getMarketConfig(market);
   const access = await requireUserCompanyAccess({
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
@@ -92,7 +106,7 @@ export async function startBillingCheckoutAction(formData: FormData) {
 
   const stripe = createStripeServerClient();
   const [price, company, billing] = await Promise.all([
-    getStripePrice(stripe),
+    getStripePrice(stripe, marketConfig.currency),
     getCompanyForBilling(access.companyId),
     getCompanyBillingSnapshot(access.companyId),
   ]);
@@ -117,13 +131,13 @@ export async function startBillingCheckoutAction(formData: FormData) {
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    success_url: `${publicEnv.appUrl}${BILLING_ROUTE}?success=checkout`,
-    cancel_url: `${publicEnv.appUrl}${BILLING_ROUTE}?canceled=1`,
+    success_url: `${siteUrl}${BILLING_ROUTE}?success=checkout`,
+    cancel_url: `${siteUrl}${BILLING_ROUTE}?canceled=1`,
     line_items: [{ price: price.id, quantity: 1 }],
     client_reference_id: access.companyId,
     customer: billing.stripeCustomerId ?? undefined,
     customer_email: billing.stripeCustomerId ? undefined : company.email,
-    locale: "de",
+    locale: market === "us" ? "en" : "de",
     metadata: {
       company_id: access.companyId,
       lookup_key: BILLING_LOOKUP_KEY,
@@ -174,6 +188,15 @@ export async function startBillingCheckoutAction(formData: FormData) {
 }
 
 export async function openBillingPortalAction() {
+  let siteUrl = publicEnv.appUrl;
+
+  try {
+    const requestMarket = await getRequestMarket();
+    siteUrl = requestMarket.config.siteUrl;
+  } catch {
+    // Fall back to existing environment URL outside request scope.
+  }
+
   const access = await requireUserCompanyAccess({
     nextPath: BILLING_ROUTE,
     enforceBilling: false,
@@ -192,7 +215,7 @@ export async function openBillingPortalAction() {
 
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${publicEnv.appUrl}${BILLING_ROUTE}`,
+    return_url: `${siteUrl}${BILLING_ROUTE}`,
   });
 
   redirect(session.url);

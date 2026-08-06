@@ -41,7 +41,43 @@ const state = vi.hoisted(() => ({
     trialUsedAt: null,
   } as BillingSnapshotMock,
   checkoutPayload: null as Record<string, unknown> | null,
+  market: "de" as "de" | "us",
+  priceCurrency: "eur" as "eur" | "usd",
   subscriptionsUpdatePayload: null as Record<string, unknown> | null,
+}));
+
+vi.mock("@/shared/i18n/request", () => ({
+  getRequestMarket: vi.fn(async () => {
+    if (state.market === "us") {
+      return {
+        market: "us",
+        host: "varnito.com",
+        config: {
+          code: "us",
+          currency: "usd",
+          domain: "varnito.com",
+          language: "en",
+          legalContactEmail: "contact@varnito.com",
+          locale: "en-US",
+          siteUrl: "https://varnito.com",
+        },
+      };
+    }
+
+    return {
+      market: "de",
+      host: "varnito.de",
+      config: {
+        code: "de",
+        currency: "eur",
+        domain: "varnito.de",
+        language: "de",
+        legalContactEmail: "kontakt@varnito.de",
+        locale: "de-DE",
+        siteUrl: "https://varnito.de",
+      },
+    };
+  }),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -85,7 +121,7 @@ vi.mock("@/shared/lib/stripe/server", () => ({
       list: vi.fn(async () => ({
         data: [
           {
-            currency: "eur",
+            currency: state.priceCurrency,
             id: "price_test_1",
             product: "prod_test_1",
             recurring: {
@@ -158,6 +194,8 @@ const { startBillingCheckoutAction } = await import("./actions");
 
 describe("stripe billing checkout trial", () => {
   beforeEach(() => {
+    state.market = "de";
+    state.priceCurrency = "eur";
     state.billingSnapshot = {
       cancelAt: null,
       cancelAtPeriodEnd: false,
@@ -223,5 +261,22 @@ describe("stripe billing checkout trial", () => {
       trial_period_days?: number;
     };
     expect(subscriptionData.trial_period_days).toBeUndefined();
+  });
+
+  it("uses US checkout locale, currency-matched price and varnito.com return URLs", async () => {
+    state.market = "us";
+    state.priceCurrency = "usd";
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+
+    expect(state.checkoutPayload?.locale).toBe("en");
+    expect(state.checkoutPayload?.success_url).toBe(
+      "https://varnito.com/dashboard/billing?success=checkout",
+    );
+    expect(state.checkoutPayload?.cancel_url).toBe(
+      "https://varnito.com/dashboard/billing?canceled=1",
+    );
   });
 });
