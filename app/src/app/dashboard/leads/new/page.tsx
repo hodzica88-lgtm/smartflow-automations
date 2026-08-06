@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireUserCompanyAccess } from "@/features/billing/service";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
+import { getRequestMarket } from "@/shared/i18n/request";
 import {
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
@@ -101,6 +103,25 @@ export async function createPhoneLeadAction(formData: FormData) {
       "/dashboard/leads/new?error=Die+Telefonanfrage+konnte+nicht+gespeichert+werden",
     );
   }
+
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
+
+  trackAnalyticsEvent({
+    eventName: "lead_created_manual",
+    market,
+    companyId,
+    isAuthenticated: true,
+    metadata: {
+      hasEmail: Boolean(email),
+      inquiryType,
+    },
+  });
 
   redirect(`/dashboard/leads/${lead.id}`);
 }

@@ -26,6 +26,21 @@ export type OperatorDashboardData = {
     dueNotifications: number;
     staleProcessingNotifications: number;
     companiesNeedingAttention: number;
+    analytics: {
+      eventsLast7d: {
+        de: number;
+        us: number;
+        total: number;
+      };
+      eventsLast30d: {
+        de: number;
+        us: number;
+        total: number;
+      };
+      checkoutStartsLast30d: number;
+      publicLeadsLast30d: number;
+      exportsLast30d: number;
+    };
   };
   companies: OperatorCompany[];
 };
@@ -228,6 +243,7 @@ const mapCompanyOverview = (company: RawCompanyOverview): OperatorCompany => ({
 export const getOperatorDashboardData = async (): Promise<OperatorDashboardData> => {
   const supabase = createSupabaseServiceRoleClient();
   const now = new Date();
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
   const staleBefore = new Date(now.getTime() - 10 * 60 * 1000).toISOString();
@@ -241,6 +257,13 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
     failedNotifications24h,
     dueNotifications,
     staleProcessingNotifications,
+    analyticsEventsLast7dDe,
+    analyticsEventsLast7dUs,
+    analyticsEventsLast30dDe,
+    analyticsEventsLast30dUs,
+    analyticsCheckoutStartsLast30d,
+    analyticsPublicLeadsLast30d,
+    analyticsExportsLast30d,
   ] = await Promise.all([
     supabase
       .from("operator_company_overview")
@@ -282,6 +305,55 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
         .eq("status", "processing")
         .lte("processing_started_at", staleBefore),
     ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("market", "de")
+        .gte("occurred_at", last7Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("market", "us")
+        .gte("occurred_at", last7Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("market", "de")
+        .gte("occurred_at", last30Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("market", "us")
+        .gte("occurred_at", last30Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("event_name", "billing_checkout_started")
+        .gte("occurred_at", last30Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("event_name", "lead_created_public")
+        .gte("occurred_at", last30Days),
+    ),
+    readCount(
+      supabase
+        .from("analytics_events")
+        .select("id", { count: "exact", head: true })
+        .eq("event_name", "leads_export_requested")
+        .gte("occurred_at", last30Days),
+    ),
   ]);
 
   if (companyOverviewResult.error) {
@@ -307,6 +379,21 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
       dueNotifications,
       staleProcessingNotifications,
       companiesNeedingAttention,
+      analytics: {
+        eventsLast7d: {
+          de: analyticsEventsLast7dDe,
+          us: analyticsEventsLast7dUs,
+          total: analyticsEventsLast7dDe + analyticsEventsLast7dUs,
+        },
+        eventsLast30d: {
+          de: analyticsEventsLast30dDe,
+          us: analyticsEventsLast30dUs,
+          total: analyticsEventsLast30dDe + analyticsEventsLast30dUs,
+        },
+        checkoutStartsLast30d: analyticsCheckoutStartsLast30d,
+        publicLeadsLast30d: analyticsPublicLeadsLast30d,
+        exportsLast30d: analyticsExportsLast30d,
+      },
     },
     companies,
   };

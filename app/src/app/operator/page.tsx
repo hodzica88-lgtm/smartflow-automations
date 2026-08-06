@@ -157,6 +157,54 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
         </section>
       ) : null}
 
+      <section className={styles.companySection} aria-labelledby="analytics-summary-title">
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 id="analytics-summary-title">Analytics-Zusammenfassung (anonymisiert)</h2>
+            <p>Marktvergleich DE/US sowie zentrale Funnel-Events für die letzten 7 und 30 Tage.</p>
+          </div>
+        </div>
+
+        <dl className={styles.definitionGrid}>
+          <div>
+            <dt>Events 7 Tage (DE)</dt>
+            <dd>{metrics.analytics.eventsLast7d.de}</dd>
+          </div>
+          <div>
+            <dt>Events 7 Tage (US)</dt>
+            <dd>{metrics.analytics.eventsLast7d.us}</dd>
+          </div>
+          <div>
+            <dt>Events 7 Tage (Gesamt)</dt>
+            <dd>{metrics.analytics.eventsLast7d.total}</dd>
+          </div>
+          <div>
+            <dt>Events 30 Tage (DE)</dt>
+            <dd>{metrics.analytics.eventsLast30d.de}</dd>
+          </div>
+          <div>
+            <dt>Events 30 Tage (US)</dt>
+            <dd>{metrics.analytics.eventsLast30d.us}</dd>
+          </div>
+          <div>
+            <dt>Events 30 Tage (Gesamt)</dt>
+            <dd>{metrics.analytics.eventsLast30d.total}</dd>
+          </div>
+          <div>
+            <dt>Checkout-Starts 30 Tage</dt>
+            <dd>{metrics.analytics.checkoutStartsLast30d}</dd>
+          </div>
+          <div>
+            <dt>Öffentliche Leads 30 Tage</dt>
+            <dd>{metrics.analytics.publicLeadsLast30d}</dd>
+          </div>
+          <div>
+            <dt>Lead-Exporte 30 Tage</dt>
+            <dd>{metrics.analytics.exportsLast30d}</dd>
+          </div>
+        </dl>
+      </section>
+
       <section className={styles.companySection} aria-labelledby="companies-title">
         <div className={styles.sectionHeader}>
           <div>

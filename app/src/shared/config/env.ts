@@ -10,6 +10,7 @@ type ServerEnv = PublicEnv & {
   brevoApiKey?: string;
   brevoSenderEmail?: string;
   brevoSenderName?: string;
+  analyticsEventsEnabled: boolean;
   vapidPrivateKey?: string;
   vapidSubject?: string;
   stripeSecretKey?: string;
@@ -28,6 +29,25 @@ const getOptionalEnv = (key: string) => {
   const value = process.env[key];
 
   return value && value.trim().length > 0 ? value : undefined;
+};
+
+const getBooleanEnv = (key: string, fallback: boolean) => {
+  const value = getOptionalEnv(key);
+
+  if (!value) {
+    return fallback;
+  }
+
+  const normalized = value.toLowerCase();
+  if (normalized === "1" || normalized === "true" || normalized === "yes") {
+    return true;
+  }
+
+  if (normalized === "0" || normalized === "false" || normalized === "no") {
+    return false;
+  }
+
+  return fallback;
 };
 
 const getListEnv = (key: string) =>
@@ -108,6 +128,7 @@ export const loadServerEnv = (): ServerEnv => {
     brevoApiKey: getOptionalEnv("BREVO_API_KEY"),
     brevoSenderEmail: getOptionalEnv("BREVO_SENDER_EMAIL"),
     brevoSenderName: getOptionalEnv("BREVO_SENDER_NAME"),
+    analyticsEventsEnabled: getBooleanEnv("ANALYTICS_EVENTS_ENABLED", true),
     vapidPrivateKey: getOptionalEnv("VAPID_PRIVATE_KEY"),
     vapidSubject: getOptionalEnv("VAPID_SUBJECT"),
     stripeSecretKey: getOptionalEnv("STRIPE_SECRET_KEY"),

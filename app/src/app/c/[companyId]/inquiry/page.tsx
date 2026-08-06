@@ -1,8 +1,10 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { createAppNotification } from "@/features/notifications/service";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getActiveCompanyInquiryTypes } from "@/features/inquiry-types/service";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
 import LegalFooter from "@/shared/ui/LegalFooter";
+import { getRequestMarket } from "@/shared/i18n/request";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -257,6 +259,25 @@ export default async function Page({ params, searchParams }: PageProps) {
               dedupeKey: `new_inquiry:${leadData.id}`,
               metadata: {
                 leadId: leadData.id,
+              },
+            });
+
+            let market: "de" | "us" | "unknown" = "unknown";
+
+            try {
+              market = (await getRequestMarket()).market;
+            } catch {
+              // Keep market unknown when request context is unavailable.
+            }
+
+            trackAnalyticsEvent({
+              eventName: "lead_created_public",
+              market,
+              companyId: targetCompanyId,
+              isAuthenticated: false,
+              metadata: {
+                inquiryType: inquiry_type,
+                hasDescription: Boolean(description),
               },
             });
 

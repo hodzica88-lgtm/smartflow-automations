@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
@@ -174,6 +175,13 @@ export async function inviteTeamMemberAction(formData: FormData) {
   }
 
   const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
 
   try {
     await createPendingMember(companyId, email);
@@ -203,12 +211,30 @@ export async function inviteTeamMemberAction(formData: FormData) {
     details: { email },
   });
 
+  trackAnalyticsEvent({
+    eventName: "team_invite_sent",
+    market,
+    companyId,
+    isAuthenticated: true,
+    metadata: {
+      invitedByOwner: true,
+    },
+  });
+
   redirectTeamSuccess("Einladung wurde versendet.");
 }
 
 export async function resendTeamInvitationAction(formData: FormData) {
   const memberId = getStringValue(formData, "member_id");
   const { companyId } = await getOwnerAccess();
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
+
   const supabase = createSupabaseServiceRoleClient();
 
   const { data: member, error } = await supabase
@@ -256,12 +282,26 @@ export async function resendTeamInvitationAction(formData: FormData) {
     details: { email: member.email },
   });
 
+  trackAnalyticsEvent({
+    eventName: "team_invite_resent",
+    market,
+    companyId,
+    isAuthenticated: true,
+  });
+
   redirectTeamSuccess("Einladung wurde erneut versendet.");
 }
 
 export async function removeTeamMemberAction(formData: FormData) {
   const memberId = getStringValue(formData, "member_id");
   const { companyId, ownerUserId, ownerEmail } = await getOwnerAccess();
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
 
   if (!memberId || memberId === ownerUserId) {
     return redirectTeamError("Dieser Zugang kann nicht entfernt werden.");
@@ -294,6 +334,13 @@ export async function removeTeamMemberAction(formData: FormData) {
     details: { memberId },
   });
 
+  trackAnalyticsEvent({
+    eventName: "team_member_removed",
+    market,
+    companyId,
+    isAuthenticated: true,
+  });
+
   redirectTeamSuccess("Mitarbeiterzugang wurde entfernt.");
 }
 
@@ -315,6 +362,14 @@ export async function acceptTeamInvitationAction(formData: FormData) {
   }
 
   const authClient = await createSupabaseServerClient();
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
+
   const {
     data: { user },
   } = await authClient.auth.getUser();
@@ -386,6 +441,13 @@ export async function acceptTeamInvitationAction(formData: FormData) {
     actorLabel: user.email ?? user.id,
     action: "invite_accepted",
     details: { fullName },
+  });
+
+  trackAnalyticsEvent({
+    eventName: "team_invite_accepted",
+    market,
+    companyId: profile.default_company_id,
+    isAuthenticated: true,
   });
 
   redirect("/dashboard/leads");

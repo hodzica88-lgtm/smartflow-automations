@@ -10,6 +10,7 @@ import {
   requireUserCompanyAccess,
   getCompanyBillingSnapshot,
 } from "@/features/billing/service";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
 import { getMarketConfig, type MarketCode } from "@/shared/i18n/market";
@@ -184,14 +185,27 @@ export async function startBillingCheckoutAction(formData: FormData) {
     redirectBillingError("Stripe Checkout konnte nicht vorbereitet werden.");
   }
 
+  trackAnalyticsEvent({
+    eventName: "billing_checkout_started",
+    market,
+    companyId: access.companyId,
+    isAuthenticated: true,
+    metadata: {
+      trialGranted: shouldGrantTrial,
+      hasStripeCustomer: Boolean(billing.stripeCustomerId),
+    },
+  });
+
   redirect(checkoutUrl);
 }
 
 export async function openBillingPortalAction() {
   let siteUrl = publicEnv.appUrl;
+  let market: MarketCode = "de";
 
   try {
     const requestMarket = await getRequestMarket();
+    market = requestMarket.market;
     siteUrl = requestMarket.config.siteUrl;
   } catch {
     // Fall back to existing environment URL outside request scope.
@@ -216,6 +230,16 @@ export async function openBillingPortalAction() {
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: `${siteUrl}${BILLING_ROUTE}`,
+  });
+
+  trackAnalyticsEvent({
+    eventName: "billing_portal_opened",
+    market,
+    companyId: access.companyId,
+    isAuthenticated: true,
+    metadata: {
+      hasStripeCustomer: true,
+    },
   });
 
   redirect(session.url);

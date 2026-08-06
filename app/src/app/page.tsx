@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { SITE_NAME } from "@/shared/config/site";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 
@@ -33,8 +34,14 @@ export const generateMetadata = async (): Promise<Metadata> => {
 };
 
 export default async function Home() {
-  const { config } = await getRequestMarket();
+  const { market, config } = await getRequestMarket();
   const copy = getMarketCopy(config.code).landing;
+
+  trackAnalyticsEvent({
+    eventName: "landing_view",
+    market,
+    isAuthenticated: false,
+  });
 
   return (
     <main className={styles.page} id="top">

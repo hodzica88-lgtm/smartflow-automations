@@ -1,6 +1,8 @@
 import * as XLSX from "xlsx";
 
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getUserCompanyState } from "@/features/onboarding/company";
+import { resolveMarketFromHost } from "@/shared/i18n/market";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
@@ -160,6 +162,19 @@ export async function GET(request: Request) {
     status: lead.status ?? "",
     createdAt: formatDateTime(lead.created_at),
   }));
+
+  const market = resolveMarketFromHost(new URL(request.url).host);
+  trackAnalyticsEvent({
+    eventName: "leads_export_requested",
+    market,
+    companyId: companyState.companyId,
+    isAuthenticated: true,
+    metadata: {
+      format,
+      range,
+      rowCount: rows.length,
+    },
+  });
 
   if (format === "xlsx") {
     const workbook = XLSX.utils.book_new();

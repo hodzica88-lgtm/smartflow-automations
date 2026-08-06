@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath } from "@/features/auth/redirects";
@@ -65,6 +66,13 @@ export const loginAction = async (formData: FormData) => {
   }
 
   const user = data.user!;
+  let market: "de" | "us" | "unknown" = "unknown";
+
+  try {
+    market = (await getRequestMarket()).market;
+  } catch {
+    // Keep market unknown when request context is unavailable.
+  }
 
   try {
     await ensureUserProfile(user);
@@ -104,6 +112,17 @@ export const loginAction = async (formData: FormData) => {
 
   const billing = await getCompanyBillingSnapshot(companyState.companyId);
 
+  trackAnalyticsEvent({
+    eventName: "auth_login_success",
+    market,
+    companyId: companyState.companyId,
+    isAuthenticated: true,
+    metadata: {
+      isOwner: companyState.isOwner,
+      hasBillingAccess: billing.hasAppAccess,
+    },
+  });
+
   if (!billing.hasAppAccess) {
     redirect(BILLING_ROUTE);
   }
@@ -130,6 +149,12 @@ export const forgotPasswordAction = async (formData: FormData) => {
   }
 
   const { config } = await getRequestMarket();
+  trackAnalyticsEvent({
+    eventName: "auth_forgot_password_requested",
+    market: config.code,
+    isAuthenticated: false,
+  });
+
   const supabase = await createSupabaseServerClient();
   await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${config.siteUrl}/login`,
