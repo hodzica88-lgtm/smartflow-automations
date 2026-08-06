@@ -1,0 +1,21 @@
+export type HeaderEntry = {
+  key: string;
+  value: string;
+};
+
+export const SECURITY_HEADERS: HeaderEntry[] = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-site" },
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains; preload",
+  },
+];
+
+export const SECURITY_HEADERS_BY_KEY = new Map(
+  SECURITY_HEADERS.map((header) => [header.key.toLowerCase(), header.value]),
+);
