@@ -60,7 +60,7 @@ export default async function Home() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.kicker}>{copy.kicker}</p>
+          <p className={styles.kicker}>{market === "us" ? "New release" : "Neue Oberfläche"}</p>
           <h1>{copy.heroTitle}</h1>
           <p className={styles.lead}>
             {copy.heroLead}
@@ -71,7 +71,7 @@ export default async function Home() {
               {copy.primaryCta}
             </Link>
             <Link className={styles.secondaryButton} href="/demo/dashboard">
-              {market === "us" ? "Open product demo" : "Produkt-Demo starten"}
+              {market === "us" ? "Explore the live demo" : "Live-Demo ansehen"}
             </Link>
             <a className={styles.secondaryButton} href="#so-funktioniert">
               {copy.secondaryCta}
@@ -99,6 +99,31 @@ export default async function Home() {
             <strong>{copy.previewBillingTitle}</strong>
             <p>{copy.previewBillingText}</p>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section} aria-labelledby="views-title">
+        <div className={styles.sectionHeading}>
+          <p className={styles.sectionEyebrow}>{copy.viewsEyebrow}</p>
+          <h2 id="views-title">{copy.viewsTitle}</h2>
+        </div>
+
+        <div className={styles.viewsGrid}>
+          <article className={styles.viewCard}>
+            <span className={styles.previewLabel}>Landing</span>
+            <strong>{copy.views[0]?.title}</strong>
+            <p>{copy.views[0]?.text}</p>
+          </article>
+          <article className={styles.viewCard}>
+            <span className={styles.previewLabel}>Dashboard</span>
+            <strong>{copy.views[1]?.title}</strong>
+            <p>{copy.views[1]?.text}</p>
+          </article>
+          <article className={styles.viewCard}>
+            <span className={styles.previewLabel}>Billing</span>
+            <strong>{copy.views[2]?.title}</strong>
+            <p>{copy.views[2]?.text}</p>
+          </article>
         </div>
       </section>
 
@@ -171,31 +196,6 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="views-title">
-        <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{copy.viewsEyebrow}</p>
-          <h2 id="views-title">{copy.viewsTitle}</h2>
-        </div>
-
-        <div className={styles.viewsGrid}>
-          <article className={styles.viewCard}>
-            <span className={styles.previewLabel}>Landing</span>
-            <strong>{copy.views[0]?.title}</strong>
-            <p>{copy.views[0]?.text}</p>
-          </article>
-          <article className={styles.viewCard}>
-            <span className={styles.previewLabel}>Dashboard</span>
-            <strong>{copy.views[1]?.title}</strong>
-            <p>{copy.views[1]?.text}</p>
-          </article>
-          <article className={styles.viewCard}>
-            <span className={styles.previewLabel}>Billing</span>
-            <strong>{copy.views[2]?.title}</strong>
-            <p>{copy.views[2]?.text}</p>
-          </article>
-        </div>
-      </section>
-
       <section className={styles.section} aria-labelledby="pricing-title">
         <div className={styles.sectionHeading}>
           <p className={styles.sectionEyebrow}>{copy.pricingEyebrow}</p>
@@ -232,6 +232,27 @@ export default async function Home() {
               <p>{entry.answer}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className={styles.section} aria-labelledby="trust-title">
+        <div className={styles.sectionHeading}>
+          <p className={styles.sectionEyebrow}>{market === "us" ? "Trust" : "Vertrauen"}</p>
+          <h2 id="trust-title">{market === "us" ? "Built for reliable daily operations." : "Für verlässliche tägliche Abläufe gebaut."}</h2>
+        </div>
+        <div className={styles.gridThree}>
+          <article className={styles.featureCard}>
+            <h3>{market === "us" ? "Clear ownership" : "Klare Zuständigkeiten"}</h3>
+            <p>{market === "us" ? "Every lead has a visible owner and status." : "Jede Anfrage hat eine sichtbare Zuständigkeit und einen klaren Status."}</p>
+          </article>
+          <article className={styles.featureCard}>
+            <h3>{market === "us" ? "Secure billing flow" : "Sicherer Billing-Flow"}</h3>
+            <p>{market === "us" ? "Trial, subscription, and tax handling are transparent." : "Testphase, Abonnement und Steuerlogik sind transparent nachvollziehbar."}</p>
+          </article>
+          <article className={styles.featureCard}>
+            <h3>{market === "us" ? "Audit-ready operations" : "Audit-fähige Abläufe"}</h3>
+            <p>{market === "us" ? "Operational actions are logged and reviewable." : "Operative Änderungen sind protokolliert und nachvollziehbar."}</p>
+          </article>
         </div>
       </section>
 

@@ -77,7 +77,7 @@ export default async function NotificationsPage() {
           {copy.sectionLabel}
         </p>
         <h1 style={{ margin: "6px 0" }}>{copy.heading}</h1>
-        <p style={{ margin: 0, color: "#4b5563" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           {copy.subheading}
         </p>
       </section>
@@ -87,10 +87,10 @@ export default async function NotificationsPage() {
           <button
             type="submit"
             style={{
-              border: "1px solid #d1d5db",
+              border: "1px solid var(--border)",
               borderRadius: 8,
               padding: "10px 12px",
-              background: "#fff",
+              background: "var(--card)",
               cursor: "pointer",
             }}
           >
@@ -101,12 +101,12 @@ export default async function NotificationsPage() {
         <Link
           href="/dashboard"
           style={{
-            border: "1px solid #d1d5db",
+            border: "1px solid var(--border)",
             borderRadius: 8,
             padding: "10px 12px",
             textDecoration: "none",
-            color: "#111827",
-            background: "#fff",
+            color: "var(--text)",
+            background: "var(--card)",
           }}
         >
           {copy.backToDashboard}
@@ -114,7 +114,7 @@ export default async function NotificationsPage() {
       </div>
 
       {items.length === 0 ? (
-        <section style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 20, background: "#fff" }}>
+        <section style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 20, background: "var(--card)" }}>
           {copy.empty}
         </section>
       ) : (
@@ -123,10 +123,10 @@ export default async function NotificationsPage() {
             <article
               key={item.id}
               style={{
-                border: `1px solid ${item.is_read ? "#e5e7eb" : "#bfdbfe"}`,
+                border: `1px solid ${item.is_read ? "var(--border)" : "#bfdbfe"}`,
                 borderRadius: 10,
                 padding: 14,
-                background: item.is_read ? "#fff" : "#eff6ff",
+                background: item.is_read ? "var(--card)" : "rgba(212,175,55,0.12)",
                 display: "grid",
                 gap: 8,
               }}
@@ -149,7 +149,7 @@ export default async function NotificationsPage() {
                         border: "1px solid #93c5fd",
                         borderRadius: 8,
                         padding: "8px 10px",
-                        background: "#fff",
+                        background: "var(--card)",
                         cursor: "pointer",
                       }}
                     >

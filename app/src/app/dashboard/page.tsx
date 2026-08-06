@@ -137,72 +137,43 @@ export default async function DashboardPage() {
   return (
     <main className={styles.shell}>
       <section className={styles.header} aria-labelledby="dashboard-title">
-        <p className={styles.eyebrow}>Dashboard</p>
-        <h1 className={styles.title} id="dashboard-title">
-          {copy.overviewTitle}
-        </h1>
-        <p className={styles.copy}>
-          {copy.overviewCopy}
-        </p>
-
-        <form action={logoutAction} className={styles.toolbar}>
-          <Link className={styles.button} href={BILLING_ROUTE}>
-            Billing
-          </Link>
-          <button className={styles.button} type="submit">
-            {copy.logout}
-          </button>
-        </form>
+        <div className={styles.headerMain}>
+          <p className={styles.eyebrow}>Workspace</p>
+          <h1 className={styles.title} id="dashboard-title">
+            {copy.overviewTitle}
+          </h1>
+          <p className={styles.copy}>{copy.overviewCopy}</p>
+        </div>
+        <div className={styles.toolbar}>
+          <Link className={styles.buttonSecondary} href="/dashboard/leads">{copy.manageLeads}</Link>
+          <Link className={styles.buttonSecondary} href="/dashboard/analytics">{copy.openAnalytics}</Link>
+          <Link className={styles.button} href={BILLING_ROUTE}>Billing</Link>
+          <form action={logoutAction}>
+            <button className={styles.button} type="submit">
+              {copy.logout}
+            </button>
+          </form>
+        </div>
       </section>
-
-      {totalLeads === 0 ? (
-        <section className={styles.empty} aria-label="Keine Leads vorhanden">
-          <h2>{copy.noLeadsTitle}</h2>
-          <p>
-            {copy.noLeadsCopy}
-          </p>
-          <div className={styles.sectionActions}>
-            <Link className={styles.button} href="/dashboard/leads">{copy.manageLeads}</Link>
-            <a className={styles.buttonSecondary} href="/dashboard/settings">
-              {copy.companySettings}
-            </a>
-          </div>
-        </section>
-      ) : null}
 
       <section className={styles.grid} aria-label="Dashboard Übersicht">
         <article className={styles.card}>
           <p className={styles.cardLabel}>{copy.newLeads}</p>
           <strong className={styles.cardValue}>{metrics.newLeads}</strong>
         </article>
-
         <article className={styles.card}>
           <p className={styles.cardLabel}>{copy.contacted}</p>
           <strong className={styles.cardValue}>{metrics.contactedLeads}</strong>
         </article>
-
         <article className={styles.card}>
           <p className={styles.cardLabel}>{copy.successful}</p>
           <strong className={styles.cardValue}>{metrics.successfulLeads}</strong>
         </article>
-
         <article className={styles.card}>
           <p className={styles.cardLabel}>{copy.unsuccessful}</p>
           <strong className={styles.cardValue}>{metrics.unsuccessfulLeads}</strong>
         </article>
       </section>
-
-      {recentFailedNotificationCount > 0 ? (
-        <section className={`${styles.empty} ${styles.warningSection}`} aria-label="E-Mail-Versand prüfen">
-          <h2>{copy.checkEmailDelivery}</h2>
-          <p>{copy.checkEmailDeliveryCopy}</p>
-          <p>{copy.failedNotificationsLastDays(recentFailedNotificationCount)}</p>
-          <p>{market === "us" ? "Please review the notification email in settings." : "Bitte pruefen Sie die Benachrichtigungs-E-Mail in den Einstellungen."}</p>
-          <Link className={styles.sectionLink} href="/dashboard/settings">
-            {copy.openSettings}
-          </Link>
-        </section>
-      ) : null}
 
       <section className={styles.empty} aria-label="Auswertung der letzten 30 Tage">
         <div className={styles.sectionHeader}>
@@ -219,17 +190,14 @@ export default async function DashboardPage() {
             <p className={styles.cardLabel}>{copy.totalInquiries}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.total}</strong>
           </article>
-
           <article className={styles.card}>
             <p className={styles.cardLabel}>{copy.successful}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.successful}</strong>
           </article>
-
           <article className={styles.card}>
             <p className={styles.cardLabel}>{copy.unsuccessful}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.unsuccessful}</strong>
           </article>
-
           <article className={styles.card}>
             <p className={styles.cardLabel}>{copy.stillOpen}</p>
             <strong className={styles.cardValue}>{recentLeadEvaluation.open}</strong>
@@ -242,7 +210,28 @@ export default async function DashboardPage() {
         </p>
       </section>
 
-      {totalLeads > 0 ? (
+      {recentFailedNotificationCount > 0 ? (
+        <section className={`${styles.empty} ${styles.warningSection}`} aria-label="E-Mail-Versand prüfen">
+          <h2>{copy.checkEmailDelivery}</h2>
+          <p>{copy.checkEmailDeliveryCopy}</p>
+          <p>{copy.failedNotificationsLastDays(recentFailedNotificationCount)}</p>
+          <p>{market === "us" ? "Please review the notification email in settings." : "Bitte pruefen Sie die Benachrichtigungs-E-Mail in den Einstellungen."}</p>
+          <Link className={styles.sectionLink} href="/dashboard/settings">
+            {copy.openSettings}
+          </Link>
+        </section>
+      ) : null}
+
+      {totalLeads === 0 ? (
+        <section className={styles.empty} aria-label="Keine Leads vorhanden">
+          <h2>{copy.noLeadsTitle}</h2>
+          <p>{copy.noLeadsCopy}</p>
+          <div className={styles.sectionActions}>
+            <Link className={styles.button} href="/dashboard/leads">{copy.manageLeads}</Link>
+            <a className={styles.buttonSecondary} href="/dashboard/settings">{copy.companySettings}</a>
+          </div>
+        </section>
+      ) : (
         <section className={styles.empty} aria-label="Leads verwalten">
           <h2>{copy.leadOverviewTitle}</h2>
           <p>{copy.leadOverviewCopy}</p>
@@ -250,7 +239,7 @@ export default async function DashboardPage() {
             <Link className={styles.button} href="/dashboard/leads">{copy.toLeads}</Link>
           </div>
         </section>
-      ) : null}
+      )}
 
       <section className={styles.empty} aria-label="Offene Anfragen">
         <div className={styles.sectionHeader}>

@@ -26,8 +26,8 @@ const primaryButtonStyle = {
   width: "fit-content",
   padding: "12px 18px",
   borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "var(--card)",
   border: "none",
   cursor: "pointer",
   fontWeight: 700,
@@ -35,9 +35,9 @@ const primaryButtonStyle = {
 
 const secondaryButtonStyle = {
   ...primaryButtonStyle,
-  background: "#fff",
-  color: "#1a202c",
-  border: "1px solid #cbd5e0",
+  background: "var(--card)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
 } as const;
 
 const safeResponseMessage = (fallback: string) => fallback;
@@ -281,38 +281,38 @@ export default function PushNotificationsSection({
   const statusLabel = STATUS_LABELS[status];
 
   return (
-    <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 16 }}>
+    <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)", display: "grid", gap: 16 }}>
       <h2 style={{ margin: 0 }}>Benachrichtigungen</h2>
-      <p style={{ margin: 0, color: "#555" }}>
+      <p style={{ margin: 0, color: "var(--muted)" }}>
         Push-Benachrichtigungen informieren sofort über neue Leads. E-Mail bleibt als Fallback bestehen.
       </p>
 
       <div style={{ display: "grid", gap: 8 }}>
         <strong>Status: {statusLabel}</strong>
         {status === "unsupported" ? (
-          <span style={{ color: "#555" }}>
+          <span style={{ color: "var(--muted)" }}>
             Push ist in diesem Browser, auf diesem Gerät oder in der aktuellen Konfiguration nicht verfügbar.
           </span>
         ) : null}
         {status === "blocked" ? (
-          <span style={{ color: "#555" }}>
+          <span style={{ color: "var(--muted)" }}>
             Der Browser blockiert Push-Benachrichtigungen. Bitte die Browser-Einstellungen prüfen.
           </span>
         ) : null}
         {status === "inactive" ? (
-          <span style={{ color: "#555" }}>
+          <span style={{ color: "var(--muted)" }}>
             Push ist noch nicht aktiviert.
           </span>
         ) : null}
         {status === "supported" ? (
-          <span style={{ color: "#555" }}>
+          <span style={{ color: "var(--muted)" }}>
             Push ist auf diesem Gerät aktiviert.
           </span>
         ) : null}
       </div>
 
       {message ? (
-        <div style={{ padding: 12, borderRadius: 8, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+        <div style={{ padding: 12, borderRadius: 8, background: "var(--background)", border: "1px solid var(--border)" }}>
           {message}
         </div>
       ) : null}

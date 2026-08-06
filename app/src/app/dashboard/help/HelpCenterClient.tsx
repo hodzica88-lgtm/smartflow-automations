@@ -83,18 +83,18 @@ export default function HelpCenterClient() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Artikel suchen"
-          style={{ minHeight: 44, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 12px" }}
+          style={{ minHeight: 44, borderRadius: 8, border: "1px solid var(--border)", padding: "0 12px" }}
         />
       </label>
 
       {filteredArticles.length === 0 ? (
-        <div style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16, background: "#fff" }}>
+        <div style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 16, background: "var(--card)" }}>
           Kein Artikel gefunden.
         </div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
           {filteredArticles.map((article) => (
-            <article key={article.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16, background: "#fff" }}>
+            <article key={article.id} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 16, background: "var(--card)" }}>
               <h2 style={{ margin: "0 0 8px" }}>{article.title}</h2>
               <p style={{ margin: 0, color: "#374151" }}>{article.content}</p>
             </article>

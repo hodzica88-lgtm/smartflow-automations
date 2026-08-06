@@ -81,14 +81,14 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
       }}
     >
       <header style={{ display: "grid", width: "min(100%, 760px)", gap: 12, margin: "0 auto" }}>
-        <Link href="/dashboard/analytics" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+        <Link href="/dashboard/analytics" style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
           ← Zurück zu den Auswertungen
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
           Nutzen-Schätzung
         </p>
         <h1 style={{ margin: 0 }}>Durchschnittlichen Auftragswert ändern</h1>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
           Eine grobe Schätzung reicht. Varnito verwendet diesen einen Wert automatisch, um den ungefähren Wert gewonnener Aufträge zu zeigen.
         </p>
       </header>
@@ -99,9 +99,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
             width: "min(100%, 760px)",
             margin: "0 auto",
             padding: 16,
-            border: "1px solid #b7f0c6",
+            border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))",
             borderRadius: 10,
-            background: "#e6ffed",
+            background: "rgba(46,204,113,0.12)",
           }}
         >
           Durchschnittswert wurde gespeichert.
@@ -115,9 +115,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
             width: "min(100%, 760px)",
             margin: "0 auto",
             padding: 16,
-            border: "1px solid #f0b7b7",
+            border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))",
             borderRadius: 10,
-            background: "#ffe6e6",
+            background: "rgba(231,76,60,0.12)",
             overflowWrap: "anywhere",
           }}
         >
@@ -132,9 +132,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
           gap: 18,
           margin: "0 auto",
           padding: 20,
-          border: "1px solid #e2e8f0",
+          border: "1px solid var(--border)",
           borderRadius: 12,
-          background: "#fff",
+          background: "var(--card)",
         }}
       >
         <form action={updateCustomerValueAction} style={{ display: "grid", gap: 18 }}>
@@ -150,9 +150,9 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
               defaultValue={formatInputValue(settings.averageOrderValueCents)}
               placeholder="zum Beispiel 500"
               required
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             />
-            <small style={{ color: "#555", lineHeight: 1.5 }}>
+            <small style={{ color: "var(--muted)", lineHeight: 1.5 }}>
               Der Wert kann jederzeit angepasst werden. Weitere Beträge pro Lead sind nicht nötig.
             </small>
           </label>
@@ -168,8 +168,8 @@ export default async function CustomerValuePage({ searchParams }: CustomerValueP
               border: 0,
               borderRadius: 8,
               padding: "0 16px",
-              background: "#3182ce",
-              color: "#fff",
+              background: "var(--gold)",
+              color: "var(--card)",
               cursor: "pointer",
               fontWeight: 700,
             }}

@@ -19,8 +19,8 @@ const primaryActionStyle = {
   width: "fit-content",
   padding: "12px 18px",
   borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "var(--card)",
   border: "none",
   cursor: "pointer",
   fontWeight: 700,
@@ -147,22 +147,22 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
   return (
     <main style={{ padding: 24, maxWidth: 760, margin: "0 auto", display: "grid", gap: 20 }}>
       <div style={{ marginBottom: 24 }}>
-        <Link href="/dashboard/leads" style={{ color: "#3182ce", textDecoration: "none" }}>
+        <Link href="/dashboard/leads" style={{ color: "var(--gold)", textDecoration: "none" }}>
           ← Zurück zur Übersicht
         </Link>
         <h1 style={{ margin: "8px 0 4px" }}>Telefonanfrage erfassen</h1>
-        <p style={{ margin: 0, color: "#555" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           Erfassen Sie eine neue Anfrage aus einem Telefonat schnell und ohne zusätzliche Schritte.
         </p>
       </div>
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(231,76,60,0.12)", border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
 
-      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff" }}>
+      <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)" }}>
         <form action={createPhoneLeadAction} style={{ display: "grid", gap: 16 }}>
           <label style={{ display: "grid", gap: 6 }}>
             Name
@@ -170,7 +170,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
               name="name"
               type="text"
               required
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             />
           </label>
 
@@ -180,7 +180,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
               name="phone"
               type="tel"
               required
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             />
           </label>
 
@@ -189,7 +189,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
             <input
               name="email"
               type="email"
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             />
           </label>
 
@@ -199,7 +199,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
               name="inquiry_type"
               defaultValue=""
               required
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             >
               <option value="" disabled>
                 Bitte wählen
@@ -217,7 +217,7 @@ export default async function NewLeadPage({ searchParams }: NewLeadPageProps) {
             <textarea
               name="notes"
               rows={5}
-              style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+              style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             />
           </label>
 

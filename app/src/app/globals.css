@@ -1,22 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --background: #0b0b0d;
-  --surface: #17181c;
-  --card: #20242a;
-  --border: #2e323a;
+  --background: #090a0f;
+  --surface: #11131a;
+  --card: #171a22;
+  --border: #2a3040;
   --gold: #d4af37;
-  --gold-hover: #e4c454;
+  --gold-hover: #e1c15d;
   --white: #ffffff;
-  --text: #e8e8e8;
-  --muted: #a7aab0;
+  --text: #eef1f9;
+  --muted: #9ea7be;
   --success: #2ecc71;
-  --warning: #f39c12;
-  --danger: #e74c3c;
-  --ring: rgba(212, 175, 55, 0.32);
-  --shadow-xl: 0 26px 70px rgba(0, 0, 0, 0.42);
-  --radius-xl: 24px;
-  --radius-md: 14px;
+  --warning: #f0a327;
+  --danger: #ff5f72;
+  --ring: rgba(212, 175, 55, 0.28);
+  --shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.42);
+  --radius-xl: 26px;
+  --radius-md: 16px;
   --duration-fast: 200ms;
   --duration-base: 260ms;
   --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
@@ -35,9 +35,9 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 10% -10%, rgba(212, 175, 55, 0.18), transparent 28%),
-    radial-gradient(circle at 100% 0%, rgba(212, 175, 55, 0.08), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%),
+    radial-gradient(circle at 10% -4%, rgba(212, 175, 55, 0.2), transparent 30%),
+    radial-gradient(circle at 92% 2%, rgba(96, 121, 173, 0.2), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 40%),
     var(--background);
   color: var(--text);
   font-family: "Poppins", sans-serif;
@@ -79,6 +79,7 @@ h4,
 h5,
 h6 {
   margin: 0;
+  font-family: "Poppins", sans-serif;
   letter-spacing: -0.02em;
 }
 
@@ -97,7 +98,9 @@ p {
 
 .premium-card {
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    var(--surface);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
 }
@@ -109,7 +112,7 @@ p {
   min-height: 48px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 86%, black 14%);
+  background: color-mix(in srgb, var(--surface) 90%, black 10%);
   color: var(--text);
   padding: 0 14px;
 }
@@ -140,7 +143,7 @@ p {
   border-radius: 12px;
   border: 1px solid var(--gold);
   background: var(--gold);
-  color: #111;
+  color: #101010;
   padding: 0 18px;
   font-weight: 700;
   text-decoration: none;
@@ -151,18 +154,18 @@ p {
   transform: translateY(-1px) scale(1.01);
   border-color: var(--gold-hover);
   background: var(--gold-hover);
-  box-shadow: 0 14px 30px rgba(212, 175, 55, 0.22);
+  box-shadow: 0 14px 30px rgba(212, 175, 55, 0.28);
 }
 
 .premium-button-secondary {
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text);
 }
 
 .premium-button-secondary:hover {
   border-color: color-mix(in srgb, var(--gold) 50%, var(--border));
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .premium-fade-in {
@@ -178,5 +181,15 @@ p {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes premium-shimmer {
+  from {
+    transform: translateX(-105%);
+  }
+
+  to {
+    transform: translateX(210%);
   }
 }

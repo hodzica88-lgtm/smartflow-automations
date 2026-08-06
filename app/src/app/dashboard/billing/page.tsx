@@ -14,6 +14,7 @@ import {
   syncOwnerCompanyBillingFromStripe,
 } from "@/features/billing/service";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import styles from "./billing.module.css";
 
 type BillingPageProps = {
   searchParams?: Promise<{
@@ -23,46 +24,6 @@ type BillingPageProps = {
     canceled?: string;
   }>;
 };
-
-const panelStyle = {
-  display: "grid",
-  gap: 16,
-  padding: 20,
-  borderRadius: 18,
-  border: "1px solid var(--border)",
-  background: "linear-gradient(180deg, rgba(255,255,255,0.026), rgba(255,255,255,0.01))",
-  boxShadow: "var(--shadow-xl)",
-} as const;
-
-const primaryButtonStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: "2.75rem",
-  width: "fit-content",
-  padding: "12px 18px",
-  borderRadius: 12,
-  background: "var(--gold)",
-  color: "#111",
-  border: "1px solid var(--gold)",
-  cursor: "pointer",
-  fontWeight: 700,
-} as const;
-
-const secondaryButtonStyle = {
-  ...primaryButtonStyle,
-  background: "rgba(255,255,255,0.03)",
-  color: "var(--text)",
-  border: "1px solid var(--border)",
-} as const;
-
-const checkboxRowStyle = {
-  display: "flex",
-  gap: 12,
-  alignItems: "flex-start",
-  lineHeight: 1.5,
-  color: "var(--muted)",
-} as const;
 
 const formatDateTimeByLocale = (value: string | null, locale: "de-DE" | "en-US") => {
   if (!value) {
@@ -126,75 +87,96 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const companyName = await getCompanyName(access.companyId, market);
 
   return (
-    <main style={{ padding: 24, maxWidth: 920, margin: "0 auto", display: "grid", gap: 20 }}>
-      <header style={{ display: "grid", gap: 8 }}>
-        <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
+    <main className={styles.shell}>
+      <header className={styles.header}>
+        <Link href={billing.hasAppAccess ? "/dashboard" : "/dashboard/billing"} className={styles.backLink}>
           ← {copy.back}
         </Link>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase", color: "var(--gold)", letterSpacing: "0.08em" }}>
+        <p className={styles.eyebrow}>
           Billing
         </p>
-        <h1 style={{ margin: 0 }}>{companyName}</h1>
-        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
+        <h1 className={styles.title}>{companyName}</h1>
+        <p className={styles.copy}>
           {getStatusText(copy, resolvedSearchParams?.billing ?? billing.lockReason)}
         </p>
       </header>
 
       {resolvedSearchParams?.success ? (
-        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--success) 40%, var(--border))", borderRadius: 12, background: "rgba(46,204,113,0.12)" }}>
+        <section className={styles.notice}>
           {copy.checkoutSuccess}
         </section>
       ) : null}
 
       {resolvedSearchParams?.canceled === "1" ? (
-        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--warning) 45%, var(--border))", borderRadius: 12, background: "rgba(243,156,18,0.12)" }}>
+        <section className={styles.noticeWarning}>
           {copy.checkoutCanceled}
         </section>
       ) : null}
 
       {resolvedSearchParams?.error ? (
-        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 12, background: "rgba(231,76,60,0.12)" }}>
+        <section className={styles.noticeError}>
           {resolvedSearchParams.error}
         </section>
       ) : null}
 
-      <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>{copy.statusHeading}</h2>
-        <div style={{ display: "grid", gap: 10 }}>
-          <div><strong>Produkt:</strong> Varnito Pro</div>
-          <div><strong>Status:</strong> {getBillingStatusLabel(billing.status)}</div>
-          <div><strong>{market === "us" ? "Access:" : "Zugriff:"}</strong> {billing.hasAppAccess ? copy.statusAccessGranted : copy.statusAccessBlocked}</div>
-          <div><strong>{copy.statusTrialUntil}:</strong> {formatDateTimeByLocale(billing.trialEndsAt, config.locale)}</div>
-          <div><strong>{copy.statusCurrentPeriodUntil}:</strong> {formatDateTimeByLocale(billing.currentPeriodEnd, config.locale)}</div>
-          <div><strong>{copy.statusCancellationPlanned}:</strong> {cancellationPlanned ? copy.yes : copy.no}</div>
-          <div><strong>{copy.statusCancellationDate}:</strong> {formatDateTimeByLocale(plannedCancellationDate, config.locale)}</div>
+      <section className={styles.panel}>
+        <h2 className={styles.panelTitle}>{copy.statusHeading}</h2>
+        <div className={styles.statusGrid}>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>Produkt</div>
+            <div className={styles.statusValue}>Varnito Pro</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>Status</div>
+            <div className={styles.statusValue}>{getBillingStatusLabel(billing.status)}</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>{market === "us" ? "Access" : "Zugriff"}</div>
+            <div className={styles.statusValue}>{billing.hasAppAccess ? copy.statusAccessGranted : copy.statusAccessBlocked}</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>{copy.statusTrialUntil}</div>
+            <div className={styles.statusValue}>{formatDateTimeByLocale(billing.trialEndsAt, config.locale)}</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>{copy.statusCurrentPeriodUntil}</div>
+            <div className={styles.statusValue}>{formatDateTimeByLocale(billing.currentPeriodEnd, config.locale)}</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>{copy.statusCancellationPlanned}</div>
+            <div className={styles.statusValue}>{cancellationPlanned ? copy.yes : copy.no}</div>
+          </div>
+          <div className={styles.statusRow}>
+            <div className={styles.statusLabel}>{copy.statusCancellationDate}</div>
+            <div className={styles.statusValue}>{formatDateTimeByLocale(plannedCancellationDate, config.locale)}</div>
+          </div>
         </div>
       </section>
 
-      <section style={panelStyle}>
-        <h2 style={{ margin: 0 }}>{copy.subscriptionHeading}</h2>
-        <p style={{ margin: 0, fontWeight: 700, color: "var(--text)" }}>{copy.subscriptionPrice}</p>
-        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>{copy.subscriptionTaxNote}</p>
-        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
+      <section className={styles.panel}>
+        <h2 className={styles.panelTitle}>{copy.subscriptionHeading}</h2>
+        <p className={styles.price}>{copy.subscriptionPrice}</p>
+        <p className={styles.muted}>{copy.subscriptionTaxNote}</p>
+        <p className={styles.muted}>
           {copy.subscriptionText}
         </p>
 
         {access.isOwner ? (
-          <div style={{ display: "grid", gap: 12 }}>
-            <form action={startBillingCheckoutAction} style={{ display: "grid", gap: 12 }}>
-              <label style={checkboxRowStyle}>
-                <input name="legal_acceptance" type="checkbox" required style={{ marginTop: 4 }} />
+          <div className={styles.actions}>
+            <form action={startBillingCheckoutAction} className={styles.form}>
+              <label className={styles.checkboxRow}>
+                <input name="legal_acceptance" type="checkbox" required />
                 <span>
                   {copy.legalAcceptance}
                 </span>
               </label>
-              <button type="submit" style={primaryButtonStyle}>{copy.startSubscription}</button>
+              <button type="submit" className={styles.button}>{copy.startSubscription}</button>
             </form>
 
             <form action={openBillingPortalAction}>
               <button
                 type="submit"
-                style={secondaryButtonStyle}
+                className={styles.buttonSecondary}
                 disabled={!billing.stripeCustomerId}
               >
                 {copy.manageSubscription}
@@ -202,7 +184,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             </form>
           </div>
         ) : (
-          <p style={{ margin: 0, color: "var(--muted)" }}>
+          <p className={styles.muted}>
             {copy.ownerOnly}
           </p>
         )}

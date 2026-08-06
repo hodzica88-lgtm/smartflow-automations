@@ -34,7 +34,7 @@ export default function EmailTemplateEditor(props: Props) {
   );
 
   return (
-    <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, background: "#fff", display: "grid", gap: 12 }}>
+    <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 16, background: "var(--card)", display: "grid", gap: 12 }}>
       <h3 style={{ margin: 0 }}>{props.templateType}</h3>
       <label style={{ display: "grid", gap: 6 }}>
         Betreff
@@ -42,7 +42,7 @@ export default function EmailTemplateEditor(props: Props) {
           name="template_subject"
           value={subject}
           onChange={(event) => setSubject(event.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           required
         />
       </label>
@@ -53,7 +53,7 @@ export default function EmailTemplateEditor(props: Props) {
           value={body}
           onChange={(event) => setBody(event.target.value)}
           rows={9}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+          style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           required
         />
       </label>

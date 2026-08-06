@@ -59,8 +59,8 @@ const primaryActionStyle = {
   width: "fit-content",
   padding: "12px 18px",
   borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "var(--card)",
   border: "none",
   cursor: "pointer",
   fontWeight: 700,
@@ -68,9 +68,9 @@ const primaryActionStyle = {
 
 const secondaryActionStyle = {
   ...primaryActionStyle,
-  background: "#fff",
-  color: "#1a202c",
-  border: "1px solid #cbd5e0",
+  background: "var(--card)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
 } as const;
 
 const getCompanyId = async () => {
@@ -541,22 +541,22 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           Einstellungen
         </p>
         <h1 style={{ margin: 0 }}>Firmeninformationen</h1>
-        <p style={{ marginTop: 8, color: "#555" }}>
+        <p style={{ marginTop: 8, color: "var(--muted)" }}>
           Aktualisieren Sie die Grunddaten Ihres Unternehmens für Varnito.
         </p>
-        <Link href="/dashboard/billing" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+        <Link href="/dashboard/billing" style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
           Billing öffnen
         </Link>
       </section>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(46,204,113,0.12)", border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {success}
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(231,76,60,0.12)", border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
@@ -568,7 +568,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             name="name"
             type="text"
             defaultValue={company.name ?? ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             required
           />
         </label>
@@ -579,7 +579,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             name="contact_person"
             type="text"
             defaultValue={company.contact_person ?? ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             required
           />
         </label>
@@ -590,7 +590,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             name="email"
             type="email"
             defaultValue={company.email ?? ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             required
           />
         </label>
@@ -601,9 +601,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             name="notification_email"
             type="email"
             defaultValue={company.notification_email ?? ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           />
-          <small style={{ color: "#555" }}>
+          <small style={{ color: "var(--muted)" }}>
             An diese Adresse senden wir neue Kundenanfragen.
           </small>
         </label>
@@ -614,7 +614,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             name="phone"
             type="tel"
             defaultValue={company.phone ?? ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           />
         </label>
 
@@ -625,7 +625,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             type="url"
             defaultValue={company.website_url ?? ""}
             placeholder="https://example.com"
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           />
         </label>
 
@@ -634,7 +634,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           <select
             name="industry"
             defaultValue={isSupportedIndustry(industry) ? industry : ""}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             required
           >
             <option value="" disabled>
@@ -653,7 +653,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           <select
             name="timezone"
             defaultValue={company.timezone ?? timeZones[0]}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
             required
           >
             {timeZones.map((timezone) => (
@@ -671,7 +671,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             defaultValue={company.business_hours ?? ""}
             rows={4}
             placeholder="Mo-Fr, 9:00-17:00"
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}
           />
         </label>
 
@@ -680,9 +680,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </button>
       </form>
 
-      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 16 }}>
+      <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)", display: "grid", gap: 16 }}>
         <h2 style={{ margin: 0 }}>Anfragearten</h2>
-        <p style={{ margin: 0, color: "#555" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           Diese Auswahl sehen Kunden im Anfrageformular.
         </p>
 
@@ -692,7 +692,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             type="text"
             maxLength={80}
             placeholder="Neue Anfrageart"
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0", minWidth: 260, flex: "1 1 260px" }}
+            style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", minWidth: 260, flex: "1 1 260px" }}
           />
           <button type="submit" style={primaryActionStyle}>
             Anfrageart hinzufügen
@@ -707,7 +707,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <div style={{ display: "grid", gap: 10 }}>
           {inquiryTypes.length === 0 ? (
-            <p style={{ margin: 0, color: "#555" }}>Noch keine Anfragearten vorhanden.</p>
+            <p style={{ margin: 0, color: "var(--muted)" }}>Noch keine Anfragearten vorhanden.</p>
           ) : (
             inquiryTypes.map((entry, index) => (
               <article
@@ -715,10 +715,10 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 style={{
                   display: "grid",
                   gap: 10,
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid var(--border)",
                   borderRadius: 10,
                   padding: 12,
-                  background: entry.active ? "#fff" : "#f7fafc",
+                  background: entry.active ? "var(--card)" : "rgba(255,255,255,0.02)",
                 }}
               >
                 <form action={renameInquiryTypeAction} style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
@@ -728,7 +728,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     type="text"
                     defaultValue={entry.name}
                     maxLength={80}
-                    style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0", minWidth: 220, flex: "1 1 220px" }}
+                    style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", minWidth: 220, flex: "1 1 220px" }}
                   />
                   <button type="submit" style={secondaryActionStyle}>
                     Umbenennen
@@ -775,47 +775,47 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         pushConfigured={pushConfigured}
       />
 
-      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 12 }}>
+      <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)", display: "grid", gap: 12 }}>
         <h2 style={{ margin: 0 }}>Branding</h2>
-        <p style={{ margin: 0, color: "#555" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           Diese Angaben werden in allen automatischen E-Mails verwendet.
         </p>
         <form action={updateBrandingAction} style={{ display: "grid", gap: 10 }}>
           <label style={{ display: "grid", gap: 6 }}>
             Firmenlogo URL
-            <input name="branding_logo_url" defaultValue={branding.logoUrl ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+            <input name="branding_logo_url" defaultValue={branding.logoUrl ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             Firmenname
-            <input name="branding_company_name" defaultValue={branding.companyName} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} required />
+            <input name="branding_company_name" defaultValue={branding.companyName} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} required />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             Primaerfarbe
-            <input name="branding_primary_color" type="color" defaultValue={branding.primaryColor} style={{ width: 84, height: 42, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+            <input name="branding_primary_color" type="color" defaultValue={branding.primaryColor} style={{ width: 84, height: 42, borderRadius: 8, border: "1px solid var(--border)" }} />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             Telefon
-            <input name="branding_phone" defaultValue={branding.phone ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+            <input name="branding_phone" defaultValue={branding.phone ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             Website
-            <input name="branding_website" defaultValue={branding.website ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+            <input name="branding_website" defaultValue={branding.website ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             E-Mail
-            <input name="branding_email" defaultValue={branding.email ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} />
+            <input name="branding_email" defaultValue={branding.email ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} />
           </label>
           <label style={{ display: "grid", gap: 6 }}>
             Signatur
-            <textarea name="branding_signature" defaultValue={branding.signature} rows={4} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }} required />
+            <textarea name="branding_signature" defaultValue={branding.signature} rows={4} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }} required />
           </label>
           <button type="submit" style={primaryActionStyle}>Branding speichern</button>
         </form>
       </section>
 
-      <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", display: "grid", gap: 14 }}>
+      <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)", display: "grid", gap: 14 }}>
         <h2 style={{ margin: 0 }}>E-Mail-Templates</h2>
-        <p style={{ margin: 0, color: "#555" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           Kein HTML-Editor. Platzhalter: {"{{company_name}}"}, {"{{signature}}"}, {"{{lead_name}}"}, {"{{lead_phone}}"}, {"{{lead_email}}"}, {"{{lead_inquiry_type}}"}, {"{{lead_message}}"}, {"{{dashboard_url}}"}
         </p>
 

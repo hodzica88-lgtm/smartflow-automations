@@ -89,7 +89,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       <p>Kurzes Formular — wir melden uns während unserer Geschäftszeiten.</p>
 
       {success ? (
-        <div style={{padding:12, background:'#e6ffed', border:'1px solid #b7f0c6'}}>
+        <div style={{padding:12, background:'rgba(46,204,113,0.12)', border:'1px solid color-mix(in srgb, var(--success) 45%, var(--border))'}}>
           Vielen Dank! Ihre Anfrage wurde erfolgreich übermittelt. Wir melden uns während unserer Geschäftszeiten bei Ihnen.
         </div>
       ) : (

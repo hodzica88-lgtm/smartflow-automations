@@ -21,16 +21,16 @@ export default async function KontaktPage() {
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "40px 20px", display: "grid", gap: 24 }}>
       <header style={{ display: "grid", gap: 8 }}>
-        <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "#0f766e", fontWeight: 700 }}>{copy.eyebrow}</p>
+        <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>{copy.eyebrow}</p>
         <h1 style={{ margin: 0, fontSize: 40, lineHeight: 1.05 }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.7 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
           {copy.lead}
         </p>
       </header>
 
       <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>{copy.emailLabel}</h2>
-        <a href={`mailto:${config.legalContactEmail}`} style={{ color: "#0f766e", fontWeight: 700 }}>
+        <a href={`mailto:${config.legalContactEmail}`} style={{ color: "var(--gold)", fontWeight: 700 }}>
           {config.legalContactEmail}
         </a>
       </section>

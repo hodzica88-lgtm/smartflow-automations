@@ -124,7 +124,7 @@ export default function AcceptTeamInvitationClient({
             padding: 12,
             borderRadius: 8,
             border: "1px solid #f5b5b5",
-            background: "#fff2f2",
+            background: "rgba(231,76,60,0.12)",
           }}
         >
           {error}

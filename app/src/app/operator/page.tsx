@@ -110,26 +110,6 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
         </div>
       </section>
 
-      <section className={styles.companySection} aria-label="Suche">
-        <form method="get" className={styles.sectionHeader}>
-          <div>
-            <h2>{copy.searchTitle}</h2>
-            <p>{copy.searchCopy}</p>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            <input
-              className={styles.searchInput}
-              name="q"
-              defaultValue={resolvedSearchParams?.q ?? ""}
-              placeholder={copy.searchPlaceholder}
-            />
-            <button className={styles.primaryButton} type="submit">
-              {copy.searchButton}
-            </button>
-          </div>
-        </form>
-      </section>
-
       <section className={styles.metrics} aria-label="Betreiberkennzahlen">
         <article className={styles.metricCard}>
           <p>{copy.metrics.activeCompanies}</p>
@@ -155,6 +135,26 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
           <p>{copy.metrics.companiesNeedingAttention}</p>
           <strong>{metrics.companiesNeedingAttention}</strong>
         </article>
+      </section>
+
+      <section className={styles.companySection} aria-label="Suche">
+        <form method="get" className={styles.sectionHeader}>
+          <div>
+            <h2>{copy.searchTitle}</h2>
+            <p>{copy.searchCopy}</p>
+          </div>
+          <div className={styles.actions}>
+            <input
+              className={styles.searchInput}
+              name="q"
+              defaultValue={resolvedSearchParams?.q ?? ""}
+              placeholder={copy.searchPlaceholder}
+            />
+            <button className={styles.primaryButton} type="submit">
+              {copy.searchButton}
+            </button>
+          </div>
+        </form>
       </section>
 
       <section className={styles.companySection} aria-labelledby="owner-kpis-title">
@@ -259,7 +259,7 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
         <div className={styles.sectionHeader}>
           <div>
             <h2 id="companies-title">Kundenunternehmen</h2>
-            <p>Die neuesten 100 Unternehmen, sortiert nach Erstellungsdatum.</p>
+            <p>Die neuesten 100 Unternehmen in einem operativen Gesamtbild mit Status- und Billing-Kontext.</p>
           </div>
           <span>{filteredCompanies.length} angezeigt</span>
         </div>

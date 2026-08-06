@@ -24,17 +24,17 @@ const actionStyle = {
   border: 0,
   borderRadius: 8,
   padding: "0 16px",
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "var(--card)",
   cursor: "pointer",
   fontWeight: 700,
 } as const;
 
 const secondaryActionStyle = {
   ...actionStyle,
-  border: "1px solid #cbd5e0",
-  background: "#fff",
-  color: "#1a202c",
+  border: "1px solid var(--border)",
+  background: "var(--card)",
+  color: "var(--text)",
 } as const;
 
 const dangerActionStyle = {
@@ -66,34 +66,34 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   return (
     <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>
       <header style={{ display: "grid", gap: 8 }}>
-        <Link href="/dashboard/leads" style={{ color: "#3182ce", fontWeight: 700, textDecoration: "none" }}>
+        <Link href="/dashboard/leads" style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
           ← {copy.backToLeads}
         </Link>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
           {copy.sectionLabel}
         </p>
         <h1 style={{ margin: 0 }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "#555", lineHeight: 1.6 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
           {copy.description}
         </p>
       </header>
 
       {resolvedSearchParams?.success ? (
-        <section style={{ padding: 16, border: "1px solid #b7f0c6", borderRadius: 10, background: "#e6ffed" }}>
+        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))", borderRadius: 10, background: "rgba(46,204,113,0.12)" }}>
           {resolvedSearchParams.success}
         </section>
       ) : null}
 
       {resolvedSearchParams?.error ? (
-        <section role="alert" style={{ padding: 16, border: "1px solid #f0b7b7", borderRadius: 10, background: "#ffe6e6" }}>
+        <section role="alert" style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 10, background: "rgba(231,76,60,0.12)" }}>
           {resolvedSearchParams.error}
         </section>
       ) : null}
 
-      <section style={{ display: "grid", gap: 16, padding: 20, border: "1px solid #e2e8f0", borderRadius: 12, background: "#fff" }}>
+      <section style={{ display: "grid", gap: 16, padding: 20, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}>
         <div>
           <h2 style={{ margin: 0 }}>{copy.inviteTitle}</h2>
-          <p style={{ margin: "6px 0 0", color: "#555" }}>
+          <p style={{ margin: "6px 0 0", color: "var(--muted)" }}>
             {copy.inviteDescription}
           </p>
         </div>
@@ -106,7 +106,7 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
               type="email"
               required
               placeholder={copy.emailPlaceholder}
-              style={{ minHeight: 44, padding: "0 12px", border: "1px solid #cbd5e0", borderRadius: 8 }}
+              style={{ minHeight: 44, padding: "0 12px", border: "1px solid var(--border)", borderRadius: 8 }}
             />
           </label>
           <button type="submit" style={actionStyle}>
@@ -124,12 +124,12 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
           return (
             <article
               key={member.id}
-              style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: 18, border: "1px solid #e2e8f0", borderRadius: 12, background: "#fff" }}
+              style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: 18, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}
             >
               <div style={{ display: "grid", gap: 4 }}>
                 <strong>{getTeamMemberLabel(member)}</strong>
-                <span style={{ color: "#555", overflowWrap: "anywhere" }}>{member.email}</span>
-                <span style={{ fontSize: 13, color: "#718096" }}>
+                <span style={{ color: "var(--muted)", overflowWrap: "anywhere" }}>{member.email}</span>
+                <span style={{ fontSize: 13, color: "var(--muted)" }}>
                   {isOwner ? copy.ownerLabel : isPending ? copy.pendingLabel : copy.activeLabel}
                 </span>
               </div>

@@ -44,10 +44,10 @@ const primaryActionStyle = {
   minHeight: "2.75rem",
   padding: "12px 18px",
   borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "#111",
   textDecoration: "none",
-  border: "none",
+  border: "1px solid var(--gold)",
   cursor: "pointer",
   fontWeight: 700,
 } as const;
@@ -287,37 +287,37 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
   return (
     <main style={{ padding: 24, maxWidth: 1000, margin: "0 auto", display: "grid", gap: 24 }}>
       <div style={{ marginBottom: 24 }}>
-        <Link href="/dashboard/leads" style={{ color: "#3182ce", textDecoration: "none" }}>
+        <Link href="/dashboard/leads" style={{ color: "var(--gold)", textDecoration: "none" }}>
           ← Zurück zur Übersicht
         </Link>
         <h1 style={{ margin: "8px 0 4px" }}>{leadName}</h1>
-        <p style={{ margin: 0, color: "#555" }}>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
           Detailansicht mit Zuständigkeit und Statusverlauf.
         </p>
       </div>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(46,204,113,0.12)", border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           Lead wurde erfolgreich aktualisiert.
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(231,76,60,0.12)", border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
 
       <div style={{ display: "grid", gap: 20 }}>
-        <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff", overflowWrap: "anywhere" }}>
+        <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)", overflowWrap: "anywhere" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
-              <p style={{ margin: 0, fontSize: 13, color: "#718096", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 Lead-Daten
               </p>
               <h2 style={{ margin: "6px 0 0" }}>Kontaktdaten und Anfrage</h2>
             </div>
-            <span style={{ padding: "6px 10px", borderRadius: 9999, background: "#edf2f7", fontWeight: 600 }}>
+            <span style={{ padding: "6px 10px", borderRadius: 9999, background: "rgba(167,170,176,0.22)", fontWeight: 600 }}>
               {STATUS_LABELS[lead.status] ?? lead.status}
             </span>
           </div>
@@ -387,14 +387,14 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
           </div>
         </section>
 
-        <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff" }}>
+        <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)" }}>
           <h2 style={{ marginTop: 0 }}>Lead aktualisieren</h2>
           <form action={updateLeadDetailAction} style={{ display: "grid", gap: 12 }}>
             <input type="hidden" name="leadId" value={lead.id} />
 
             <label style={{ display: "grid", gap: 4 }}>
               Zuständig
-              <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+              <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}>
                 <option value="">Nicht zugewiesen</option>
                 {teamMembers.map((member) => (
                   <option key={member.id} value={member.id}>
@@ -406,7 +406,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
 
             <label style={{ display: "grid", gap: 4 }}>
               Status
-              <select name="status" defaultValue={lead.status} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+              <select name="status" defaultValue={lead.status} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}>
                 {LEAD_STATUSES.map((value) => (
                   <option key={value} value={value}>
                     {STATUS_LABELS[value]}
@@ -418,7 +418,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
             <div style={{ display: "grid", gap: 12 }}>
               <label style={{ display: "grid", gap: 4 }}>
                 Erfolgreiches Ergebnis
-                <select name="successful_outcome" defaultValue={lead.successful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                <select name="successful_outcome" defaultValue={lead.successful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}>
                   <option value="" disabled>Bitte wählen</option>
                   {SUCCESSFUL_OUTCOMES.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -430,7 +430,7 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
 
               <label style={{ display: "grid", gap: 4 }}>
                 Nicht erfolgreich
-                <select name="unsuccessful_outcome" defaultValue={lead.unsuccessful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                <select name="unsuccessful_outcome" defaultValue={lead.unsuccessful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)" }}>
                   <option value="" disabled>Bitte wählen</option>
                   {UNSUCCESSFUL_OUTCOMES.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -447,10 +447,10 @@ export default async function LeadDetailPage({ params, searchParams }: LeadDetai
           </form>
         </section>
 
-        <section style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 20, background: "#fff" }}>
+        <section style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "var(--card)" }}>
           <h2 style={{ marginTop: 0 }}>Status-Verlauf</h2>
           {history.length === 0 ? (
-            <p style={{ margin: 0, color: "#555" }}>Noch kein Verlauf vorhanden.</p>
+            <p style={{ margin: 0, color: "var(--muted)" }}>Noch kein Verlauf vorhanden.</p>
           ) : (
             <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8, overflowWrap: "anywhere" }}>
               {history.map((entry) => {

@@ -11,7 +11,7 @@ export default function LeadWorkspaceLayout({
         <form action={logoutAction}>
           <button
             type="submit"
-            style={{ minHeight: 40, padding: "0 14px", border: "1px solid #cbd5e0", borderRadius: 8, background: "#fff", color: "#1a202c", cursor: "pointer", fontWeight: 700 }}
+            style={{ minHeight: 40, padding: "0 14px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--card)", color: "var(--text)", cursor: "pointer", fontWeight: 700 }}
           >
             Abmelden
           </button>

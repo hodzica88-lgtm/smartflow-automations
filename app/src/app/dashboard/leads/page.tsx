@@ -41,8 +41,8 @@ const primaryActionStyle = {
   minHeight: "2.75rem",
   padding: "12px 18px",
   borderRadius: 8,
-  background: "#3182ce",
-  color: "#fff",
+  background: "var(--gold)",
+  color: "var(--card)",
   textDecoration: "none",
   border: "none",
   cursor: "pointer",
@@ -51,9 +51,9 @@ const primaryActionStyle = {
 
 const secondaryActionStyle = {
   ...primaryActionStyle,
-  background: "#fff",
-  color: "#1a202c",
-  border: "1px solid #cbd5e0",
+  background: "var(--card)",
+  color: "var(--text)",
+  border: "1px solid var(--border)",
 } as const;
 
 type LeadListItem = {
@@ -294,7 +294,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
           Lead-Verwaltung
         </p>
         <h1 style={{ margin: 0 }}>Ihre Leads</h1>
-        <p style={{ marginTop: 8, color: "#555" }}>
+        <p style={{ marginTop: 8, color: "var(--muted)" }}>
           Übersicht über aktuelle Anfragen, Zuständigkeit und Lead-Status.
         </p>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
@@ -315,7 +315,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
         >
           <label style={{ display: "grid", gap: 4 }}>
             Zeitraum
-            <select name="range" defaultValue="month" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }}>
+            <select name="range" defaultValue="month" style={{ minHeight: 40, borderRadius: 8, border: "1px solid var(--border)", padding: "0 8px" }}>
               <option value="today">Heute</option>
               <option value="week">Diese Woche</option>
               <option value="month">Dieser Monat</option>
@@ -325,12 +325,12 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
           <label style={{ display: "grid", gap: 4 }}>
             Von
-            <input name="from" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }} />
+            <input name="from" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid var(--border)", padding: "0 8px" }} />
           </label>
 
           <label style={{ display: "grid", gap: 4 }}>
             Bis
-            <input name="to" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid #cbd5e0", padding: "0 8px" }} />
+            <input name="to" type="date" style={{ minHeight: 40, borderRadius: 8, border: "1px solid var(--border)", padding: "0 8px" }} />
           </label>
 
           <button name="format" value="csv" type="submit" style={secondaryActionStyle}>
@@ -343,22 +343,22 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       </section>
 
       {success ? (
-        <div style={{ padding: 16, background: "#e6ffed", border: "1px solid #b7f0c6", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(46,204,113,0.12)", border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           Lead wurde erfolgreich aktualisiert.
         </div>
       ) : null}
 
       {error ? (
-        <div style={{ padding: 16, background: "#ffe6e6", border: "1px solid #f0b7b7", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
+        <div style={{ padding: 16, background: "rgba(231,76,60,0.12)", border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 8, marginBottom: 16, overflowWrap: "anywhere" }}>
           {error}
         </div>
       ) : null}
 
-      <section style={{ padding: 16, border: "1px solid #e2e8f0", borderRadius: 12, background: "#fff" }}>
+      <section style={{ padding: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}>
         <form method="get" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
           <label style={{ display: "grid", flex: "1 1 260px", gap: 4 }}>
             Nach Zuständigkeit filtern
-            <select name="assigned" defaultValue={assignedFilter} style={{ minHeight: 42, padding: "0 10px", borderRadius: 8, border: "1px solid #cbd5e0" }}>
+            <select name="assigned" defaultValue={assignedFilter} style={{ minHeight: 42, padding: "0 10px", borderRadius: 8, border: "1px solid var(--border)" }}>
               <option value="">Alle Leads</option>
               <option value="unassigned">Nicht zugewiesen</option>
               {teamMembers.map((member) => (
@@ -377,7 +377,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       <section>
         <div style={{ display: "grid", gap: 16 }}>
           {leads.length === 0 ? (
-            <div style={{ padding: 24, border: "1px solid #ddd", borderRadius: 8 }}>
+            <div style={{ padding: 24, border: "1px solid var(--border)", borderRadius: 8 }}>
               <h2>Keine Leads vorhanden</h2>
               <p>Für diese Auswahl sind aktuell keine Anfragen vorhanden.</p>
             </div>
@@ -393,22 +393,22 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                 <article
                   key={lead.id}
                   style={{
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid var(--border)",
                     borderRadius: 12,
                     padding: 18,
-                    background: isNew ? "#f8fdf4" : "#fff",
+                    background: isNew ? "rgba(46,204,113,0.08)" : "var(--card)",
                     boxShadow: "0 1px 2px rgba(0,0,0,.04)",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                     <div>
-                      <p style={{ margin: 0, fontSize: 14, color: "#718096" }}>Lead</p>
+                      <p style={{ margin: 0, fontSize: 14, color: "var(--muted)" }}>Lead</p>
                       <h2 style={{ margin: "4px 0 0", fontSize: 20 }}>
                         <Link href={`/dashboard/leads/${lead.id}`} style={{ color: "inherit", textDecoration: "none" }}>
                           {leadName}
                         </Link>
                       </h2>
-                      <p style={{ margin: "8px 0 0", color: "#4a5568", overflowWrap: "anywhere" }}>
+                      <p style={{ margin: "8px 0 0", color: "var(--muted)", overflowWrap: "anywhere" }}>
                         {(lead.email ?? lead.phone) || "Keine Kontaktdaten"}
                       </p>
                     </div>
@@ -418,15 +418,15 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                           display: "inline-block",
                           padding: "4px 10px",
                           borderRadius: 9999,
-                          background: isNew ? "#def1ff" : "#edf2f7",
-                          color: "#1a202c",
+                          background: isNew ? "rgba(212,175,55,0.14)" : "rgba(167,170,176,0.22)",
+                          color: "var(--text)",
                           fontSize: 12,
                           fontWeight: 600,
                         }}
                       >
                         {STATUS_LABELS[lead.status] ?? lead.status}
                       </span>
-                      <p style={{ margin: "8px 0 0", color: "#718096", fontSize: 13 }}>
+                      <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 13 }}>
                         {formatCreatedAt(lead.created_at)}
                       </p>
                     </div>
@@ -434,18 +434,18 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
                   <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
                     <div style={{ display: "grid", gap: 6 }}>
-                      <span style={{ fontSize: 13, color: "#4a5568", fontWeight: 600 }}>Zuständig</span>
+                      <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Zuständig</span>
                       <span style={{ overflowWrap: "anywhere" }}>{getTeamMemberLabel(assignedMember)}</span>
                     </div>
 
                     <div style={{ display: "grid", gap: 6 }}>
-                      <span style={{ fontSize: 13, color: "#4a5568", fontWeight: 600 }}>Anfrage-Typ</span>
+                      <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Anfrage-Typ</span>
                       <span style={{ overflowWrap: "anywhere" }}>{lead.inquiry_type ?? "Nicht angegeben"}</span>
                     </div>
 
                     {lead.notes ? (
                       <div style={{ display: "grid", gap: 6 }}>
-                        <span style={{ fontSize: 13, color: "#4a5568", fontWeight: 600 }}>Beschreibung</span>
+                        <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Beschreibung</span>
                         <span style={{ overflowWrap: "anywhere" }}>{lead.notes}</span>
                       </div>
                     ) : null}
@@ -455,7 +455,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
                       <label style={{ display: "grid", gap: 4 }}>
                         Zuständig
-                        <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                        <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
                           <option value="">Nicht zugewiesen</option>
                           {teamMembers.map((member) => (
                             <option key={member.id} value={member.id}>
@@ -467,7 +467,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
                       <label style={{ display: "grid", gap: 4 }}>
                         Status
-                        <select name="status" defaultValue={lead.status} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                        <select name="status" defaultValue={lead.status} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
                           {LEAD_STATUSES.map((value) => (
                             <option key={value} value={value}>
                               {STATUS_LABELS[value]}
@@ -479,7 +479,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                       <div style={{ display: "grid", gap: 12 }}>
                         <label style={{ display: "grid", gap: 4 }}>
                           Erfolgreiches Ergebnis
-                          <select name="successful_outcome" defaultValue={lead.successful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                          <select name="successful_outcome" defaultValue={lead.successful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
                             <option value="" disabled>Bitte wählen</option>
                             {SUCCESSFUL_OUTCOMES.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -487,14 +487,14 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                               </option>
                             ))}
                           </select>
-                          <span style={{ fontSize: 12, color: "#718096" }}>
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
                             Nur wählen, wenn Status auf „Erfolgreich“ gesetzt ist.
                           </span>
                         </label>
 
                         <label style={{ display: "grid", gap: 4 }}>
                           Nicht erfolgreich
-                          <select name="unsuccessful_outcome" defaultValue={lead.unsuccessful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid #cbd5e0" }}>
+                          <select name="unsuccessful_outcome" defaultValue={lead.unsuccessful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
                             <option value="" disabled>Bitte wählen</option>
                             {UNSUCCESSFUL_OUTCOMES.map((option) => (
                               <option key={option.value} value={option.value}>
@@ -502,7 +502,7 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
                               </option>
                             ))}
                           </select>
-                          <span style={{ fontSize: 12, color: "#718096" }}>
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
                             Nur wählen, wenn Status auf „Nicht erfolgreich“ gesetzt ist.
                           </span>
                         </label>
@@ -518,10 +518,10 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
 
                     {historyByLeadId[lead.id]?.length ? (
                       <div style={{ display: "grid", gap: 8, marginTop: 18 }}>
-                        <p style={{ margin: 0, fontSize: 13, color: "#4a5568", fontWeight: 700 }}>
+                        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", fontWeight: 700 }}>
                           Verlauf
                         </p>
-                        <ul style={{ margin: 0, paddingLeft: 16, color: "#4a5568" }}>
+                        <ul style={{ margin: 0, paddingLeft: 16, color: "var(--muted)" }}>
                           {historyByLeadId[lead.id].map((entry) => {
                             const actor = entry.changed_by_user_id
                               ? getTeamMemberLabel(memberById.get(entry.changed_by_user_id))

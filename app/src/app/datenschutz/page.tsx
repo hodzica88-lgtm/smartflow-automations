@@ -9,15 +9,15 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const listStyle = { margin: 0, paddingLeft: 18, lineHeight: 1.7, color: "#4b5563" } as const;
+const listStyle = { margin: 0, paddingLeft: 18, lineHeight: 1.7, color: "var(--muted)" } as const;
 
 export default function DatenschutzPage() {
   return (
     <main style={{ maxWidth: 840, margin: "0 auto", padding: "40px 20px", display: "grid", gap: 24 }}>
       <header style={{ display: "grid", gap: 8 }}>
-        <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "#0f766e", fontWeight: 700 }}>Rechtliches</p>
+        <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>Rechtliches</p>
         <h1 style={{ margin: 0, fontSize: 40, lineHeight: 1.05 }}>Datenschutzerklärung</h1>
-        <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.7 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
           Diese Seite beschreibt die im Code tatsächlich erkennbaren Verarbeitungen. Sie ersetzt keine juristische Prüfung und muss vor dem Livegang finalisiert werden.
         </p>
       </header>
@@ -34,7 +34,7 @@ export default function DatenschutzPage() {
 
       <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Cookie- und Tracking-Status</h2>
-        <p style={{ margin: 0, color: "#4b5563", lineHeight: 1.7 }}>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
           Im aktuellen Code sind keine Marketing- oder Analyse-Tools, keine Drittanbieter-Tracker und kein Einwilligungs-Banner für nicht notwendige Cookies erkennbar. Es werden nur technisch erforderliche Session- und Authentifizierungsmechanismen verwendet.
         </p>
       </section>
