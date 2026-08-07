@@ -1,8 +1,9 @@
 {
-  "name": "Varnito",
+  "name": "Varnito Control Center",
   "short_name": "Varnito",
-  "description": "Neue Leads sofort sehen und ohne E-Mail-Flut bearbeiten.",
-  "start_url": "/dashboard",
+  "description": "Owner desktop workspace for revenue, health, queue, and customer status.",
+  "start_url": "/operator/owner",
+  "id": "/operator/owner",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
@@ -10,6 +11,7 @@
   "orientation": "portrait-primary",
   "background_color": "#0B0B0D",
   "theme_color": "#0B0B0D",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "/icons/varnito-icon-192.png",
@@ -34,6 +36,18 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Control Center",
+      "short_name": "Owner",
+      "url": "/operator/owner"
+    },
+    {
+      "name": "Operator",
+      "short_name": "Operator",
+      "url": "/operator"
     }
   ]
 }

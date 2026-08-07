@@ -12,7 +12,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
 
   return {
     metadataBase: new URL(config.siteUrl),
-    applicationName: SITE_NAME,
+    applicationName: "Varnito Control Center",
     title: {
       default: SITE_NAME,
       template: `%s | ${SITE_NAME}`,

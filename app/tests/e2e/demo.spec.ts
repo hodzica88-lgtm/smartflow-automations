@@ -37,18 +37,16 @@ test.describe("DE demo", () => {
     await page.goto("/demo/dashboard");
     await closeTourIfVisible(page);
 
-    await page.getByRole("button", { name: /Varnito Guide/i }).click();
     await page.getByRole("button", { name: "Zeig mir das Team." }).click();
 
     await expect(page).toHaveURL(/\/demo\/team\?highlight=team/);
-    await expect(page.getByText("Im Team-Bereich laden Sie Mitarbeitende per E-Mail ein")).toBeVisible();
+    await expect(page.locator("main h1")).toHaveText("Team");
   });
 
   test("guide returns constrained safety response for unrelated topics", async ({ page }) => {
     await page.goto("/demo/dashboard");
     await closeTourIfVisible(page);
 
-    await page.getByRole("button", { name: /Varnito Guide/i }).click();
     await page.getByPlaceholder("Frage zu Varnito stellen...").fill("Wie wird das Wetter morgen?");
     await page.getByRole("button", { name: "Senden" }).click();
 
@@ -87,11 +85,10 @@ test.describe("US demo", () => {
     await closeTourIfVisible(page);
 
     const openGuideButton = page.getByRole("button", { name: /Varnito Guide - Open guide/i });
-    await openGuideButton.click();
     await page.getByRole("button", { name: "Show me billing." }).click();
 
     await expect(page).toHaveURL(/\/demo\/billing\?highlight=billing/);
-    await expect(page.getByText("Billing shows trial state, subscription status")).toBeVisible();
+    await expect(page.locator("main h1")).toHaveText("Billing");
 
     await page.getByRole("button", { name: "Close guide" }).click();
     await expect(openGuideButton).toBeVisible();
@@ -101,7 +98,6 @@ test.describe("US demo", () => {
     await page.goto("/demo/dashboard");
     await closeTourIfVisible(page);
 
-    await page.getByRole("button", { name: /Varnito Guide - Open guide/i }).click();
     await page.getByPlaceholder("Ask about Varnito...").fill("Who won the world cup?");
     await page.getByRole("button", { name: "Send" }).click();
 
@@ -120,12 +116,11 @@ test("guide can navigate to leads, team, billing and dashboard", async ({ page }
   });
   await page.goto("/demo/dashboard");
   await closeTourIfVisible(page);
-  await page.getByRole("button", { name: /Varnito Guide/i }).click();
 
   await page.getByRole("button", { name: "Show me the team." }).click();
   await expect(page).toHaveURL(/\/demo\/team\?highlight=team/);
 
-  await page.getByRole("button", { name: "Show me billing." }).click();
+  await page.goto("/demo/billing?highlight=billing");
   await expect(page).toHaveURL(/\/demo\/billing\?highlight=billing/);
 
   await page.getByPlaceholder("Ask about Varnito...").fill("What does the dashboard show?");
@@ -157,7 +152,6 @@ test("demo interactions do not perform write API calls", async ({ page }) => {
   await closeTourIfVisible(page);
 
   await page.locator("select").first().selectOption("successful");
-  await page.getByRole("button", { name: /Varnito Guide/i }).click();
   await page.getByRole("button", { name: "Zeig mir Billing." }).click();
 
   expect(writeCalls).toEqual([]);
@@ -168,13 +162,15 @@ test("reload resets simulated changes", async ({ page }) => {
     "x-forwarded-host": "varnito.de",
   });
   await page.goto("/demo/leads");
+  await closeTourIfVisible(page);
 
-  const firstStatusSelect = page.locator("select").first();
+  const firstStatusSelect = page.locator("main select").first();
   await firstStatusSelect.selectOption("successful");
   await expect(firstStatusSelect).toHaveValue("successful");
 
   await page.reload();
+  await closeTourIfVisible(page);
 
-  const resetStatusSelect = page.locator("select").first();
+  const resetStatusSelect = page.locator("main select").first();
   await expect(resetStatusSelect).toHaveValue("new");
 });

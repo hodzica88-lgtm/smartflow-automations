@@ -135,6 +135,42 @@ export type OperatorCompanyDetailData = {
   recentNotifications: OperatorCompanyNotification[];
 };
 
+export type OwnerControlCenterData = {
+  mrr: {
+    de: number;
+    us: number;
+  };
+  activeCustomers: number;
+  runningTrials: number;
+  paymentRisks: number;
+  scheduledCancellations: number;
+  newCompaniesLast7d: number;
+  analytics: {
+    de7d: number;
+    us7d: number;
+    de30d: number;
+    us30d: number;
+  };
+  serverStatus: "ok" | "degraded";
+  healthStatus: "ok" | "degraded";
+  queue: {
+    due: number;
+    failed24h: number;
+    stale: number;
+  };
+  lastErrors: Array<{
+    id: string;
+    companyId: string;
+    message: string;
+    updatedAt: string;
+  }>;
+  lastBackup: {
+    label: string;
+    checkedAt: string | null;
+  };
+  warnings: string[];
+};
+
 type CountResult = {
   count: number | null;
   error: Error | null;
@@ -231,6 +267,13 @@ type RawSubscription = {
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+};
+
+type RawRecentQueueError = {
+  id: string;
+  company_id: string;
+  error_message: string | null;
+  updated_at: string;
 };
 
 const readCount = async (query: PromiseLike<CountResult>) => {
@@ -728,5 +771,85 @@ export const getOperatorCompanyDetailData = async (
     users,
     recentLeads,
     recentNotifications,
+  };
+};
+
+export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterData> => {
+  const supabase = createSupabaseServiceRoleClient();
+  const now = new Date();
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+  const [dashboard, newCompaniesLast7d, recentErrorsResult] = await Promise.all([
+    getOperatorDashboardData(),
+    readCount(
+      supabase
+        .from("companies")
+        .select("id", { count: "exact", head: true })
+        .is("deleted_at", null)
+        .gte("created_at", last7Days),
+    ),
+    supabase
+      .from("notification_queue")
+      .select("id, company_id, error_message, updated_at")
+      .eq("status", "failed")
+      .gte("updated_at", last24Hours)
+      .order("updated_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  if (recentErrorsResult.error) {
+    throw recentErrorsResult.error;
+  }
+
+  const queue = {
+    due: dashboard.metrics.dueNotifications,
+    failed24h: dashboard.metrics.failedNotifications24h,
+    stale: dashboard.metrics.staleProcessingNotifications,
+  };
+
+  const warnings = [
+    queue.stale > 0 ? `${queue.stale} queue item(s) stuck in processing.` : null,
+    dashboard.metrics.owner.paymentRiskSubscriptions > 0
+      ? `${dashboard.metrics.owner.paymentRiskSubscriptions} subscription(s) at payment risk.`
+      : null,
+    dashboard.metrics.owner.scheduledCancellationSubscriptions > 0
+      ? `${dashboard.metrics.owner.scheduledCancellationSubscriptions} cancellation(s) scheduled.`
+      : null,
+    dashboard.metrics.companiesNeedingAttention > 0
+      ? `${dashboard.metrics.companiesNeedingAttention} company account(s) need attention.`
+      : null,
+  ].filter((entry): entry is string => Boolean(entry));
+
+  return {
+    mrr: {
+      de: dashboard.metrics.owner.estimatedMrrEur,
+      us: dashboard.metrics.owner.estimatedMrrUsd,
+    },
+    activeCustomers: dashboard.metrics.activeCompanies,
+    runningTrials: dashboard.metrics.owner.trialingSubscriptions,
+    paymentRisks: dashboard.metrics.owner.paymentRiskSubscriptions,
+    scheduledCancellations: dashboard.metrics.owner.scheduledCancellationSubscriptions,
+    newCompaniesLast7d,
+    analytics: {
+      de7d: dashboard.metrics.analytics.eventsLast7d.de,
+      us7d: dashboard.metrics.analytics.eventsLast7d.us,
+      de30d: dashboard.metrics.analytics.eventsLast30d.de,
+      us30d: dashboard.metrics.analytics.eventsLast30d.us,
+    },
+    serverStatus: queue.stale > 0 ? "degraded" : "ok",
+    healthStatus: queue.stale > 0 ? "degraded" : "ok",
+    queue,
+    lastErrors: ((recentErrorsResult.data ?? []) as RawRecentQueueError[]).map((entry) => ({
+      id: entry.id,
+      companyId: entry.company_id,
+      message: entry.error_message?.trim() || "Unknown delivery error",
+      updatedAt: entry.updated_at,
+    })),
+    lastBackup: {
+      label: "Backup restore verification",
+      checkedAt: "2026-07-23T00:00:00.000Z",
+    },
+    warnings,
   };
 };

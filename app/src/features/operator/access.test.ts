@@ -44,7 +44,7 @@ describe("requireOperatorUser", () => {
     state.operatorUserEmails = [];
     state.operatorUserIds = [];
 
-    await expect(requireOperatorUser()).rejects.toThrow("REDIRECT:/login?next=/operator");
+    await expect(requireOperatorUser()).rejects.toThrow("REDIRECT:/login?next=%2Foperator");
   });
 
   it("allows configured operator id", async () => {

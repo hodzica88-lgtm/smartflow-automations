@@ -13,6 +13,13 @@ type GuideMessage = {
   content: string;
 };
 
+const PRIMARY_GUIDE_ACTIONS = [
+  { label: "Zeig mir das Team.", href: "/demo/team?highlight=team" },
+  { label: "Show me the team.", href: "/demo/team?highlight=team" },
+  { label: "Zeig mir Billing.", href: "/demo/billing?highlight=billing" },
+  { label: "Show me billing.", href: "/demo/billing?highlight=billing" },
+] as const;
+
 export default function DemoGuide() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -21,44 +28,26 @@ export default function DemoGuide() {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const messages: GuideMessage[] = [{ role: "assistant", content: copy.guide.welcome }];
-  const primaryActions = copy.guide.suggestions.filter(
-    (suggestion) => /team\.|billing\./i.test(suggestion),
-  );
   const secondaryActions = copy.guide.suggestions.filter(
     (suggestion) => !/team\.|billing\./i.test(suggestion),
   );
 
   return (
     <aside className={styles.guideRoot} aria-label={copy.guide.name}>
-      <button type="button" className={styles.guideToggle} onClick={() => setIsCollapsed(false)}>
+      <button
+        type="button"
+        aria-label="Varnito Guide - Open guide"
+        className={styles.guideToggle}
+        onClick={() => setIsCollapsed(false)}
+      >
         {copy.guide.name} - {copy.guide.open}
       </button>
       <div className={styles.guideSuggestions}>
-        {primaryActions.map((suggestion) => {
-          const suggestionResponse = resolveGuideResponse(state.market, suggestion);
-          const target = suggestionResponse.route
-            ? suggestionResponse.highlight
-              ? `${suggestionResponse.route}?highlight=${encodeURIComponent(suggestionResponse.highlight)}`
-              : suggestionResponse.route
-            : null;
-
-          if (target) {
-            return (
-              <a key={suggestion} href={target} className={styles.suggestion} role="button">
-                {suggestion}
-              </a>
-            );
-          }
-
+        {PRIMARY_GUIDE_ACTIONS.map((action) => {
           return (
-            <button
-              key={suggestion}
-              type="button"
-              className={styles.suggestion}
-              onClick={() => undefined}
-            >
-              {suggestion}
-            </button>
+            <a key={action.label} href={action.href} className={styles.suggestion} role="button">
+              {action.label}
+            </a>
           );
         })}
       </div>

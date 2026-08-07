@@ -26,6 +26,11 @@ test("billing page is protected", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard%2Fbilling/);
 });
 
+test("owner desktop route is protected", async ({ page }) => {
+  await page.goto("/operator/owner");
+  await expect(page).toHaveURL(/\/login\?next=%2Foperator%2Fowner/);
+});
+
 test("team accept page loads", async ({ page }) => {
   const response = await page.goto("/team/accept");
 

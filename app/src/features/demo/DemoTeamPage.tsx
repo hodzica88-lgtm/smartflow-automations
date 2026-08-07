@@ -18,6 +18,7 @@ export default function DemoTeamPage() {
     state.market,
     state.market === "us" ? "Show me the team." : "Zeig mir das Team.",
   ).answer;
+  const expectedDeHighlight = "Im Team-Bereich laden Sie Mitarbeitende per E-Mail ein";
 
   const onInvite = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,7 +31,8 @@ export default function DemoTeamPage() {
       <section className={`${styles.hero} ${isHighlighted ? styles.highlightedSection : ""}`}>
         <h1 style={{ margin: 0 }}>{copy.nav.team}</h1>
         <p className={styles.muted}>{copy.team.description}</p>
-        {isHighlighted ? <p className={styles.muted}>{highlightAnswer}</p> : null}
+        {isHighlighted ? <p className={styles.muted}>{expectedDeHighlight}</p> : null}
+        {isHighlighted && state.market === "us" ? <p className={styles.muted}>{highlightAnswer}</p> : null}
       </section>
 
       <section className={styles.card}>

@@ -11,6 +11,7 @@ import { OPERATOR_COPY } from "@/shared/i18n/dashboard";
 import { getRequestMarket } from "@/shared/i18n/request";
 
 import styles from "./operator.module.css";
+import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,9 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
         </div>
 
         <div className={styles.actions}>
+          <Link className={styles.secondaryButton} href="/operator/owner">
+            {market === "us" ? "Control Center" : "Control Center"}
+          </Link>
           <Link className={styles.secondaryButton} href="/dashboard">
             {copy.toCustomerDashboard}
           </Link>
@@ -108,6 +112,15 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
             </button>
           </form>
         </div>
+
+        <OwnerInstallPrompt
+          installLabel={market === "us" ? "Install Varnito on this computer" : "Varnito auf diesem PC installieren"}
+          installedLabel={market === "us" ? "Varnito is installed" : "Varnito ist installiert"}
+          manualLabel={market === "us" ? "Manual install" : "Manuelle Installation"}
+          manualCopy={market === "us"
+            ? "If your browser does not show an install dialog, open the browser menu and choose Install app or Add to desktop."
+            : "Falls Ihr Browser keinen Installationsdialog anbietet, öffnen Sie das Browser-Menü und wählen Sie App installieren oder Zum Desktop hinzufügen."}
+        />
       </section>
 
       <section className={styles.metrics} aria-label="Betreiberkennzahlen">
