@@ -83,6 +83,62 @@ const findCompanyIdByStripeReference = async (
   return data?.company_id ?? null;
 };
 
+const getTrialWillEndNotificationCopy = (market: "de" | "us" | "unknown") => {
+  if (market === "us") {
+    return {
+      title: "Your trial ends soon",
+      message: "Your free trial ends in 3 days. Your paid subscription will begin afterwards.",
+    };
+  }
+
+  return {
+    title: "Testphase endet bald",
+    message: "Ihre kostenlose Testphase endet in 3 Tagen. Danach beginnt das kostenpflichtige Abonnement.",
+  };
+};
+
+const getCompanyMarket = async (companyId: string): Promise<"de" | "us" | "unknown"> => {
+  try {
+    const supabase = createSupabaseServiceRoleClient();
+    const { data, error } = await supabase
+      .from("companies")
+      .select("market")
+      .eq("id", companyId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return "unknown";
+    }
+
+    if (data.market === "us") {
+      return "us";
+    }
+
+    if (data.market === "de") {
+      return "de";
+    }
+  } catch {
+    // Allow webhook processing to continue even when the market column is unavailable.
+  }
+
+  return "unknown";
+};
+
+const isSubscriptionScheduledForTrialCancellation = (
+  subscription: Pick<Stripe.Subscription, "cancel_at" | "cancel_at_period_end">,
+  trialEnd: number | null | undefined,
+) => {
+  if (subscription.cancel_at_period_end) {
+    return true;
+  }
+
+  if (!trialEnd || !subscription.cancel_at) {
+    return false;
+  }
+
+  return subscription.cancel_at <= trialEnd;
+};
+
 const syncSubscription = async (companyId: string, subscription: Stripe.Subscription) => {
   const { priceId, productId } = getPriceDetails(subscription);
   const { currentPeriodEnd, currentPeriodStart } = getCurrentPeriod(subscription);
@@ -304,6 +360,48 @@ const handleSubscriptionEvent = async (
   }
 };
 
+const handleTrialWillEnd = async (subscription: Stripe.Subscription, stripe: Stripe) => {
+  const companyId = await resolveCompanyIdForSubscriptionEvent(subscription);
+
+  if (!companyId) {
+    return;
+  }
+
+  const refreshed = await stripe.subscriptions.retrieve(subscription.id, {
+    expand: ["items.data.price.product"],
+  });
+
+  if (normalizeBillingStatus(refreshed.status) !== "trialing") {
+    return;
+  }
+
+  const trialEnd = refreshed.trial_end ?? subscription.trial_end ?? null;
+
+  if (!trialEnd) {
+    return;
+  }
+
+  if (isSubscriptionScheduledForTrialCancellation(refreshed, trialEnd)) {
+    return;
+  }
+
+  const market = await getCompanyMarket(companyId);
+  const { title, message } = getTrialWillEndNotificationCopy(market);
+
+  await createAppNotificationSafe({
+    companyId,
+    type: "trial_ends_7_days",
+    title,
+    message,
+    dedupeKey: `trial_will_end:${refreshed.id}:${trialEnd}`,
+    metadata: {
+      stripeSubscriptionId: refreshed.id,
+      trialEnd,
+      source: "trial_will_end",
+    },
+  });
+};
+
 const handleInvoiceEvent = async (invoice: Stripe.Invoice, stripe: Stripe) => {
   const invoiceSubscription = invoice as Stripe.Invoice & {
     subscription?: string | { id?: string | null } | null;
@@ -375,6 +473,9 @@ export const processStripeEvent = async (event: Stripe.Event) => {
         stripe,
         "customer.subscription.deleted",
       );
+      break;
+    case "customer.subscription.trial_will_end":
+      await handleTrialWillEnd(event.data.object as Stripe.Subscription, stripe);
       break;
     case "invoice.paid":
     case "invoice.payment_failed":

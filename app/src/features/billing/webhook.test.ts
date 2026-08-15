@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
+  createAppNotification: vi.fn(),
   upsertCompanySubscription: vi.fn(),
   webhookEvents: new Map<string, { id: string; processed_at: string | null }>(),
   retrievedSubscription: {
@@ -100,6 +101,25 @@ vi.mock("@/shared/lib/supabase/server", () => ({
         };
       }
 
+      if (table === "companies") {
+        return {
+          select() {
+            return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    return {
+                      data: { market: "de" },
+                      error: null,
+                    };
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+
       throw new Error(`Unexpected table: ${table}`);
     },
   })),
@@ -124,6 +144,10 @@ vi.mock("@/features/billing/service", () => ({
   upsertCompanySubscription: testState.upsertCompanySubscription,
 }));
 
+vi.mock("@/features/notifications/service", () => ({
+  createAppNotification: testState.createAppNotification,
+}));
+
 vi.mock("@/shared/config/env", () => ({
   loadServerEnv: () => ({
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
@@ -138,6 +162,7 @@ describe("processStripeWebhookRequest", () => {
 
   beforeEach(() => {
     testState.webhookEvents.clear();
+    testState.createAppNotification.mockReset();
     testState.upsertCompanySubscription.mockReset();
     process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
     testState.retrievedSubscription.cancel_at_period_end = false;
