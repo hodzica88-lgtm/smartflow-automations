@@ -10,6 +10,11 @@ type ServerEnv = PublicEnv & {
   brevoApiKey?: string;
   brevoSenderEmail?: string;
   brevoSenderName?: string;
+  openAiApiKey?: string;
+  openAiModel?: string;
+  supportEmail?: string;
+  supportFromName?: string;
+  supportWebhookSecret?: string;
   analyticsEventsEnabled: boolean;
   vapidPrivateKey?: string;
   vapidSubject?: string;
@@ -129,6 +134,11 @@ export const loadServerEnv = (): ServerEnv => {
     brevoApiKey: getOptionalEnv("BREVO_API_KEY"),
     brevoSenderEmail: getOptionalEnv("BREVO_SENDER_EMAIL"),
     brevoSenderName: getOptionalEnv("BREVO_SENDER_NAME"),
+    openAiApiKey: getOptionalEnv("OPENAI_API_KEY"),
+    openAiModel: getOptionalEnv("OPENAI_MODEL"),
+    supportEmail: getOptionalEnv("SUPPORT_EMAIL"),
+    supportFromName: getOptionalEnv("SUPPORT_FROM_NAME"),
+    supportWebhookSecret: getOptionalEnv("SUPPORT_WEBHOOK_SECRET"),
     analyticsEventsEnabled: getBooleanEnv("ANALYTICS_EVENTS_ENABLED", true),
     vapidPrivateKey: getOptionalEnv("VAPID_PRIVATE_KEY"),
     vapidSubject: getOptionalEnv("VAPID_SUBJECT"),
