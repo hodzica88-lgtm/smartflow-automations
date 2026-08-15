@@ -242,7 +242,7 @@ describe("stripe billing checkout trial", () => {
     return formData;
   };
 
-  it("sets 30-day trial for first checkout", async () => {
+  it("sets 30-day trial for first checkout and enables automatic tax", async () => {
     await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
       "REDIRECT:https://checkout.stripe.test/session_1",
     );
@@ -251,6 +251,7 @@ describe("stripe billing checkout trial", () => {
       trial_period_days?: number;
     };
     expect(subscriptionData.trial_period_days).toBe(30);
+    expect(state.checkoutPayload?.automatic_tax).toEqual({ enabled: true });
   });
 
   it("does not grant second trial when trial_used_at exists", async () => {
@@ -280,7 +281,7 @@ describe("stripe billing checkout trial", () => {
     expect(subscriptionData.trial_period_days).toBeUndefined();
   });
 
-  it("uses US checkout locale, currency-matched price and varnito.com return URLs", async () => {
+  it("uses US checkout locale, currency-matched price and varnito.com return URLs with automatic tax enabled", async () => {
     state.market = "us";
     state.priceCurrency = "usd";
 
@@ -289,6 +290,7 @@ describe("stripe billing checkout trial", () => {
     );
 
     expect(state.checkoutPayload?.locale).toBe("en");
+    expect(state.checkoutPayload?.automatic_tax).toEqual({ enabled: true });
     expect(state.checkoutPayload?.success_url).toBe(
       "https://varnito.com/dashboard/billing?success=checkout",
     );

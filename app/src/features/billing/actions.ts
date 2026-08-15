@@ -130,6 +130,7 @@ export async function startBillingCheckoutAction(formData: FormData) {
     success_url: `${siteUrl}${BILLING_ROUTE}?success=checkout`,
     cancel_url: `${siteUrl}${BILLING_ROUTE}?canceled=1`,
     line_items: [{ price: price.id, quantity: 1 }],
+    automatic_tax: { enabled: true },
     client_reference_id: access.companyId,
     customer: billing.stripeCustomerId ?? undefined,
     customer_email: billing.stripeCustomerId ? undefined : company.email,
