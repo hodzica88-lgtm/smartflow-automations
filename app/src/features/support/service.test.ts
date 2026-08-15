@@ -218,6 +218,52 @@ describe("support inbound processing", () => {
     expect(table.insert).toHaveBeenCalled();
   });
 
+  it("accepts the real Brevo items-array payload and prefers extracted markdown", async () => {
+    const routeModule = await import("@/app/api/support/inbound/route");
+
+    const payload = {
+      items: [
+        {
+          MessageId: "brevo-real-1",
+          From: {
+            Address: "customer@example.com",
+            Name: "Ada Example",
+          },
+          Subject: "Question about billing",
+          ExtractedMarkdownMessage: "Hello, I need help with billing.",
+          RawTextBody: "Plain fallback",
+        },
+        {
+          MessageId: "brevo-real-2",
+          From: {
+            Address: "customer2@example.com",
+            Name: "Bob Example",
+          },
+          Subject: "Another question",
+          RawTextBody: "Another plain message",
+        },
+      ],
+    };
+
+    const normalized = routeModule.normalizeSupportInboundItems(payload);
+
+    expect(normalized).toHaveLength(2);
+    expect(normalized[0]).toMatchObject({
+      senderEmail: "customer@example.com",
+      senderName: "Ada Example",
+      subject: "Question about billing",
+      body: "Hello, I need help with billing.",
+      providerMessageId: "brevo-real-1",
+    });
+    expect(normalized[1]).toMatchObject({
+      senderEmail: "customer2@example.com",
+      senderName: "Bob Example",
+      subject: "Another question",
+      body: "Another plain message",
+      providerMessageId: "brevo-real-2",
+    });
+  });
+
   it("rejects unauthenticated owner access for support actions", async () => {
     const { createSupabaseServerClient } = await import("@/shared/lib/supabase/server");
     serverClientMock.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });

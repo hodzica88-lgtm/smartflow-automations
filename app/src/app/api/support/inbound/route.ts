@@ -29,6 +29,62 @@ const parseInboundPayload = async (request: Request) => {
   }
 };
 
+const readString = (value: unknown) => (typeof value === "string" ? value : undefined);
+
+const normalizeBrevoItem = (item: unknown) => {
+  const record = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+
+  const from = (record.From ?? record.from) as Record<string, unknown> | string | undefined;
+  const senderEmail = typeof from === "string"
+    ? from
+    : typeof from === "object" && from
+      ? readString((from as Record<string, unknown>).Address ?? (from as Record<string, unknown>).address)
+      : readString(record.sender_email ?? record.senderEmail ?? record.from);
+
+  const senderName = typeof from === "object" && from
+    ? readString((from as Record<string, unknown>).Name ?? (from as Record<string, unknown>).name)
+    : readString(record.from_name ?? record.fromName);
+
+  const subject = readString(record.Subject ?? record.subject);
+  const body =
+    readString(record.ExtractedMarkdownMessage ?? record.extractedMarkdownMessage)
+    ?? readString(record.RawTextBody ?? record.rawTextBody)
+    ?? readString(record.text)
+    ?? readString(record.body)
+    ?? "";
+
+  const providerMessageId =
+    readString(record.MessageId ?? record.message_id ?? record.id)
+    ?? readString(record.messageId);
+
+  return {
+    senderEmail: senderEmail ?? "",
+    senderName,
+    subject,
+    body,
+    providerMessageId,
+  };
+};
+
+export const normalizeSupportInboundItems = (payload: Record<string, unknown>) => {
+  const rawItems = Array.isArray(payload.items) ? payload.items : [payload];
+
+  return rawItems.flatMap((item) => {
+    const normalized = normalizeBrevoItem(item);
+    if (!normalized.senderEmail || !normalized.body) {
+      return [];
+    }
+
+    return [{
+      senderEmail: normalized.senderEmail,
+      senderName: normalized.senderName,
+      subject: normalized.subject,
+      body: normalized.body,
+      providerMessageId: normalized.providerMessageId,
+    }];
+  });
+};
+
 export async function POST(request: Request) {
   const env = loadServerEnv();
   const headerSecret = getHeaderValue(request, "x-support-secret") ?? getHeaderValue(request, "x-varnito-support-secret");
@@ -38,39 +94,64 @@ export async function POST(request: Request) {
   }
 
   const payload = await parseInboundPayload(request);
-  const senderEmail = String((payload.from as string | undefined) ?? (payload.sender_email as string | undefined) ?? "");
-  const senderName = typeof payload.from_name === "string" ? payload.from_name : undefined;
-  const subject = typeof payload.subject === "string" ? payload.subject : undefined;
-  const body = typeof payload.text === "string" ? payload.text : typeof payload.body === "string" ? payload.body : "";
-  const providerMessageId = typeof payload.message_id === "string" ? payload.message_id : typeof payload.id === "string" ? payload.id : undefined;
-  const market = (typeof payload.market === "string" && (payload.market === "de" || payload.market === "us")) ? payload.market : "de";
-
-  if (!senderEmail || !body) {
+  const normalizedItems = normalizeSupportInboundItems(payload);
+  if (normalizedItems.length === 0) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
 
-  const result = await processInboundSupportMessage({
-    senderEmail,
-    senderName,
-    subject,
-    body,
-    providerMessageId,
-    market,
-    ipAddress: getHeaderValue(request, "x-forwarded-for") ?? getHeaderValue(request, "x-real-ip") ?? undefined,
-  });
+  const market = (typeof payload.market === "string" && (payload.market === "de" || payload.market === "us")) ? payload.market : "de";
+  const ipAddress = getHeaderValue(request, "x-forwarded-for") ?? getHeaderValue(request, "x-real-ip") ?? undefined;
 
-  if (result.duplicate) {
-    return NextResponse.json({ status: "duplicate" }, { status: 200 });
+  if (normalizedItems.length === 1) {
+    const item = normalizedItems[0];
+    const result = await processInboundSupportMessage({
+      senderEmail: item.senderEmail,
+      senderName: item.senderName,
+      subject: item.subject,
+      body: item.body,
+      providerMessageId: item.providerMessageId,
+      market,
+      ipAddress,
+    });
+
+    if (result.duplicate) {
+      return NextResponse.json({ status: "duplicate" }, { status: 200 });
+    }
+
+    if (result.loop) {
+      return NextResponse.json({ status: "ignored_loop" }, { status: 200 });
+    }
+
+    return NextResponse.json({
+      status: "processed",
+      threadId: result.threadId,
+      duplicate: result.duplicate,
+      created: result.created,
+    }, { status: 200 });
   }
 
-  if (result.loop) {
-    return NextResponse.json({ status: "ignored_loop" }, { status: 200 });
-  }
+  const results = await Promise.all(normalizedItems.map(async (item) => {
+    const result = await processInboundSupportMessage({
+      senderEmail: item.senderEmail,
+      senderName: item.senderName,
+      subject: item.subject,
+      body: item.body,
+      providerMessageId: item.providerMessageId,
+      market,
+      ipAddress,
+    });
+
+    return {
+      senderEmail: item.senderEmail,
+      status: result.duplicate ? "duplicate" : result.loop ? "ignored_loop" : "processed",
+      threadId: result.threadId,
+      created: result.created,
+    };
+  }));
 
   return NextResponse.json({
     status: "processed",
-    threadId: result.threadId,
-    duplicate: result.duplicate,
-    created: result.created,
+    processedCount: results.length,
+    items: results,
   }, { status: 200 });
 }
