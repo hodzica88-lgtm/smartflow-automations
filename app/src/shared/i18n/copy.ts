@@ -154,6 +154,24 @@ type SharedCopy = {
     inquiryTypeAdded: string;
     inquiryTypeNotAdded: string;
   };
+  inquiryShare: {
+    title: string;
+    linkLabel: string;
+    linkDescription: string;
+    copyLink: string;
+    copied: string;
+    copyFailed: string;
+    embedLabel: string;
+    embedDescription: string;
+    copyEmbedCode: string;
+    qrLabel: string;
+    qrDescription: string;
+    qrLoading: string;
+    downloadQrCode: string;
+    downloadFailed: string;
+    qrAriaLabel: string;
+    embedTitle: string;
+  };
   contact: {
     eyebrow: string;
     title: string;
@@ -273,6 +291,24 @@ const COPY: Record<MarketCode, MarketCopy> = {
         inquiryTypeExists: "Diese Anfrageart existiert bereits.",
         inquiryTypeAdded: "Anfrageart hinzugefügt.",
         inquiryTypeNotAdded: "Anfrageart konnte nicht hinzugefügt werden.",
+      },
+      inquiryShare: {
+        title: "Anfrageformular teilen",
+        linkLabel: "Anfrage-Link",
+        linkDescription: "Diesen Link können Sie per E-Mail, WhatsApp oder auf Ihrer Website teilen.",
+        copyLink: "Link kopieren",
+        copied: "Kopiert",
+        copyFailed: "Kopieren nicht moeglich",
+        embedLabel: "Embed-Code",
+        embedDescription: "Diesen Code können Sie in Ihre Website einfügen.",
+        copyEmbedCode: "Embed-Code kopieren",
+        qrLabel: "QR-Code",
+        qrDescription: "Diesen QR-Code können Sie ausdrucken oder auf Flyern und Visitenkarten verwenden.",
+        qrLoading: "QR-Code wird geladen",
+        downloadQrCode: "QR-Code herunterladen",
+        downloadFailed: "Download nicht moeglich",
+        qrAriaLabel: "QR-Code für das Anfrageformular",
+        embedTitle: "Anfrageformular",
       },
       contact: {
         eyebrow: "Kontakt",
@@ -471,6 +507,24 @@ const COPY: Record<MarketCode, MarketCopy> = {
         inquiryTypeExists: "This inquiry type already exists.",
         inquiryTypeAdded: "Inquiry type added.",
         inquiryTypeNotAdded: "The inquiry type could not be added.",
+      },
+      inquiryShare: {
+        title: "Share inquiry form",
+        linkLabel: "Inquiry link",
+        linkDescription: "Share this link by email, WhatsApp, or on your website.",
+        copyLink: "Copy link",
+        copied: "Copied",
+        copyFailed: "Copy failed",
+        embedLabel: "Embed code",
+        embedDescription: "Add this code to your website.",
+        copyEmbedCode: "Copy embed code",
+        qrLabel: "QR code",
+        qrDescription: "Print this QR code or use it on flyers and business cards.",
+        qrLoading: "QR code is loading",
+        downloadQrCode: "Download QR code",
+        downloadFailed: "Download failed",
+        qrAriaLabel: "QR code for the inquiry form",
+        embedTitle: "Inquiry form",
       },
       contact: {
         eyebrow: "Contact",

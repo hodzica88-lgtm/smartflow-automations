@@ -24,6 +24,11 @@ describe("market copy", () => {
     expect(us.auth.loginForgotPassword).toBe("Forgot your password?");
     expect(us.auth.forgotBackToLogin).toBe("Back to login");
     expect(us.contact.title).toBe("Contact us");
+    expect(us.inquiryShare.title).toBe("Share inquiry form");
+    expect(us.inquiryShare.linkDescription).toBe("Share this link by email, WhatsApp, or on your website.");
+    expect(us.inquiryShare.embedDescription).toBe("Add this code to your website.");
+    expect(us.inquiryShare.qrDescription).toBe("Print this QR code or use it on flyers and business cards.");
+    expect(us.inquiryShare.embedTitle).toBe("Inquiry form");
   });
 
   it("keeps germany landing pricing and CTA copy", () => {
@@ -45,5 +50,10 @@ describe("market copy", () => {
     expect(de.auth.loginForgotPassword).toBe("Passwort vergessen?");
     expect(de.auth.forgotBackToLogin).toBe("Zurück zur Anmeldung");
     expect(de.contact.title).toBe("Kontakt aufnehmen");
+    expect(de.inquiryShare.title).toBe("Anfrageformular teilen");
+    expect(de.inquiryShare.linkDescription).toBe("Diesen Link können Sie per E-Mail, WhatsApp oder auf Ihrer Website teilen.");
+    expect(de.inquiryShare.embedDescription).toBe("Diesen Code können Sie in Ihre Website einfügen.");
+    expect(de.inquiryShare.qrDescription).toBe("Diesen QR-Code können Sie ausdrucken oder auf Flyern und Visitenkarten verwenden.");
+    expect(de.inquiryShare.embedTitle).toBe("Anfrageformular");
   });
 });

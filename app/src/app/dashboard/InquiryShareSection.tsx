@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 
+import { getMarketCopy } from "@/shared/i18n/copy";
 import styles from "./dashboard.module.css";
 
 type InquiryShareSectionProps = {
@@ -15,6 +16,8 @@ const getBrowserOriginSnapshot = () => window.location.origin;
 const QR_CODE_FILE_NAME = "company-inquiry-qr-code.png";
 
 export default function InquiryShareSection({ companyId }: InquiryShareSectionProps) {
+  const market = typeof window !== "undefined" && window.location.hostname.endsWith("varnito.com") ? "us" : "de";
+  const copy = getMarketCopy(market).shared.inquiryShare;
   const origin = useSyncExternalStore(
     subscribeToLocationOrigin,
     getBrowserOriginSnapshot,
@@ -29,8 +32,8 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
   const inquiryUrl = useMemo(() => `${origin}${inquiryPath}`, [origin, inquiryPath]);
   const embedCode = useMemo(
     () =>
-      `<iframe src=\"${inquiryUrl}\" width=\"100%\" height=\"700\" frameborder=\"0\" loading=\"lazy\" title=\"Anfrageformular\"></iframe>`,
-    [inquiryUrl],
+      `<iframe src="${inquiryUrl}" width="100%" height="700" frameborder="0" loading="lazy" title="${copy.embedTitle}"></iframe>`,
+    [copy.embedTitle, inquiryUrl],
   );
 
   const copyText = async (value: string, target: "link" | "embed") => {
@@ -87,12 +90,12 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
   };
 
   return (
-    <section className={styles.empty} aria-label="Anfrageformular teilen">
-      <h2>Anfrageformular teilen</h2>
+    <section className={styles.empty} aria-label={copy.title}>
+      <h2>{copy.title}</h2>
 
       <article className={styles.shareBlock}>
-        <h3>Anfrage-Link</h3>
-        <p>Diesen Link können Sie per E-Mail, WhatsApp oder auf Ihrer Website teilen.</p>
+        <h3>{copy.linkLabel}</h3>
+        <p>{copy.linkDescription}</p>
         <p className={styles.shareValue}>{inquiryUrl || inquiryPath}</p>
         <div className={styles.copyRow}>
           <button
@@ -103,18 +106,18 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
             }}
             disabled={!inquiryUrl}
           >
-            Link kopieren
+            {copy.copyLink}
           </button>
-          {linkStatus === "success" ? <span className={styles.copySuccess}>Kopiert</span> : null}
+          {linkStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
           {linkStatus === "error" ? (
-            <span className={styles.copyError}>Kopieren nicht moeglich</span>
+            <span className={styles.copyError}>{copy.copyFailed}</span>
           ) : null}
         </div>
       </article>
 
       <article className={styles.shareBlock}>
-        <h3>Embed-Code</h3>
-        <p>Diesen Code können Sie in Ihre Website einfügen.</p>
+        <h3>{copy.embedLabel}</h3>
+        <p>{copy.embedDescription}</p>
         <pre className={styles.embedCode}>
           <code>{embedCode}</code>
         </pre>
@@ -127,18 +130,18 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
             }}
             disabled={!inquiryUrl}
           >
-            Embed-Code kopieren
+            {copy.copyEmbedCode}
           </button>
-          {embedStatus === "success" ? <span className={styles.copySuccess}>Kopiert</span> : null}
+          {embedStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
           {embedStatus === "error" ? (
-            <span className={styles.copyError}>Kopieren nicht moeglich</span>
+            <span className={styles.copyError}>{copy.copyFailed}</span>
           ) : null}
         </div>
       </article>
 
       <article className={styles.shareBlock}>
-        <h3>QR-Code</h3>
-        <p>Diesen QR-Code können Sie ausdrucken oder auf Flyern und Visitenkarten verwenden.</p>
+        <h3>{copy.qrLabel}</h3>
+        <p>{copy.qrDescription}</p>
         <div className={styles.qrPreview}>
           {inquiryUrl ? (
             <QRCodeCanvas
@@ -147,11 +150,11 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
               value={inquiryUrl}
               size={256}
               includeMargin
-              aria-label="QR-Code für das Anfrageformular"
-              title="QR-Code für das Anfrageformular"
+              aria-label={copy.qrAriaLabel}
+              title={copy.qrAriaLabel}
             />
           ) : (
-            <div className={styles.qrPlaceholder}>QR-Code wird geladen</div>
+            <div className={styles.qrPlaceholder}>{copy.qrLoading}</div>
           )}
         </div>
         <div className={styles.copyRow}>
@@ -163,11 +166,11 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
             }}
             disabled={!inquiryUrl}
           >
-            QR-Code herunterladen
+            {copy.downloadQrCode}
           </button>
-          {qrStatus === "success" ? <span className={styles.copySuccess}>Kopiert</span> : null}
+          {qrStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
           {qrStatus === "error" ? (
-            <span className={styles.copyError}>Download nicht moeglich</span>
+            <span className={styles.copyError}>{copy.downloadFailed}</span>
           ) : null}
         </div>
       </article>
