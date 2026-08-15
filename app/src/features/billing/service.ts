@@ -313,7 +313,7 @@ export const syncOwnerCompanyBillingFromStripe = async (
       stripe_subscription_id: subscription.id,
       trial_ends_at: toIsoString(subscription.trial_end),
       trial_started_at: toIsoString(subscription.trial_start),
-      trial_used_at: toIsoString(subscription.trial_start) ?? new Date().toISOString(),
+      trial_used_at: subscription.trial_start ? toIsoString(subscription.trial_start) : null,
     })
     .eq("company_id", input.companyId);
 

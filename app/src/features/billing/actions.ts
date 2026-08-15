@@ -118,7 +118,6 @@ export async function startBillingCheckoutAction(formData: FormData) {
     },
   };
 
-  const trialGrantedAt = new Date();
   const shouldGrantTrial = canGrantCheckoutTrial(billing);
 
   if (shouldGrantTrial) {
@@ -150,30 +149,10 @@ export async function startBillingCheckoutAction(formData: FormData) {
   const { error } = await supabase
     .from("subscriptions")
     .update({
-      current_period_end: shouldGrantTrial
-        ? new Date(
-            trialGrantedAt.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000,
-          ).toISOString()
-        : billing.currentPeriodEnd,
-      current_period_start: shouldGrantTrial
-        ? trialGrantedAt.toISOString()
-        : billing.currentPeriodStart,
-      status: shouldGrantTrial ? "trialing" : billing.status,
       stripe_customer_id: billing.stripeCustomerId ?? (typeof session.customer === "string" ? session.customer : null),
       stripe_price_id: price.id,
       stripe_product_id: priceProductId,
       plan: "pro",
-      trial_ends_at: shouldGrantTrial
-        ? new Date(
-            trialGrantedAt.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000,
-          ).toISOString()
-        : billing.trialEndsAt,
-      trial_started_at: shouldGrantTrial
-        ? trialGrantedAt.toISOString()
-        : billing.trialStartedAt,
-      trial_used_at: shouldGrantTrial
-        ? trialGrantedAt.toISOString()
-        : billing.trialUsedAt,
     })
     .eq("company_id", access.companyId);
 
