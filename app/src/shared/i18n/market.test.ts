@@ -20,7 +20,7 @@ describe("market resolution", () => {
     expect(resolveMarketFromHost("host=varnito.com")).toBe("us");
     expect(getMarketConfig("us").currency).toBe("usd");
     expect(getMarketConfig("us").siteUrl).toBe("https://varnito.com");
-    expect(getMarketConfig("us").legalContactEmail).toBe("contact@varnito.com");
+    expect(getMarketConfig("us").legalContactEmail).toBe("support@varnito.com");
   });
 
   it("defaults localhost and unknown hosts to germany market", () => {

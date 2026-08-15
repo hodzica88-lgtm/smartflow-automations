@@ -18,7 +18,7 @@ const MARKET_CONFIG: Record<MarketCode, MarketConfig> = {
     locale: "de-DE",
     currency: "eur",
     siteUrl: "https://varnito.de",
-    legalContactEmail: "kontakt@varnito.de",
+    legalContactEmail: "support@varnito.com",
   },
   us: {
     code: "us",
@@ -27,7 +27,7 @@ const MARKET_CONFIG: Record<MarketCode, MarketConfig> = {
     locale: "en-US",
     currency: "usd",
     siteUrl: "https://varnito.com",
-    legalContactEmail: "contact@varnito.com",
+    legalContactEmail: "support@varnito.com",
   },
 };
 

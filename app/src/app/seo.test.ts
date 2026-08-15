@@ -17,7 +17,7 @@ vi.mock("@/shared/i18n/request", () => ({
           locale: "en-US",
           currency: "usd",
           siteUrl: "https://varnito.com",
-          legalContactEmail: "contact@varnito.com",
+          legalContactEmail: "support@varnito.com",
         },
       };
     }
@@ -32,7 +32,7 @@ vi.mock("@/shared/i18n/request", () => ({
         locale: "de-DE",
         currency: "eur",
         siteUrl: "https://varnito.de",
-        legalContactEmail: "kontakt@varnito.de",
+        legalContactEmail: "support@varnito.com",
       },
     };
   },
