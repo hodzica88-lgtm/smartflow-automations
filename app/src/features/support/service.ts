@@ -15,6 +15,14 @@ const normalizeEmail = (value?: string | null) => {
   return email && EMAIL_REGEX.test(email) ? email : null;
 };
 
+const logSupportPersistenceError = (context: string, error: { code?: string; message?: string; details?: string } | null | undefined) => {
+  console.error("[support-persistence]", context, {
+    code: error?.code ?? "unknown",
+    message: error?.message ?? "unknown",
+    details: typeof error?.details === "string" && error.details.length > 0 ? error.details.slice(0, 200) : undefined,
+  });
+};
+
 export const createSupportMessageHash = (value: string) => {
   const encoded = new TextEncoder().encode(value.trim().toLowerCase());
   let hash = 2166136261;
@@ -160,7 +168,12 @@ export const processInboundSupportMessage = async ({
     .eq("provider_message_id", providerMessageId ?? duplicateKey)
     .limit(1);
 
-  if (!messageCheck.error && messageCheck.data && messageCheck.data.length > 0) {
+  if (messageCheck.error) {
+    logSupportPersistenceError("support_messages duplicate check failed", messageCheck.error);
+    return { duplicate: false, threadId: null, created: false, persistError: "duplicate_check_failed" };
+  }
+
+  if (messageCheck.data && messageCheck.data.length > 0) {
     return { duplicate: true, threadId: null, created: false };
   }
 
@@ -181,6 +194,11 @@ export const processInboundSupportMessage = async ({
     .eq("customer_email", email)
     .order("created_at", { ascending: false })
     .limit(1);
+
+  if (existingThread.error) {
+    logSupportPersistenceError("support_threads lookup failed", existingThread.error);
+    return { duplicate: false, threadId: null, created: false, persistError: "thread_lookup_failed", classification };
+  }
 
   const threadId = existingThread.data && existingThread.data[0]?.id ? existingThread.data[0].id : null;
   const threadStatus: SupportThreadStatus = classification.canAutoReply ? "ai_answered" : "open";
@@ -203,7 +221,8 @@ export const processInboundSupportMessage = async ({
       .single();
 
     if (threadInsert.error || !threadInsert.data?.id) {
-      return { duplicate: false, threadId: null, created: false, classification };
+      logSupportPersistenceError("support_threads insert failed", threadInsert.error ?? null);
+      return { duplicate: false, threadId: null, created: false, classification, persistError: "thread_insert_failed" };
     }
 
     finalThreadId = threadInsert.data.id;
@@ -222,7 +241,8 @@ export const processInboundSupportMessage = async ({
     });
 
   if (messageInsert.error) {
-    return { duplicate: false, threadId: finalThreadId, created: false, classification };
+    logSupportPersistenceError("support_messages insert failed", messageInsert.error);
+    return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "message_insert_failed" };
   }
 
   if (classification.canAutoReply && classification.suggestedReply) {
@@ -235,7 +255,7 @@ export const processInboundSupportMessage = async ({
     });
 
     if (reply.sent) {
-      await supabase.from("support_messages").insert({
+      const outboundInsert = await supabase.from("support_messages").insert({
         thread_id: finalThreadId,
         direction: "outbound",
         sender_type: "ai",
@@ -245,7 +265,12 @@ export const processInboundSupportMessage = async ({
         provider_message_id: reply.providerMessageId,
       });
 
-      await supabase
+      if (outboundInsert.error) {
+        logSupportPersistenceError("support_messages ai reply insert failed", outboundInsert.error);
+        return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "ai_reply_insert_failed" };
+      }
+
+      const updateResult = await supabase
         .from("support_threads")
         .update({
           status: "ai_answered",
@@ -254,6 +279,11 @@ export const processInboundSupportMessage = async ({
           ai_confidence: classification.confidence,
         })
         .eq("id", finalThreadId);
+
+      if (updateResult.error) {
+        logSupportPersistenceError("support_threads ai reply status update failed", updateResult.error);
+        return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "thread_status_update_failed" };
+      }
     }
   } else {
     await supabase

@@ -114,6 +114,10 @@ export async function POST(request: Request) {
       ipAddress,
     });
 
+    if (result.persistError) {
+      return NextResponse.json({ error: "persistence_failed" }, { status: 500 });
+    }
+
     if (result.duplicate) {
       return NextResponse.json({ status: "duplicate" }, { status: 200 });
     }
@@ -143,11 +147,16 @@ export async function POST(request: Request) {
 
     return {
       senderEmail: item.senderEmail,
-      status: result.duplicate ? "duplicate" : result.loop ? "ignored_loop" : "processed",
+      status: result.persistError ? "persistence_failed" : (result.duplicate ? "duplicate" : result.loop ? "ignored_loop" : "processed"),
       threadId: result.threadId,
       created: result.created,
+      persistError: result.persistError,
     };
   }));
+
+  if (results.some((item) => item.persistError)) {
+    return NextResponse.json({ error: "persistence_failed", items: results }, { status: 500 });
+  }
 
   return NextResponse.json({
     status: "processed",
