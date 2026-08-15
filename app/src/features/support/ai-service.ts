@@ -3,6 +3,105 @@ import { getSupportKnowledgeAnswer } from "@/features/support/knowledge";
 import type { SupportClassification, SupportThreadCategory } from "@/features/support/types";
 
 const AUTO_REPLIABLE_CATEGORIES: SupportThreadCategory[] = ["general_usage"];
+const SUPPORT_CATEGORY_VALUES: SupportThreadCategory[] = [
+  "general_usage",
+  "payment",
+  "refund",
+  "legal",
+  "privacy",
+  "account_deletion",
+  "security",
+  "unknown",
+];
+const SUPPORT_PRIORITY_VALUES = ["low", "medium", "high", "urgent"] as const;
+
+const normalizeSupportCategory = (value: unknown, fallback: SupportThreadCategory): SupportThreadCategory => {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const aliases: Record<string, SupportThreadCategory> = {
+    datenschutz: "privacy",
+    privacy: "privacy",
+    gdpr: "privacy",
+    dsgvo: "privacy",
+    "data_privacy": "privacy",
+    refund: "refund",
+    erstattung: "refund",
+    chargeback: "refund",
+    payment: "payment",
+    "payment_issue": "payment",
+    invoice: "payment",
+    bill: "payment",
+    legal: "legal",
+    recht: "legal",
+    contract: "legal",
+    general_usage: "general_usage",
+    "general_use": "general_usage",
+    usage: "general_usage",
+    account_deletion: "account_deletion",
+    "delete_account": "account_deletion",
+    security: "security",
+    unknown: "unknown",
+  };
+
+  const mapped = aliases[normalized];
+  if (mapped) {
+    return mapped;
+  }
+
+  if (SUPPORT_CATEGORY_VALUES.includes(normalized as SupportThreadCategory)) {
+    return normalized as SupportThreadCategory;
+  }
+
+  return fallback;
+};
+
+const normalizeSupportPriority = (value: unknown, fallback: SupportClassification["priority"]): SupportClassification["priority"] => {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  const aliases: Record<string, SupportClassification["priority"]> = {
+    low: "low",
+    niedrig: "low",
+    medium: "medium",
+    mittel: "medium",
+    high: "high",
+    hoch: "high",
+    urgent: "urgent",
+    dringend: "urgent",
+  };
+
+  const mapped = aliases[normalized];
+  if (mapped) {
+    return mapped;
+  }
+
+  if (SUPPORT_PRIORITY_VALUES.includes(normalized as typeof SUPPORT_PRIORITY_VALUES[number])) {
+    return normalized as SupportClassification["priority"];
+  }
+
+  return fallback;
+};
+
+const normalizeDetectedLanguage = (value: unknown, fallback: "de" | "en") => {
+  if (value === "de" || value === "en") {
+    return value;
+  }
+
+  return fallback;
+};
+
+const normalizeConfidence = (value: unknown, fallback: number) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return Number(fallback.toFixed(2));
+  }
+
+  return Number(Math.min(0.99, Math.max(0.2, value)).toFixed(2));
+};
 
 const pickLanguage = (text: string): "de" | "en" => {
   const normalized = text.toLowerCase();
@@ -124,18 +223,35 @@ export const classifySupportRequest = async ({
         const content = payload.choices?.[0]?.message?.content;
         if (content) {
           const parsed = JSON.parse(content) as Partial<SupportClassification> & { detectedLanguage?: string };
-          const detectedLanguage = parsed.detectedLanguage === "de" || parsed.detectedLanguage === "en" ? parsed.detectedLanguage : language;
-          const nextCategory = (parsed.category as SupportThreadCategory | undefined) ?? category;
-          const finalCanAutoReply = Boolean(parsed.canAutoReply) && AUTO_REPLIABLE_CATEGORIES.includes(nextCategory) && confidence >= 0.75;
+          const detectedLanguage = normalizeDetectedLanguage(parsed.detectedLanguage, language);
+          const safeCategory = normalizeSupportCategory(parsed.category, category);
+          const safePriority = normalizeSupportPriority(parsed.priority, priority);
+          const safeConfidence = normalizeConfidence(parsed.confidence, confidence);
+          const aiCanAutoReply = typeof parsed.canAutoReply === "boolean" ? parsed.canAutoReply : undefined;
+          const finalCanAutoReply = safeCategory === "general_usage"
+            && safeConfidence >= 0.75
+            && !complaintSignal
+            && !/(refund|payment|legal|privacy|delete.*account|security|breach|chargeback|invoice|dispute|complaint|beschwerde)/i.test(lower)
+            && (aiCanAutoReply === undefined || aiCanAutoReply === true);
+
+          const finalEscalationReason = finalCanAutoReply ? undefined : (
+            typeof parsed.escalationReason === "string" && parsed.escalationReason.trim().length > 0
+              ? parsed.escalationReason
+              : buildEscalationReason(safeCategory, text)
+          );
+
+          const finalSuggestedReply = finalCanAutoReply
+            ? (typeof parsed.suggestedReply === "string" && parsed.suggestedReply.trim().length > 0 ? parsed.suggestedReply : suggestedReply)
+            : undefined;
 
           return {
             detectedLanguage,
-            category: nextCategory,
-            priority: parsed.priority === "low" || parsed.priority === "medium" || parsed.priority === "high" || parsed.priority === "urgent" ? parsed.priority : priority,
+            category: safeCategory,
+            priority: safePriority,
             canAutoReply: finalCanAutoReply,
-            confidence: Number((typeof parsed.confidence === "number" ? parsed.confidence : confidence).toFixed(2)),
-            escalationReason: finalCanAutoReply ? undefined : parsed.escalationReason ?? buildEscalationReason(nextCategory, text),
-            suggestedReply: finalCanAutoReply ? parsed.suggestedReply ?? suggestedReply : undefined,
+            confidence: safeConfidence,
+            escalationReason: finalEscalationReason,
+            suggestedReply: finalSuggestedReply,
           };
         }
       }

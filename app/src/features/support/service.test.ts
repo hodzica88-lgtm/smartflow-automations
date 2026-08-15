@@ -133,6 +133,40 @@ describe("support AI classification", () => {
     expect(result.canAutoReply).toBe(false);
     expect(result.category).toBe("unknown");
   });
+
+  it("normalizes localized AI category Datenschutz to privacy", async () => {
+    const deterministic = await aiModule.classifySupportRequest({
+      subject: "Datenschutz",
+      body: "Bitte löschen Sie meine Daten und geben Sie Auskunft über den DSGVO-Status.",
+      market: "de",
+    });
+
+    expect(deterministic.category).toBe("privacy");
+    expect(deterministic.canAutoReply).toBe(false);
+  });
+
+  it("falls back when AI returns an invalid category value", async () => {
+    const result = await aiModule.classifySupportRequest({
+      subject: "Question",
+      body: "Need help navigating the dashboard.",
+      market: "us",
+    });
+
+    expect(result.category).toMatch(/general_usage|unknown/);
+    expect(result.canAutoReply).toBe(true);
+  });
+
+  it("keeps privacy-sensitive requests escalated even if AI output is noisy", async () => {
+    const result = await aiModule.classifySupportRequest({
+      subject: "Datenschutz",
+      body: "Ich möchte alle persönlichen Daten löschen und brauche eine Auskunft zur DSGVO.",
+      market: "de",
+    });
+
+    expect(result.category).toBe("privacy");
+    expect(result.canAutoReply).toBe(false);
+    expect(result.escalationReason).toBeTruthy();
+  });
 });
 
 describe("support inbound processing", () => {
