@@ -106,7 +106,7 @@ type SharedCopy = {
     errors: {
       missingRequired: string;
       missingAverageOrderValue: string;
-        invalidAverageOrderValue: string;
+      invalidAverageOrderValue: string;
       invalidEmail: string;
       invalidTimezone: string;
       invalidIndustry: string;
@@ -121,6 +121,38 @@ type SharedCopy = {
       forgotMissingEmail: string;
       forgotRateLimited: string;
     };
+  };
+  team: {
+    duplicateAccess: string;
+    inviteFailed: string;
+    inviteSent: string;
+    inviteRateLimited: string;
+    resendFailed: string;
+    resendRateLimited: string;
+    removeFailed: string;
+    removeRateLimited: string;
+    invalidMember: string;
+    noInvitation: string;
+    invalidEmail: string;
+    invalidFullName: string;
+    invalidPassword: string;
+    passwordMismatch: string;
+    invalidInvitation: string;
+    accessRemoved: string;
+    invitationResent: string;
+    activationFailed: string;
+  };
+  settings: {
+    requiredFields: string;
+    invalidEmail: string;
+    invalidNotificationEmail: string;
+    invalidTimezone: string;
+    invalidIndustry: string;
+    settingsSaveFailed: string;
+    settingsSaved: string;
+    inquiryTypeExists: string;
+    inquiryTypeAdded: string;
+    inquiryTypeNotAdded: string;
   };
   contact: {
     eyebrow: string;
@@ -209,6 +241,38 @@ const COPY: Record<MarketCode, MarketCopy> = {
           forgotMissingEmail: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
           forgotRateLimited: "Zu viele Anfragen zum Zurücksetzen des Passworts. Bitte versuchen Sie es später erneut.",
         },
+      },
+      team: {
+        duplicateAccess: "Diese E-Mail-Adresse besitzt bereits einen Varnito-Zugang.",
+        inviteFailed: "Die Einladung konnte nicht versendet werden.",
+        inviteSent: "Einladung wurde versendet.",
+        inviteRateLimited: "Zu viele Einladungsversuche. Bitte später erneut versuchen.",
+        resendFailed: "Die alte Einladung konnte nicht ersetzt werden.",
+        resendRateLimited: "Zu viele Versuche. Bitte später erneut versuchen.",
+        removeFailed: "Mitarbeiterzugang konnte nicht entfernt werden.",
+        removeRateLimited: "Zu viele Entfernungsversuche. Bitte später erneut versuchen.",
+        invalidMember: "Dieser Zugang kann nicht entfernt werden.",
+        noInvitation: "Offene Einladung wurde nicht gefunden.",
+        invalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        invalidFullName: "Bitte geben Sie Ihren Namen ein.",
+        invalidPassword: "Das Passwort muss mindestens 8 Zeichen haben.",
+        passwordMismatch: "Die Passwörter stimmen nicht überein.",
+        invalidInvitation: "Der Einladungslink ist ungültig oder abgelaufen.",
+        accessRemoved: "Mitarbeiterzugang wurde entfernt.",
+        invitationResent: "Einladung wurde erneut versendet.",
+        activationFailed: "Der Mitarbeiterzugang konnte nicht aktiviert werden.",
+      },
+      settings: {
+        requiredFields: "Bitte füllen Sie alle erforderlichen Felder aus.",
+        invalidEmail: "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        invalidNotificationEmail: "Bitte geben Sie eine gültige Benachrichtigungs-E-Mail-Adresse ein.",
+        invalidTimezone: "Bitte wählen Sie eine gültige Zeitzone.",
+        invalidIndustry: "Bitte wählen Sie eine gültige Branche.",
+        settingsSaveFailed: "Die Einstellungen konnten nicht gespeichert werden.",
+        settingsSaved: "Einstellungen wurden gespeichert.",
+        inquiryTypeExists: "Diese Anfrageart existiert bereits.",
+        inquiryTypeAdded: "Anfrageart hinzugefügt.",
+        inquiryTypeNotAdded: "Anfrageart konnte nicht hinzugefügt werden.",
       },
       contact: {
         eyebrow: "Kontakt",
@@ -375,6 +439,38 @@ const COPY: Record<MarketCode, MarketCopy> = {
           forgotMissingEmail: "Please enter your email address.",
           forgotRateLimited: "Too many password reset requests. Please try again later.",
         },
+      },
+      team: {
+        duplicateAccess: "This email already has a Varnito account.",
+        inviteFailed: "The invitation could not be sent.",
+        inviteSent: "Invitation sent.",
+        inviteRateLimited: "Too many invitation attempts. Please try again later.",
+        resendFailed: "The previous invitation could not be replaced.",
+        resendRateLimited: "Too many attempts. Please try again later.",
+        removeFailed: "Team access could not be removed.",
+        removeRateLimited: "Too many removal attempts. Please try again later.",
+        invalidMember: "This access cannot be removed.",
+        noInvitation: "No pending invitation was found.",
+        invalidEmail: "Please enter a valid email address.",
+        invalidFullName: "Please enter your name.",
+        invalidPassword: "The password must be at least 8 characters long.",
+        passwordMismatch: "The passwords do not match.",
+        invalidInvitation: "The invitation link is invalid or expired.",
+        accessRemoved: "Team access was removed.",
+        invitationResent: "Invitation was sent again.",
+        activationFailed: "The team access could not be activated.",
+      },
+      settings: {
+        requiredFields: "Please complete all required fields.",
+        invalidEmail: "Please enter a valid email address.",
+        invalidNotificationEmail: "Please enter a valid notification email address.",
+        invalidTimezone: "Please choose a valid time zone.",
+        invalidIndustry: "Please choose a valid industry.",
+        settingsSaveFailed: "The settings could not be saved.",
+        settingsSaved: "Settings saved.",
+        inquiryTypeExists: "This inquiry type already exists.",
+        inquiryTypeAdded: "Inquiry type added.",
+        inquiryTypeNotAdded: "The inquiry type could not be added.",
       },
       contact: {
         eyebrow: "Contact",
