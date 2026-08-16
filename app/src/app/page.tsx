@@ -97,16 +97,11 @@ export default async function Home() {
               {market === "us" ? "View demo" : "Demo ansehen"}
             </Link>
           </div>
-
-          <p className={styles.supportingText}>
-            {copy.supporting}
-          </p>
         </div>
       </section>
 
       <section className={styles.section} aria-labelledby="demo-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{market === "us" ? "DEMO" : "DEMO"}</p>
           <h2 id="demo-title">{market === "us" ? "See it in action" : "Varnito live ansehen"}</h2>
         </div>
 
@@ -119,7 +114,6 @@ export default async function Home() {
 
       <section className={`${styles.section} ${styles.trialSection}`} aria-labelledby="trial-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{market === "us" ? "FREE TRIAL" : "KOSTENLOS TESTEN"}</p>
           <h2 id="trial-title">{market === "us" ? "Try Varnito free for 30 days" : "Varnito 30 Tage kostenlos testen"}</h2>
         </div>
 
@@ -132,7 +126,6 @@ export default async function Home() {
 
       <section className={`${styles.section} ${styles.pricingSection}`} aria-labelledby="pricing-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{copy.pricingEyebrow}</p>
           <h2 id="pricing-title">{copy.pricingTitle}</h2>
         </div>
 
