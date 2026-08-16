@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { SITE_DOMAIN } from "@/shared/config/site";
+import { getRequestMarket } from "@/shared/i18n/request";
 
 export const metadata: Metadata = {
   title: "Datenschutz | Varnito",
@@ -12,10 +14,15 @@ export const metadata: Metadata = {
 
 const listStyle = { margin: 0, paddingLeft: 18, lineHeight: 1.7, color: "var(--muted)" } as const;
 
-export default function DatenschutzPage() {
+export default async function DatenschutzPage() {
+  const { market } = await getRequestMarket();
+
   return (
     <main style={{ maxWidth: 840, margin: "0 auto", padding: "40px 20px", display: "grid", gap: 24 }}>
       <header style={{ display: "grid", gap: 8 }}>
+        <Link href="/" style={{ display: "inline-flex", alignSelf: "start", border: "1px solid var(--border)", borderRadius: 999, padding: "8px 14px", color: "var(--text)", textDecoration: "none", fontWeight: 700 }}>
+          {market === "us" ? "Back to home" : "Zur Startseite"}
+        </Link>
         <p style={{ margin: 0, textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, color: "var(--gold)", fontWeight: 700 }}>Rechtliches</p>
         <h1 style={{ margin: 0, fontSize: 40, lineHeight: 1.05 }}>Datenschutzerklärung</h1>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
