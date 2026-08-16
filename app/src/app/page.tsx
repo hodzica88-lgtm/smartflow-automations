@@ -81,7 +81,6 @@ export default async function Home() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.kicker}>{market === "us" ? "New release" : "Neue Oberfläche"}</p>
           <h1>{copy.heroTitle}</h1>
           <p className={styles.lead}>
             {copy.heroLead}
@@ -115,27 +114,27 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className={styles.section} aria-labelledby="trial-title">
+      <section className={`${styles.section} ${styles.trialSection}`} aria-labelledby="trial-title">
         <div className={styles.sectionHeading}>
           <p className={styles.sectionEyebrow}>{market === "us" ? "Free trial" : "Kostenlose Testphase"}</p>
-          <h2 id="trial-title">{market === "us" ? "Try Varnito for 30 days" : "30 Tage kostenlos testen"}</h2>
+          <h2 id="trial-title">{market === "us" ? "Try Varnito free for 30 days" : "Varnito 30 Tage kostenlos testen"}</h2>
         </div>
 
         <p className={styles.supportingText}>
           {market === "us"
-            ? "Start with a 30-day free trial and continue only when you are ready."
-            : "Starten Sie mit 30 Tagen kostenloser Testphase und entscheiden Sie sich erst später für die Weiterführung."}
+            ? "Get started in minutes and decide after the trial."
+            : "So starten Sie schnell und entscheiden nach der Testphase."}
         </p>
       </section>
 
-      <section className={styles.section} aria-labelledby="pricing-title">
+      <section className={`${styles.section} ${styles.pricingSection}`} aria-labelledby="pricing-title">
         <div className={styles.sectionHeading}>
           <p className={styles.sectionEyebrow}>{copy.pricingEyebrow}</p>
           <h2 id="pricing-title">{copy.pricingTitle}</h2>
         </div>
 
         <article className={styles.pricingCard}>
-          <div>
+          <div className={styles.priceWrap}>
             <p className={styles.pricingLabel}>{copy.pricingLabel}</p>
             <strong className={styles.price}>{copy.pricingValue}</strong>
             <p className={styles.pricingCopy}>{copy.pricingTaxNote}</p>

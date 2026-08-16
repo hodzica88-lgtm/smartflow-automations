@@ -12,6 +12,13 @@
   margin: 0 auto;
 }
 
+.heroCopy,
+.section,
+.ctaBand,
+.pricingCard {
+  width: 100%;
+}
+
 .topBar {
   position: sticky;
   top: 12px;
@@ -32,6 +39,7 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -43,6 +51,8 @@
 
 .heroCopy {
   display: grid;
+  justify-items: center;
+  text-align: center;
   gap: 22px;
   border-radius: 32px;
   border: 1px solid var(--border);
@@ -68,7 +78,7 @@
 
 .hero h1 {
   margin: 0;
-  max-width: 11.5ch;
+  max-width: 12ch;
   font-size: clamp(3.2rem, 6vw, 6.75rem);
   line-height: 0.92;
   letter-spacing: -0.06em;
@@ -76,9 +86,11 @@
 
 .lead {
   max-width: 46rem;
+  margin: 0 auto;
   font-size: clamp(1.02rem, 2vw, 1.24rem);
   color: var(--muted);
   line-height: 1.75;
+  text-align: center;
 }
 
 .supportingText,
@@ -93,6 +105,12 @@
   margin: 0;
   color: var(--muted);
   line-height: 1.7;
+}
+
+.supportingText {
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .primaryButton,
@@ -179,12 +197,23 @@
   display: grid;
   gap: 8px;
   margin-bottom: 16px;
+  text-align: center;
 }
 
 .section h2,
 .ctaBand h2 {
   margin: 0;
   font-size: clamp(1.8rem, 4vw, 3rem);
+}
+
+.trialSection .sectionHeading {
+  gap: 12px;
+}
+
+.trialSection h2 {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
 }
 
 .gridThree,
@@ -244,19 +273,51 @@
 .pricingCard {
   display: grid;
   gap: 14px;
-  padding: 20px;
+  padding: 24px 20px;
+  max-width: 34rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.priceWrap {
+  display: grid;
+  gap: 8px;
 }
 
 .price {
   display: block;
-  margin-top: 8px;
-  font-size: clamp(2rem, 5vw, 3.3rem);
+  margin-top: 0;
+  font-size: clamp(3.1rem, 6vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+  color: var(--text);
+}
+
+.pricingLabel {
+  margin: 0;
+}
+
+.pricingCopy {
+  font-size: 0.96rem;
 }
 
 .pricingMeta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+  align-items: center;
+}
+
+.pricingMeta span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.5rem 0.85rem;
+  font-weight: 700;
 }
 
 .pricingMeta span {
