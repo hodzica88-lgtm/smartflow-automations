@@ -13,7 +13,7 @@ const deLeads: DemoLead[] = [
     inquiryType: "Dachreparatur",
     status: "new",
     assignedUserId: "tm-2",
-    notes: "Sturmschaden, moeglichst kurzfristig Rueckruf.",
+    notes: "Sturmschaden, möglichst kurzfristig Rückruf.",
     createdAt: minusHours(2),
     address: "Hafenstrasse 8, 22303 Hamburg",
   },
@@ -26,7 +26,7 @@ const deLeads: DemoLead[] = [
     inquiryType: "Flachdach Sanierung",
     status: "contacted",
     assignedUserId: "tm-3",
-    notes: "Vor-Ort-Termin fuer Freitag vorgeschlagen.",
+    notes: "Vor-Ort-Termin für Freitag vorgeschlagen.",
     createdAt: minusHours(18),
     address: "Bergweg 22, 23552 Luebeck",
   },
@@ -39,7 +39,7 @@ const deLeads: DemoLead[] = [
     inquiryType: "Photovoltaik Vorbereitung",
     status: "successful",
     assignedUserId: "tm-2",
-    notes: "Angebot bestaetigt, Start naechste Woche.",
+    notes: "Angebot bestätigt, Start nächste Woche.",
     createdAt: minusHours(38),
     address: "Feldstrasse 4, 28195 Bremen",
   },
@@ -52,7 +52,7 @@ const deLeads: DemoLead[] = [
     inquiryType: "Dachfenster",
     status: "unsuccessful",
     assignedUserId: null,
-    notes: "Kunde hat sich fuer regionalen Anbieter entschieden.",
+    notes: "Kunde hat sich für regionalen Anbieter entschieden.",
     createdAt: minusHours(72),
     address: "Am Markt 2, 37073 Goettingen",
   },
@@ -166,6 +166,6 @@ export const createDemoState = (market: DemoMarket): DemoState => {
     },
     notifications: market === "us"
       ? ["New inquiry assigned to Liam", "Team invite pending for Jack Hall"]
-      : ["Neue Anfrage wurde Tobias zugewiesen", "Teameinladung fuer Mara Wolf ist offen"],
+      : ["Neue Anfrage wurde Tobias zugewiesen", "Teameinladung für Mara Wolf ist offen"],
   };
 };

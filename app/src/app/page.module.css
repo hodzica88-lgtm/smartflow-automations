@@ -8,7 +8,7 @@
 .hero,
 .section,
 .ctaBand {
-  width: min(100%, 78rem);
+  width: min(100%, 84rem);
   margin: 0 auto;
 }
 
@@ -37,20 +37,20 @@
 
 .hero {
   display: grid;
-  gap: 16px;
-  margin-top: 14px;
+  gap: 18px;
+  margin-top: 18px;
 }
 
 .heroCopy {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   border-radius: 32px;
   border: 1px solid var(--border);
   background:
     radial-gradient(circle at 70% -10%, rgba(212, 175, 55, 0.22), transparent 48%),
     radial-gradient(circle at 2% 120%, rgba(114, 143, 198, 0.18), transparent 50%),
     rgba(17, 19, 26, 0.9);
-  padding: clamp(20px, 4vw, 42px);
+  padding: clamp(28px, 5vw, 64px);
   box-shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
 }
 
@@ -68,9 +68,10 @@
 
 .hero h1 {
   margin: 0;
-  max-width: 11ch;
-  font-size: clamp(3rem, 10vw, 7rem);
-  line-height: 0.9;
+  max-width: 11.5ch;
+  font-size: clamp(3.2rem, 6vw, 6.75rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
 }
 
 .lead {
