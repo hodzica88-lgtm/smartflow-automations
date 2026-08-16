@@ -3,11 +3,11 @@ set -Eeuo pipefail
 
 umask 077
 
-PROJECT_ROOT="/opt/anfragepilot"
-APP_DIR="${PROJECT_ROOT}/app"
-ENV_FILE="${APP_DIR}/.env.production"
-DOCKER_IMAGE="anfragepilot-app:latest"
-BACKUP_BASE_DIR="/home/varnitoadmin/backups/releases"
+PROJECT_ROOT="${VARNITO_PROJECT_ROOT:-/opt/anfragepilot}"
+APP_DIR="${VARNITO_APP_DIR:-${PROJECT_ROOT}/app}"
+ENV_FILE="${VARNITO_ENV_FILE:-${APP_DIR}/.env.production}"
+DOCKER_IMAGE="${VARNITO_DOCKER_IMAGE:-anfragepilot-app:latest}"
+BACKUP_BASE_DIR="${VARNITO_BACKUP_BASE_DIR:-/home/varnitoadmin/backups/releases}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -90,11 +90,6 @@ require_command_or_simulate() {
   fi
 
   fail "Required command not found: ${cmd}"
-}
-
-require_path_exists() {
-  local path="$1"
-  [[ -e "$path" ]] || fail "Required path not found: ${path}"
 }
 
 validate_args() {
@@ -277,6 +272,10 @@ write_release_info() {
   local branch="$5"
   local image_id="$6"
   local hostname_value="$7"
+  local db_dump_file="$8"
+  local db_format="$9"
+  local db_host="${10}"
+  local db_name="${11}"
 
   cat >"${file_path}" <<EOF
 Version: ${version}
@@ -289,6 +288,10 @@ Docker Image ID: ${image_id}
 Hostname: ${hostname_value}
 Project Path: ${PROJECT_ROOT}
 Backup Path: ${RELEASE_DIR}
+Database Backup File: ${db_dump_file}
+Database Dump Format: ${db_format}
+Database Host: ${db_host}
+Database Name: ${db_name}
 EOF
 }
 
@@ -296,11 +299,14 @@ validate_backup_outputs() {
   local source_archive="$1"
   local docker_archive="$2"
   local env_backup="$3"
-  local info_file="$4"
+  local db_dump="$4"
+  local info_file="$5"
 
   tar -tzf "${source_archive}" >/dev/null
   [[ -s "${docker_archive}" ]] || fail "Docker backup archive is empty: ${docker_archive}"
   [[ -s "${env_backup}" ]] || fail "Env backup file missing or empty: ${env_backup}"
+  [[ -s "${db_dump}" ]] || fail "Database dump missing or empty: ${db_dump}"
+  pg_restore --list "${db_dump}" >/dev/null 2>&1 || fail "Database dump validation failed: ${db_dump}"
   [[ -s "${info_file}" ]] || fail "release-info.txt missing or empty: ${info_file}"
 }
 
@@ -309,12 +315,14 @@ print_summary() {
   local source_archive="$2"
   local docker_archive="$3"
   local env_backup="$4"
-  local info_file="$5"
+  local db_dump="$5"
+  local info_file="$6"
 
-  local source_size docker_size env_size info_size
+  local source_size docker_size env_size db_size info_size
   source_size="$(stat -c '%s' "${source_archive}")"
   docker_size="$(stat -c '%s' "${docker_archive}")"
   env_size="$(stat -c '%s' "${env_backup}")"
+  db_size="$(stat -c '%s' "${db_dump}")"
   info_size="$(stat -c '%s' "${info_file}")"
 
   printf '\n=== Release Backup Summary ===\n'
@@ -325,6 +333,7 @@ print_summary() {
   printf '  - %s (%s bytes)\n' "$(basename "${source_archive}")" "${source_size}"
   printf '  - %s (%s bytes)\n' "$(basename "${docker_archive}")" "${docker_size}"
   printf '  - %s (%s bytes)\n' "$(basename "${env_backup}")" "${env_size}"
+  printf '  - %s (%s bytes)\n' "$(basename "${db_dump}")" "${db_size}"
   printf '  - %s (%s bytes)\n' "$(basename "${info_file}")" "${info_size}"
   printf 'Status: successful\n'
 }
@@ -339,6 +348,8 @@ main() {
   require_command stat
   require_command hostname
   require_command date
+  require_command_or_simulate pg_dump "pg_dump command not found; database dump checks are simulated."
+  require_command_or_simulate pg_restore "pg_restore command not found; database dump verification is simulated."
 
   if command -v docker >/dev/null 2>&1; then
     HAS_DOCKER_COMMAND=1
@@ -349,7 +360,7 @@ main() {
   ensure_git_clean
   ensure_remote_reachable
 
-  local commit_sha branch timestamp image_id host_value
+  local commit_sha branch timestamp image_id host_value db_dump_name db_format db_host db_name
   commit_sha="$(git -C "${GIT_CONTEXT_ROOT}" rev-parse HEAD)"
   branch="$(git -C "${GIT_CONTEXT_ROOT}" rev-parse --abbrev-ref HEAD)"
   timestamp="$(date '+%Y-%m-%d_%H-%M-%S')"
@@ -359,6 +370,25 @@ main() {
     image_id="SIMULATED-DOCKER-IMAGE-ID"
   fi
   host_value="$(hostname)"
+  db_dump_name="varnito-database-${VERSION}.dump"
+  db_format="PostgreSQL custom format (pg_dump --format=c)"
+
+  if [[ -f "${ENV_FILE}" ]]; then
+    set -a
+    . "${ENV_FILE}"
+    set +a
+  fi
+
+  db_host="${PGHOST:-${POSTGRES_HOST:-${SUPABASE_DB_HOST:-localhost}}}"
+  db_name="${PGDATABASE:-${POSTGRES_DB:-${SUPABASE_DB_NAME:-}}}"
+
+  if [[ "${DRY_RUN}" -eq 0 && -z "${db_name}" ]]; then
+    fail "Database name not configured in ${ENV_FILE}."
+  fi
+
+  if [[ -z "${db_name}" ]]; then
+    db_name="SIMULATED_DATABASE"
+  fi
 
   ensure_tag_state "${commit_sha}"
 
@@ -369,10 +399,11 @@ main() {
   create_or_verify_tag "${commit_sha}"
   build_release_dir "${timestamp}"
 
-  local source_archive docker_archive env_backup info_file
+  local source_archive docker_archive env_backup info_file db_dump
   source_archive="${RELEASE_DIR}/varnito-source-${VERSION}.tar.gz"
   docker_archive="${RELEASE_DIR}/varnito-docker-${VERSION}.tar"
   env_backup="${RELEASE_DIR}/.env.production-${VERSION}"
+  db_dump="${RELEASE_DIR}/${db_dump_name}"
   info_file="${RELEASE_DIR}/release-info.txt"
 
   if [[ "${DRY_RUN}" -eq 1 ]]; then
@@ -382,8 +413,9 @@ main() {
     log "[DRY-RUN] Would create source archive: ${source_archive}"
     log "[DRY-RUN] Would create docker archive: ${docker_archive}"
     log "[DRY-RUN] Would copy env file to: ${env_backup}"
+    log "[DRY-RUN] Would create database dump: ${db_dump}"
     log "[DRY-RUN] Would create release info file: ${info_file}"
-    log "Dry-run completed successfully. No tags, pushes, archives, or files were created."
+    log "Dry-run completed successfully. No backup artifacts were generated."
     return
   fi
 
@@ -396,16 +428,34 @@ main() {
   log "Copying production environment file..."
   cp -- "${ENV_FILE}" "${env_backup}"
 
-  log "Writing release metadata..."
-  write_release_info "${info_file}" "${VERSION}" "${timestamp}" "${commit_sha}" "${branch}" "${image_id}" "${host_value}"
+  log "Creating PostgreSQL database dump..."
+  if [[ -n "${DATABASE_URL:-}" ]]; then
+    pg_dump "${DATABASE_URL}" --format=c --compress=9 --file="${db_dump}"
+  else
+    local db_user db_password db_port
+    db_user="${PGUSER:-${POSTGRES_USER:-${SUPABASE_DB_USER:-}}}"
+    db_password="${PGPASSWORD:-${POSTGRES_PASSWORD:-${SUPABASE_DB_PASSWORD:-}}}"
+    db_port="${PGPORT:-${POSTGRES_PORT:-5432}}"
 
-  chmod 600 "${source_archive}" "${docker_archive}" "${env_backup}" "${info_file}"
+    if [[ -z "${db_user}" || -z "${db_password}" ]]; then
+      fail "Database credentials are not available in ${ENV_FILE}."
+    fi
+
+    export PGPASSWORD="${db_password}"
+    pg_dump --host="${db_host}" --port="${db_port}" --username="${db_user}" --dbname="${db_name}" --format=c --compress=9 --file="${db_dump}"
+    unset PGPASSWORD
+  fi
+
+  log "Writing release metadata..."
+  write_release_info "${info_file}" "${VERSION}" "${timestamp}" "${commit_sha}" "${branch}" "${image_id}" "${host_value}" "$(basename "${db_dump}")" "${db_format}" "${db_host}" "${db_name}"
+
+  chmod 600 "${source_archive}" "${docker_archive}" "${env_backup}" "${db_dump}" "${info_file}"
   chmod 700 "${RELEASE_DIR}"
 
   log "Validating backup integrity..."
-  validate_backup_outputs "${source_archive}" "${docker_archive}" "${env_backup}" "${info_file}"
+  validate_backup_outputs "${source_archive}" "${docker_archive}" "${env_backup}" "${db_dump}" "${info_file}"
 
-  print_summary "${commit_sha}" "${source_archive}" "${docker_archive}" "${env_backup}" "${info_file}"
+  print_summary "${commit_sha}" "${source_archive}" "${docker_archive}" "${env_backup}" "${db_dump}" "${info_file}"
 }
 
 main "$@"

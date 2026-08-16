@@ -1,99 +1,95 @@
-# Release Backup
+# Release Backup and Restore Safety
 
-## Voraussetzungen
+## What gets backed up
 
-- Zugriff auf den Server mit den Pfaden:
-  - `/opt/anfragepilot`
-  - `/opt/anfragepilot/app/.env.production`
-  - `/home/varnitoadmin/backups/releases`
-- Docker-Image `anfragepilot-app:latest` ist lokal vorhanden.
-- Git-Remote `origin` ist erreichbar.
-- Git-Working-Tree in `/opt/anfragepilot` ist sauber.
-- Shell-Werkzeuge vorhanden: `bash`, `git`, `tar`, `docker`, `stat`, `hostname`, `date`.
+Every release backup under `/home/varnitoadmin/backups/releases` contains:
 
-## Einmalige Einrichtung
+- source archive: `varnito-source-<VERSION>.tar.gz`
+- Docker image archive: `varnito-docker-<VERSION>.tar`
+- production env snapshot: `.env.production-<VERSION>`
+- PostgreSQL dump: `varnito-database-<VERSION>.dump`
+- metadata: `release-info.txt`
 
-1. Repository auf dem Server unter `/opt/anfragepilot` bereitstellen.
-2. Backup-Basisordner anlegen, falls noch nicht vorhanden:
-   - `mkdir -p /home/varnitoadmin/backups/releases`
-3. Schreibrechte fuer den Benutzer `varnitoadmin` sicherstellen.
+The database backup is created with PostgreSQL-native tooling and uses the custom dump format (`pg_dump --format=c`). It is meant to capture the application database state needed for Varnito recovery without backing up platform internals.
 
-## Skript ausfuehrbar machen
+## Weekly automatic backups
 
-```bash
-chmod +x scripts/backup-release.sh
-```
+The existing weekly cron backup remains the normal unattended backup flow. It runs every Sunday at 00:00 and is compatible with the usual low-priority, low-I/O setup and `flock` guarding. The script does not wait for interactive input when used in automated mode.
 
-## Standard-Aufruf
+## Manual backup rule
+
+Manual release backups are only intended after real Varnito changes or releases.
 
 ```bash
-bash scripts/backup-release.sh v1.1.0
+bash scripts/backup-release.sh v1.2.0
 ```
 
-## Beispiel
+Dry-run:
 
 ```bash
-./scripts/backup-release.sh v1.1.0
+bash scripts/backup-release.sh --dry-run v1.2.0
 ```
 
-## Dry-Run
+A release is considered successful only if all required elements are created and validated.
+
+## Backup listing
 
 ```bash
-./scripts/backup-release.sh --dry-run v1.1.0
+bash scripts/list-backups.sh
 ```
 
-Dry-Run fuehrt alle gefahrlosen Pruefungen aus und zeigt geplante Schritte an, erzeugt aber keine Tags, pusht nichts und schreibt keine Dateien.
+The listing shows newest-first entries, version, date, Git SHA, backup directory, database dump status, and Docker archive status. No secrets are printed.
 
-Wenn serverseitige Ressourcen lokal nicht vorhanden sind (z. B. `/opt/anfragepilot`, Docker-Image oder `/home/varnitoadmin/backups/releases`), aktiviert das Skript automatisch einen klar gekennzeichneten Simulationsmodus. Die echte Ausfuehrung ohne `--dry-run` ueberspringt diese Pruefungen niemals.
-
-## Was gesichert wird
-
-- Quellcodearchiv: `varnito-source-<VERSION>.tar.gz` (Inhalt: `/opt/anfragepilot`)
-- Docker-Archiv: `varnito-docker-<VERSION>.tar` (Inhalt: `anfragepilot-app:latest`)
-- Produktions-Env-Kopie: `.env.production-<VERSION>`
-- Metadaten: `release-info.txt`
-
-## Wo Backups liegen
-
-Backups werden unter folgendem Pfad erstellt:
-
-- `/home/varnitoadmin/backups/releases/<VERSION>-<YYYY-MM-DD_HH-MM-SS>`
-
-## Wie ein Release geprueft wird
-
-Das Skript prueft unter anderem:
-
-- gueltiges Versionsformat (`vMAJOR.MINOR.PATCH`)
-- sauberen Git-Working-Tree
-- Erreichbarkeit von `origin`
-- Tag-Konsistenz lokal/remote
-- Existenz von Projektpfad, Docker-Image und `.env.production`
-- Integritaet der erzeugten Archive und Dateien
-
-## Wie man Projektdateien wiederherstellt
+## Restore dry-run
 
 ```bash
-cd /
-tar -xzf /home/varnitoadmin/backups/releases/<RELEASE>/varnito-source-<VERSION>.tar.gz
+bash scripts/restore-release.sh --dry-run v1.2.0
 ```
 
-## Wie man das Docker-Image wieder laedt
+This is the default verification method for any restore. It validates backup presence, archive integrity, Docker archive, environment file, database dump, and metadata without altering the current production state.
+
+## Real restore
 
 ```bash
-docker load -i /home/varnitoadmin/backups/releases/<RELEASE>/varnito-docker-<VERSION>.tar
+bash scripts/restore-release.sh v1.2.0
 ```
 
-## Wie man .env.production wiederherstellt
+The script will:
 
-```bash
-cp /home/varnitoadmin/backups/releases/<RELEASE>/.env.production-<VERSION> /opt/anfragepilot/app/.env.production
-chmod 600 /opt/anfragepilot/app/.env.production
-```
+1. resolve the latest matching release directory
+2. verify required files exist
+3. validate archives and metadata
+4. create a mandatory pre-restore safety backup of the current production state
+5. require explicit confirmation before a destructive restore
+6. restore source files, `.env.production`, Docker image, and database dump
+7. recreate the Varnito service using the existing Docker Compose setup
+8. wait for the application healthcheck to pass
+9. print a final summary
 
-## Hinweis
+## Safety backup behavior
 
-Das Supabase-Datenbank-Backup ist aktuell nicht Teil dieses Skripts und muss separat erfolgen.
+Before a real restore, the restore script always creates a dedicated safety backup directory named like:
 
-## Sicherheitswarnung
+- `safety-pre-restore-2026-08-16_03-22-14`
 
-Der Backup-Ordner enthaelt Secrets und darf nicht veroeffentlicht oder zu Git hinzugefuegt werden.
+This protects the current production state and aborts the restore if the safety backup cannot be created.
+
+## Database backup and restore behavior
+
+The database backup is created with `pg_dump --format=c` and is validated with `pg_restore --list` without restoring it into production during backup validation.
+
+A real restore requires a valid configured database target and does not print secrets. It only operates on the configured Varnito application database and stops immediately on database restore errors.
+
+## Legacy backups
+
+Older backups such as `v1.2.0` may be partial and may not include a database dump. Those should be treated as legacy/partial backups, not as full database-restorable backups.
+
+The new restore tooling detects that condition clearly instead of crashing ambiguously.
+
+## Important warnings
+
+- release directories run with mode `700`
+- secret files and database dumps use mode `600`
+- backup directories are never committed to Git
+- no passwords, service-role keys, or secrets are written to `release-info.txt`
+- never run a real restore without confirming the target release and reviewing the backup status
