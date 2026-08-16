@@ -67,6 +67,9 @@ export default async function Home() {
       <header className={styles.topBar}>
         <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
         <div className={styles.topActions}>
+          <Link className={styles.secondaryButton} href="/demo">
+            {market === "us" ? "View demo" : "Demo ansehen"}
+          </Link>
           <Link className={styles.secondaryButton} href="/login">
             {market === "us" ? "Sign in" : "Anmelden"}
           </Link>
@@ -88,8 +91,8 @@ export default async function Home() {
             <Link className={styles.primaryButton} href="/registrierung">
               {copy.primaryCta}
             </Link>
-            <Link className={styles.secondaryButton} href="/demo/dashboard">
-              {market === "us" ? "Explore the live demo" : "Live-Demo ansehen"}
+            <Link className={styles.secondaryButton} href="/demo">
+              {market === "us" ? "Live demo" : "Live-Demo"}
             </Link>
             <a className={styles.secondaryButton} href="#so-funktioniert">
               {copy.secondaryCta}
