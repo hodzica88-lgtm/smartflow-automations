@@ -81,6 +81,9 @@ export default async function Home() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
+          <div className={styles.heroBrand}>
+            <VarnitoLogo />
+          </div>
           <h1>{copy.heroTitle}</h1>
           <p className={styles.lead}>
             {copy.heroLead}
@@ -103,8 +106,8 @@ export default async function Home() {
 
       <section className={styles.section} aria-labelledby="demo-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{market === "us" ? "Demo" : "Demo"}</p>
-          <h2 id="demo-title">{market === "us" ? "See it in action" : "So sieht es in der Praxis aus"}</h2>
+          <p className={styles.sectionEyebrow}>{market === "us" ? "DEMO" : "DEMO"}</p>
+          <h2 id="demo-title">{market === "us" ? "See it in action" : "Varnito live ansehen"}</h2>
         </div>
 
         <div className={styles.actions}>
@@ -116,14 +119,14 @@ export default async function Home() {
 
       <section className={`${styles.section} ${styles.trialSection}`} aria-labelledby="trial-title">
         <div className={styles.sectionHeading}>
-          <p className={styles.sectionEyebrow}>{market === "us" ? "Free trial" : "Kostenlose Testphase"}</p>
+          <p className={styles.sectionEyebrow}>{market === "us" ? "FREE TRIAL" : "KOSTENLOS TESTEN"}</p>
           <h2 id="trial-title">{market === "us" ? "Try Varnito free for 30 days" : "Varnito 30 Tage kostenlos testen"}</h2>
         </div>
 
         <p className={styles.supportingText}>
           {market === "us"
-            ? "Get started in minutes and decide after the trial."
-            : "So starten Sie schnell und entscheiden nach der Testphase."}
+            ? "Start in minutes and decide after the trial."
+            : "Schnell starten und nach der Testphase entscheiden."}
         </p>
       </section>
 
@@ -136,22 +139,19 @@ export default async function Home() {
         <article className={styles.pricingCard}>
           <div className={styles.priceWrap}>
             <p className={styles.pricingLabel}>{copy.pricingLabel}</p>
-            <strong className={styles.price}>{copy.pricingValue}</strong>
-            <p className={styles.pricingCopy}>{copy.pricingTaxNote}</p>
-          </div>
-          <div className={styles.pricingMeta}>
-            {copy.pricingMeta.map((entry) => (
-              <span key={entry}>{entry}</span>
-            ))}
+            <div className={styles.priceStack}>
+              <strong className={styles.price}>{copy.pricingValue}</strong>
+              <span className={styles.pricePeriod}>{market === "us" ? "per month" : "pro Monat"}</span>
+            </div>
+            <div className={styles.pricingDetails}>
+              <p>{market === "us" ? "Applicable taxes calculated at checkout." : "zzgl. gesetzlicher USt."}</p>
+              <p>{market === "us" ? "No hidden fees." : "Keine versteckten Gebühren."}</p>
+            </div>
           </div>
         </article>
       </section>
 
-      <section className={styles.ctaBand} aria-labelledby="cta-title">
-        <div>
-          <p className={styles.sectionEyebrow}>{copy.ctaEyebrow}</p>
-          <h2 id="cta-title">{copy.ctaTitle}</h2>
-        </div>
+      <section className={styles.ctaBand} aria-label={market === "us" ? "Start your 30-day free trial" : "30 Tage kostenlos testen"}>
         <div className={styles.actions}>
           <Link className={styles.primaryButton} href="/registrierung">
             {copy.primaryCta}

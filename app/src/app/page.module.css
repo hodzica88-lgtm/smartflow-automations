@@ -8,7 +8,7 @@
 .hero,
 .section,
 .ctaBand {
-  width: min(100%, 84rem);
+  width: min(100%, 86rem);
   margin: 0 auto;
 }
 
@@ -28,11 +28,12 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 12px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   background: rgba(17, 19, 26, 0.8);
   backdrop-filter: blur(12px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
 }
 
 .topActions,
@@ -46,7 +47,7 @@
 .hero {
   display: grid;
   gap: 18px;
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .heroCopy {
@@ -60,8 +61,14 @@
     radial-gradient(circle at 70% -10%, rgba(212, 175, 55, 0.22), transparent 48%),
     radial-gradient(circle at 2% 120%, rgba(114, 143, 198, 0.18), transparent 50%),
     rgba(17, 19, 26, 0.9);
-  padding: clamp(28px, 5vw, 64px);
+  padding: clamp(32px, 5vw, 72px);
   box-shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+}
+
+.heroBrand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
 .kicker,
@@ -69,9 +76,9 @@
 .previewLabel,
 .pricingLabel {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold);
 }
@@ -85,9 +92,9 @@
 }
 
 .lead {
-  max-width: 46rem;
+  max-width: 48rem;
   margin: 0 auto;
-  font-size: clamp(1.02rem, 2vw, 1.24rem);
+  font-size: clamp(1.08rem, 2vw, 1.3rem);
   color: var(--muted);
   line-height: 1.75;
   text-align: center;
@@ -118,8 +125,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 0 18px;
+  min-height: 48px;
+  padding: 0 22px;
   border-radius: 999px;
   font-weight: 800;
   text-decoration: none;
@@ -149,61 +156,21 @@
   border-color: color-mix(in srgb, var(--gold) 50%, var(--border));
 }
 
-.heroPanel {
-  display: grid;
-  gap: 12px;
-  border-radius: 26px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 12px;
-}
-
-.previewCard,
-.featureCard,
-.timelineStep,
-.faqCard,
-.viewCard,
-.pricingCard,
-.ctaBand {
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.02);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
-}
-
-.previewCard,
-.featureCard,
-.timelineStep,
-.faqCard,
-.viewCard {
-  padding: 18px;
-}
-
-.previewCard strong,
-.featureCard h3,
-.timelineStep h3,
-.faqCard h3,
-.viewCard strong {
-  display: block;
-  margin: 7px 0 8px;
-  font-size: 1.05rem;
-}
-
 .section {
-  padding-top: 30px;
+  padding-top: 54px;
 }
 
 .sectionHeading {
   display: grid;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 20px;
   text-align: center;
 }
 
 .section h2,
 .ctaBand h2 {
   margin: 0;
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-size: clamp(2rem, 4vw, 3.2rem);
 }
 
 .trialSection .sectionHeading {
@@ -211,155 +178,108 @@
 }
 
 .trialSection h2 {
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: clamp(2.5rem, 5vw, 4.25rem);
   line-height: 1.08;
   letter-spacing: -0.04em;
-}
-
-.gridThree,
-.gridTwo,
-.viewsGrid,
-.faqGrid {
-  display: grid;
-  gap: 12px;
-}
-
-.gridThree,
-.viewsGrid,
-.faqGrid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.gridTwo {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.timeline {
-  display: grid;
-  gap: 12px;
-}
-
-.timelineStep {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-}
-
-.timelineStep span {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  color: #101010;
-  background: linear-gradient(130deg, #b9972d, #e5c863);
-}
-
-.benefitsGrid {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.benefitChip {
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
-  font-weight: 700;
 }
 
 .pricingCard {
   display: grid;
   gap: 14px;
-  padding: 24px 20px;
-  max-width: 34rem;
+  padding: clamp(28px, 4vw, 52px);
+  max-width: 64rem;
   margin: 0 auto;
   text-align: center;
+  border-radius: 28px;
 }
 
 .priceWrap {
   display: grid;
-  gap: 8px;
+  gap: 12px;
+}
+
+.priceStack {
+  display: grid;
+  gap: 10px;
 }
 
 .price {
   display: block;
   margin-top: 0;
-  font-size: clamp(3.1rem, 6vw, 4.5rem);
-  line-height: 0.95;
+  font-size: clamp(3.2rem, 6vw, 5rem);
+  line-height: 0.9;
   letter-spacing: -0.06em;
   color: var(--text);
+}
+
+.pricePeriod {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
 }
 
 .pricingLabel {
   margin: 0;
 }
 
-.pricingCopy {
-  font-size: 0.96rem;
+.pricingDetails {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-.pricingMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-}
-
-.pricingMeta span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.25rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 0.5rem 0.85rem;
-  font-weight: 700;
-}
-
-.pricingMeta span {
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+.pricingDetails p {
+  margin: 0;
   color: var(--muted);
-  font-size: 0.89rem;
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 .ctaBand {
-  margin-top: 30px;
+  margin-top: 42px;
   margin-bottom: 12px;
-  padding: 20px;
+  padding: 28px 20px 38px;
   display: flex;
-  gap: 20px;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
 }
 
 @media (max-width: 980px) {
-  .gridThree,
-  .viewsGrid,
-  .faqGrid,
-  .gridTwo {
-    grid-template-columns: 1fr;
+  .topBar {
+    justify-content: center;
+  }
+
+  .topActions {
+    width: 100%;
   }
 
   .ctaBand {
-    display: grid;
+    display: flex;
   }
 }
 
-@media (min-width: 980px) {
-  .hero {
-    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
-    align-items: stretch;
+@media (max-width: 640px) {
+  .page {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
-  .pricingCard {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-    align-items: center;
+  .topBar {
+    padding: 14px 14px;
+  }
+
+  .topActions,
+  .actions {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
   }
 }

@@ -8,8 +8,8 @@ describe("market copy", () => {
 
     expect(us.heroTitle).toBe("Never lose another lead.");
     expect(us.pricingTitle).toBe("Varnito Pro monthly subscription.");
-    expect(us.pricingValue).toBe("$399 / month");
-    expect(us.pricingTaxNote).toBe("Taxes calculated at checkout where applicable.");
+    expect(us.pricingValue).toBe("$399");
+    expect(us.pricingTaxNote).toBe("Applicable taxes calculated at checkout.");
     expect(us.faq.some((entry) => entry.question === "Do prices include taxes?" && entry.answer.includes("Applicable taxes are calculated during checkout"))).toBe(true);
     expect(us.primaryCta).toBe("Start your 30-day free trial");
   });
@@ -35,8 +35,8 @@ describe("market copy", () => {
     const de = getMarketCopy("de").landing;
 
     expect(de.pricingTitle).toBe("Varnito Pro Monatsabo.");
-    expect(de.pricingValue).toBe("299 € / Monat");
-    expect(de.pricingTaxNote).toBe("zzgl. gesetzlicher Umsatzsteuer");
+    expect(de.pricingValue).toBe("299 €");
+    expect(de.pricingTaxNote).toBe("zzgl. gesetzlicher USt.");
     expect(de.faq.some((entry) => entry.question === "Sind die Preise netto oder brutto?" && entry.answer.includes("zzgl. der gesetzlichen Umsatzsteuer"))).toBe(true);
     expect(de.primaryCta).toBe("30 Tage kostenlos testen");
   });
