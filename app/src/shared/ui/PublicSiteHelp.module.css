@@ -86,6 +86,23 @@
   background: rgba(17, 19, 27, 0.9);
 }
 
+.quickActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickAction {
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
 .message {
   max-width: 90%;
   border-radius: 16px;

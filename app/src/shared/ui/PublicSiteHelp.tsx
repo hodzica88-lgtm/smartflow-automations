@@ -6,9 +6,24 @@ import { useMemo, useState } from "react";
 
 import styles from "./PublicSiteHelp.module.css";
 
-const PUBLIC_HELP_PREFIX = "Varnito Help";
-
 type MarketCode = "de" | "us";
+
+const QUICK_ACTIONS = {
+  de: [
+    { label: "Anmelden", href: "/login" },
+    { label: "Varnito testen", href: "/registrierung" },
+    { label: "Demo ansehen", href: "/demo" },
+    { label: "Problem melden", href: "mailto:support@varnito.com?subject=Varnito%20%E2%80%93%20Problem%20melden" },
+    { label: "Support", href: "mailto:support@varnito.com" },
+  ],
+  us: [
+    { label: "Sign in", href: "/login" },
+    { label: "Try Varnito", href: "/registrierung" },
+    { label: "View demo", href: "/demo" },
+    { label: "Report a problem", href: "mailto:support@varnito.com?subject=Varnito%20%E2%80%93%20Report%20a%20problem" },
+    { label: "Support", href: "mailto:support@varnito.com" },
+  ],
+} as const;
 
 type SiteHelpResult = {
   answer: string;
@@ -21,10 +36,7 @@ type SiteHelpResult = {
   confidence?: number;
 };
 
-const getDefaultMessage = (market: MarketCode) =>
-  market === "us"
-    ? "I need help navigating the website."
-    : "Ich brauche Hilfe bei der Navigation auf der Website.";
+const getDefaultMessage = () => "";
 
 const normalizeMarketFromPath = (path: string): MarketCode =>
   path.includes("varnito.com") || path.includes(".com") ? "us" : "de";
@@ -40,15 +52,35 @@ export default function PublicSiteHelp({
   const currentPath = path ?? pathname ?? "/";
   const isVisible = !currentPath.startsWith("/api") && !currentPath.startsWith("/operator") && !currentPath.startsWith("/dashboard") && !(currentPath.startsWith("/c/") && currentPath.includes("/inquiry"));
   const marketCode = market ?? normalizeMarketFromPath(currentPath);
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState(getDefaultMessage(marketCode));
+  const [open, setOpen] = useState(true);
+  const [input, setInput] = useState(getDefaultMessage());
   const [result, setResult] = useState<SiteHelpResult | null>(null);
   const [pending, setPending] = useState(false);
 
   const assistantTitle = useMemo(
-    () => (marketCode === "us" ? "Website help" : "Website-Hilfe"),
+    () => (marketCode === "us" ? "Varnito Help" : "Varnito Hilfe"),
     [marketCode],
   );
+
+  const quickActions = QUICK_ACTIONS[marketCode];
+  const introText =
+    marketCode === "us"
+      ? "How can I help? Just ask where to find something or what you want to do."
+      : "Wie kann ich helfen? Fragen Sie einfach, wo Sie etwas finden oder was Sie tun möchten.";
+
+  const handleQuickAction = (href: string, isMailto = false) => {
+    setOpen(false);
+    setResult(null);
+    setInput("");
+
+    if (href) {
+      window.location.href = href;
+    }
+
+    if (isMailto) {
+      return;
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,7 +139,7 @@ export default function PublicSiteHelp({
       {open ? (
         <div className={styles.panel} aria-live="polite">
           <div className={styles.header}>
-            <div className={styles.title}>{PUBLIC_HELP_PREFIX} · {assistantTitle}</div>
+            <div className={styles.title}>{assistantTitle}</div>
             <button
               type="button"
               className={styles.closeButton}
@@ -119,10 +151,19 @@ export default function PublicSiteHelp({
           </div>
 
           <div className={styles.messages}>
-            <div className={`${styles.message} ${styles.assistant}`}>
-              {marketCode === "us"
-                ? "Ask me where to start, where to find legal pages, pricing, demos, contact, or registration."
-                : "Fragen Sie mich nach Start, Preise, Demo, Kontakt, Datenschutz oder Registrierung."}
+            <div className={`${styles.message} ${styles.assistant}`}>{introText}</div>
+
+            <div className={styles.quickActions}>
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  className={styles.quickAction}
+                  onClick={() => handleQuickAction(action.href, action.href.startsWith("mailto:"))}
+                >
+                  {action.label}
+                </button>
+              ))}
             </div>
 
             {result ? (
@@ -144,7 +185,7 @@ export default function PublicSiteHelp({
               value={input}
               onChange={(event) => setInput(event.target.value)}
               aria-label={marketCode === "us" ? "Your help question" : "Ihre Hilfefrage"}
-              placeholder={marketCode === "us" ? "Ask about pricing, registration, demo, legal pages..." : "Fragen Sie nach Preisen, Registrierung, Demo, rechtlichen Seiten..."}
+              placeholder={marketCode === "us" ? "How can I help?" : "Wie kann ich Ihnen helfen?"}
             />
             <button className={styles.submitButton} type="submit" disabled={pending}>
               {pending
