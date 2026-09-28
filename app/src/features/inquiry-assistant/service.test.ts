@@ -11,6 +11,7 @@ import {
   buildContextualFollowUpQuestion,
   buildInquirySummary,
   combineInquiryDescription,
+  getInquiryTypeDisplayLabel,
   getSubmissionSuccessText,
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
@@ -255,6 +256,40 @@ describe("inquiry assistant service", () => {
     expect(followUp).toContain("Heizung");
     expect(followUp).toContain("Fehlermeldung");
     expect(followUp).not.toContain("Welche Art von Anfrage");
+  });
+
+  it("keeps DE labels in German and localizes built-in US inquiry types without changing canonical values", () => {
+    expect(getInquiryTypeDisplayLabel("Angebot anfordern", "de")).toBe("Angebot anfordern");
+    expect(getInquiryTypeDisplayLabel("Angebot anfordern", "us")).toBe("Request a quote");
+    expect(getInquiryTypeDisplayLabel("Beratung", "us")).toBe("Consultation");
+    expect(getInquiryTypeDisplayLabel("Rückrufbitte", "us")).toBe("Request a callback");
+    expect(getInquiryTypeDisplayLabel("Terminwunsch", "us")).toBe("Request an appointment");
+    expect(getInquiryTypeDisplayLabel("Reklamation", "us")).toBe("Complaint");
+    expect(getInquiryTypeDisplayLabel("General inquiry", "us")).toBe("General inquiry");
+    expect(getInquiryTypeDisplayLabel("Custom request type", "us")).toBe("Custom request type");
+
+    const resolution = resolveInquiryTypeOption("Request a quote", ["Angebot anfordern", "Beratung", "Rückrufbitte"], "Allgemeine Anfrage");
+    expect(resolution).toBe("Angebot anfordern");
+    expect(getInquiryTypeDisplayLabel(resolution, "us")).toBe("Request a quote");
+  });
+
+  it("uses English summary labels for US customer-facing request types while keeping canonical stored values", () => {
+    const summary = buildInquirySummary({
+      firstName: "Jane",
+      lastName: "Doe",
+      address: "123 Main St",
+      phone: "+1 555 123 4567",
+      email: "jane@example.com",
+      inquiryType: "Angebot anfordern",
+      description: "My heating stopped working this morning.",
+      contextualAnswer: "The radiator stays cold.",
+      market: "us",
+      allowedInquiryTypes: ["Angebot anfordern", "Beratung", "Rückrufbitte", "Terminwunsch"],
+    });
+
+    expect(summary).toContain("Request type:");
+    expect(summary).toContain("Request a quote");
+    expect(summary).not.toContain("Angebot anfordern");
   });
 
   it("uses the final DE and US success copy exactly once for the terminal success state", () => {

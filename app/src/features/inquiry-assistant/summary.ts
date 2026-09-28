@@ -7,6 +7,83 @@ const normalizeWhitespace = (value: string) => value.replace(/\s+/g, " ").trim()
 export const normalizeInquiryTypeName = (value: string) =>
   normalizeWhitespace(value).replace(/[\u00A0]/g, " ");
 
+const US_INQUIRY_TYPE_DISPLAY_LABELS: Record<string, string> = {
+  "angebot anfordern": "Request a quote",
+  beratung: "Consultation",
+  reparatur: "Repair",
+  "renovierung / sanierung": "Renovation / restoration",
+  "montage / neubau": "Installation / new construction",
+  wartung: "Maintenance",
+  "dringende anfrage": "Urgent request",
+  sonstiges: "Other",
+  inspektion: "Inspection",
+  "reifenwechsel": "Tire replacement",
+  "hauptuntersuchung": "Vehicle inspection",
+  "unfall / schaden": "Accident / damage",
+  diagnose: "Diagnosis",
+  "fahrzeugkauf": "Vehicle purchase",
+  probefahrt: "Test drive",
+  inzahlungnahme: "Trade-in",
+  "finanzierung / leasing": "Financing / leasing",
+  gebrauchswagen: "Used vehicle",
+  neuwagen: "New vehicle",
+  "fahrzeug verkaufen": "Sell vehicle",
+  büroreinigung: "Office cleaning",
+  unterhaltsreinigung: "Maintenance cleaning",
+  grundreinigung: "Deep cleaning",
+  fensterreinigung: "Window cleaning",
+  bauendreinigung: "Post-construction cleaning",
+  privathaushalt: "Private household",
+  erstberatung: "Initial consultation",
+  "ambulante pflege": "Home care",
+  haushaltshilfe: "Household help",
+  betreuung: "Care",
+  verhinderungspflege: "Short-term care",
+  "pflegegrad-beratung": "Care level consultation",
+  kapazitätsanfrage: "Capacity request",
+  privatumzug: "Private move",
+  firmenumzug: "Business move",
+  fernumzug: "Long-distance move",
+  entrümpelung: "Clearing / junk removal",
+  "möbelmontage": "Furniture assembly",
+  "ein- und auspackservice": "Packing and unpacking",
+  "besichtigung / angebot": "Inspection / quote",
+  "führerschein klasse b": "Driver's license class B",
+  motorradführerschein: "Motorcycle license",
+  "lkw- / busführerschein": "Truck / bus license",
+  auffrischungsfahrt: "Refresher lesson",
+  intensivkurs: "Intensive course",
+  "führerschein-umschreibung": "License conversion",
+  preisanfrage: "Price inquiry",
+  "immobilie verkaufen": "Sell property",
+  "immobilie kaufen": "Buy property",
+  "immobilie vermieten": "Rent out property",
+  "immobilie mieten": "Rent property",
+  immobilienbewertung: "Property valuation",
+  besichtigung: "Viewing",
+  "rückrufbitte": "Request a callback",
+  "terminwunsch": "Request an appointment",
+  reklamation: "Complaint",
+  "allgemeine anfrage": "General inquiry",
+};
+
+export const getInquiryTypeDisplayLabel = (
+  value: string | null | undefined,
+  market?: MarketCode | "unknown",
+) => {
+  if (!value) {
+    return "";
+  }
+
+  const normalizedValue = normalizeInquiryTypeName(value);
+  if (market !== "us") {
+    return normalizedValue;
+  }
+
+  const lookupKey = normalizedValue.toLowerCase();
+  return US_INQUIRY_TYPE_DISPLAY_LABELS[lookupKey] ?? normalizedValue;
+};
+
 export const resolveInquiryTypeOption = (
   candidate: string | null | undefined,
   allowedInquiryTypes: string[],
@@ -137,7 +214,7 @@ export const buildInquirySummary = ({
 
   if (shouldShowType) {
     summaryLines.push(`${german ? "Anfrageart:" : "Request type:"}`);
-    summaryLines.push(resolvedInquiryType);
+    summaryLines.push(getInquiryTypeDisplayLabel(resolvedInquiryType, market));
     summaryLines.push("");
   }
 

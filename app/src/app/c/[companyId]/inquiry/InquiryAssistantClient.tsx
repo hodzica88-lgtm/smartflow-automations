@@ -6,7 +6,9 @@ import {
   buildContextualFollowUpQuestion,
   buildInquirySummary,
   combineInquiryDescription,
+  getInquiryTypeDisplayLabel,
   getSubmissionSuccessText,
+  normalizeInquiryTypeName,
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
 
@@ -393,9 +395,32 @@ export default function InquiryAssistantClient({
     event.currentTarget.reset();
   };
 
+  const selectInquiryType = (value: string) => {
+    const canonicalValue = validInquiryTypeOptions.find(
+      (option) => normalizeInquiryTypeName(option) === normalizeInquiryTypeName(value),
+    );
+
+    if (!canonicalValue) {
+      setErrorText(market === "us" ? "Please choose a valid request type." : "Bitte wählen Sie eine gültige Anfrageart aus.");
+      return;
+    }
+
+    setInquiryType(canonicalValue);
+    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: canonicalValue }]);
+    setDraft("");
+    setSuggestions([]);
+
+    const nextFollowUp = followUpQuestion || buildContextualFollowUpQuestion({
+      description,
+      market,
+    });
+    setFollowUpQuestion(nextFollowUp);
+    setStep("follow_up");
+    pushAssistantMessage(nextFollowUp);
+  };
+
   const handleOptionPick = (value: string) => {
-    setDraft(value);
-    void handleSend();
+    selectInquiryType(value);
   };
 
   return (
@@ -430,7 +455,7 @@ export default function InquiryAssistantClient({
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {suggestions.map((option) => (
                   <button key={option} type="button" onClick={() => handleOptionPick(option)} style={{ borderRadius: 999, border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)", color: "var(--text)", padding: "10px 14px", cursor: "pointer" }}>
-                    {option}
+                    {getInquiryTypeDisplayLabel(option, market)}
                   </button>
                 ))}
               </div>
@@ -495,7 +520,7 @@ export default function InquiryAssistantClient({
                     {copy.next}
                   </button>
                 </div>
-              ) : step === "success" ? null : (
+              ) : step === "type" ? null : step === "success" ? null : (
                 <div style={{ display: "grid", gap: 10 }}>
                   <label htmlFor="assistant-input" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>{activePrompt}</label>
                   <textarea id="assistant-input" aria-label={activePrompt} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={copy.descriptionPlaceholder} rows={step === "description" ? 4 : 2} style={{ width: "100%", minHeight: step === "description" ? 120 : 52, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", padding: 14, resize: "vertical" }} />
@@ -542,7 +567,7 @@ export default function InquiryAssistantClient({
               <select name="inquiry_type" required defaultValue="" style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }}>
                 <option value="" disabled>{market === "us" ? "Please choose" : "Bitte wählen"}</option>
                 {(inquiryTypeOptions.length > 0 ? inquiryTypeOptions : [fallbackInquiryType]).map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>{getInquiryTypeDisplayLabel(option, market)}</option>
                 ))}
               </select>
             </label>
