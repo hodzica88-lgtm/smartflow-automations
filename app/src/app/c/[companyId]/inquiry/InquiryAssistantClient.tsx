@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { buildInquirySummary } from "@/features/inquiry-assistant/summary";
+import { buildInquirySummary, combineInquiryDescription, resolveInquiryTypeOption } from "@/features/inquiry-assistant/summary";
 
 type MarketCode = "de" | "us";
 
@@ -31,7 +31,8 @@ const getCopy = (market: MarketCode) => {
     send: isUs ? "Send request" : "Anfrage senden",
     change: isUs ? "Change" : "Ändern",
     next: isUs ? "Continue" : "Weiter",
-    typeQuestion: isUs ? "Which request type fits best?" : "Welche Anfrageart passt am besten?",
+    typeQuestion: isUs ? "What type of request would you like to send?" : "Welche Art von Anfrage möchten Sie senden?",
+    followUpPrompt: isUs ? "Understood. Can you briefly describe what is failing?" : "Verstanden. Können Sie kurz beschreiben, was genau nicht funktioniert?",
     firstNamePrompt: isUs ? "What is your first name?" : "Wie dürfen wir Sie nennen? Bitte geben Sie Ihren Vornamen ein.",
     lastNamePrompt: isUs ? "What is your last name?" : "Bitte geben Sie Ihren Nachnamen ein.",
     addressPrompt: isUs ? "What is your address?" : "Bitte geben Sie Ihre Adresse ein.",
@@ -126,16 +127,19 @@ export default function InquiryAssistantClient({
       .join(" • ")}`;
   })();
 
+  const validInquiryTypeOptions = inquiryTypeOptions.length > 0 ? inquiryTypeOptions : [fallbackInquiryType];
+  const lockedInquiryType = resolveInquiryTypeOption(inquiryType, validInquiryTypeOptions, fallbackInquiryType);
   const summaryText = buildInquirySummary({
     firstName,
     lastName,
     address,
     phone,
     email,
-    inquiryType: inquiryType || fallbackInquiryType,
+    inquiryType: lockedInquiryType,
     description,
     contextualAnswer,
     market,
+    allowedInquiryTypes: validInquiryTypeOptions,
   });
 
   const validateAndContinueToSummary = () => {
@@ -239,15 +243,20 @@ export default function InquiryAssistantClient({
           { id: `assistant-${Date.now() + 1}`, role: "assistant", content: payload.question ?? copy.typeQuestion },
         ]);
 
+        const resolvedType = resolveInquiryTypeOption(
+          payload.suggestedInquiryType,
+          payload.options && payload.options.length > 0 ? payload.options : validInquiryTypeOptions,
+          fallbackInquiryType,
+        );
         const questionText = payload.question ?? copy.typeQuestion;
         setFollowUpQuestion(payload.requiresTypeSelection ? "" : questionText);
 
         if (payload.suggestedInquiryType) {
-          setInquiryType(payload.suggestedInquiryType);
+          setInquiryType(resolvedType);
         }
 
         if (payload.requiresTypeSelection) {
-          setSuggestions(payload.options && payload.options.length > 0 ? payload.options : inquiryTypeOptions);
+          setSuggestions(payload.options && payload.options.length > 0 ? payload.options : validInquiryTypeOptions);
           setDraft("");
           setStep("type");
           return;
@@ -260,13 +269,22 @@ export default function InquiryAssistantClient({
       }
 
       if (step === "type") {
-        const selected = nextDraft || inquiryType || suggestions[0] || fallbackInquiryType;
-        setInquiryType(selected);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: selected }]);
+        const safeOption = resolveInquiryTypeOption(nextDraft || inquiryType || suggestions[0] || fallbackInquiryType, validInquiryTypeOptions, fallbackInquiryType);
+        if (!validInquiryTypeOptions.some((option) => option === safeOption)) {
+          setErrorText(market === "us" ? "Please choose a valid request type." : "Bitte wählen Sie eine gültige Anfrageart aus.");
+          return;
+        }
+
+        setInquiryType(safeOption);
+        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: safeOption }]);
         setDraft("");
         setSuggestions([]);
-        setStep("contact");
-        pushAssistantMessage(copy.contactDetailsPrompt);
+        setStep("follow_up");
+        pushAssistantMessage(
+          followUpQuestion || (market === "us"
+            ? "Understood. Can you briefly describe what is failing?"
+            : "Verstanden. Können Sie kurz beschreiben, was genau nicht funktioniert?"),
+        );
         return;
       }
 
@@ -285,6 +303,7 @@ export default function InquiryAssistantClient({
       }
 
       if (step === "summary") {
+        const combinedDescription = combineInquiryDescription(description, contextualAnswer);
         const response = await fetch("/api/public/inquiry-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -296,8 +315,8 @@ export default function InquiryAssistantClient({
             address,
             phone,
             email,
-            inquiryType,
-            description,
+            inquiryType: lockedInquiryType,
+            description: combinedDescription,
             source: "public_ai_chat",
             turnCount: 7,
           }),
@@ -428,7 +447,7 @@ export default function InquiryAssistantClient({
                   <button type="button" onClick={() => void handleSend()} style={{ padding: "14px 18px", background: "var(--gold)", color: "#101010", borderRadius: 12, border: "none", fontWeight: 700, cursor: "pointer" }}>
                     {copy.send}
                   </button>
-                  <button type="button" onClick={() => setStep("type")} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", color: "var(--text)", borderRadius: 12, border: "1px solid var(--border)", cursor: "pointer" }}>
+                  <button type="button" onClick={() => setStep("contact")} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", color: "var(--text)", borderRadius: 12, border: "1px solid var(--border)", cursor: "pointer" }}>
                     {copy.change}
                   </button>
                 </div>

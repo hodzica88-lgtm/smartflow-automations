@@ -559,11 +559,9 @@ export const inferInquiryTypeSuggestion = async ({
             market,
           });
           const question = requiresTypeSelection
-            ? typeof parsed.question === "string" && parsed.question.trim().length > 0
-              ? parsed.question.trim()
-              : market === "us"
-                ? "Which request type fits best?"
-                : "Welche Anfrageart passt am besten?"
+            ? market === "us"
+              ? "What type of request would you like to send?"
+              : "Welche Art von Anfrage möchten Sie senden?"
             : contextualQuestion;
           const confidence = typeof parsed.confidence === "number" ? Math.max(0.2, Math.min(0.99, parsed.confidence)) : 0.8;
 
@@ -588,8 +586,8 @@ export const inferInquiryTypeSuggestion = async ({
   const summary = `${description.trim().slice(0, 120)}${description.length > 120 ? "…" : ""}`;
   const question = requiresTypeSelection
     ? market === "us"
-      ? "Which request type fits best?"
-      : "Welche Anfrageart passt am besten?"
+      ? "What type of request would you like to send?"
+      : "Welche Art von Anfrage möchten Sie senden?"
     : buildContextualFollowUpQuestion({ description, market });
 
   return {

@@ -7,7 +7,11 @@ import {
   validateContactDetailsInput,
   validatePublicInquiryInput,
 } from "@/features/inquiry-assistant/service";
-import { buildInquirySummary } from "@/features/inquiry-assistant/summary";
+import {
+  buildInquirySummary,
+  combineInquiryDescription,
+  resolveInquiryTypeOption,
+} from "@/features/inquiry-assistant/summary";
 
 describe("inquiry assistant service", () => {
   it("infers the right German inquiry type from a heating problem", async () => {
@@ -72,7 +76,7 @@ describe("inquiry assistant service", () => {
     expect(clearResult.requiresTypeSelection).toBe(false);
     expect(clearResult.question).toContain("nicht funktioniert");
     expect(ambiguousResult.requiresTypeSelection).toBe(true);
-    expect(ambiguousResult.question).toContain("Welche Anfrageart");
+    expect(ambiguousResult.question).toContain("Welche Art von Anfrage möchten Sie senden?");
   });
 
   it("rejects a malicious inquiry type that is not in the active tenant list", () => {
@@ -182,6 +186,42 @@ describe("inquiry assistant service", () => {
     expect(result.ok).toBe(true);
   });
 
+  it("never stores arbitrary free text as inquiryType", () => {
+    const allowed = ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"];
+    const resolved = resolveInquiryTypeOption("Die Heizkörper bleiben komplett kalt.", allowed, "Allgemeine Anfrage");
+
+    expect(allowed).toContain(resolved);
+    expect(resolved).not.toBe("Die Heizkörper bleiben komplett kalt.");
+  });
+
+  it("keeps contextual follow-up answers separate from the inquiry type and stores the combined issue text for submission", () => {
+    const combined = combineInquiryDescription(
+      "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
+      "Die Heizkörper bleiben komplett kalt.",
+    );
+
+    expect(combined).toContain("Meine Heizung funktioniert seit heute Morgen nicht mehr.");
+    expect(combined).toContain("Die Heizkörper bleiben komplett kalt.");
+
+    const summary = buildInquirySummary({
+      firstName: "Max",
+      lastName: "Müller",
+      address: "Hauptstraße 1",
+      phone: "+49 176 1234567",
+      email: "max@example.com",
+      inquiryType: "Heizungsreparatur",
+      description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
+      contextualAnswer: "Die Heizkörper bleiben komplett kalt.",
+      market: "de",
+      allowedInquiryTypes: ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"],
+    });
+
+    expect(summary).toContain("Heizungsreparatur");
+    expect(summary).toContain("Die Heizkörper bleiben komplett kalt.");
+    expect(summary).toContain("Anfrageart:\nHeizungsreparatur");
+    expect(summary).not.toContain("Anfrageart:\nDie Heizkörper bleiben komplett kalt.");
+  });
+
   it("builds a complete customer summary with all relevant details before final submission", () => {
     const summary = buildInquirySummary({
       firstName: "Max",
@@ -193,6 +233,7 @@ describe("inquiry assistant service", () => {
       description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
       contextualAnswer: "Die Heizkörper bleiben komplett kalt.",
       market: "de",
+      allowedInquiryTypes: ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"],
     });
 
     expect(summary).toContain("Anliegen");
@@ -203,5 +244,17 @@ describe("inquiry assistant service", () => {
     expect(summary).toContain("+49 176");
     expect(summary).toContain("max@example.com");
     expect(summary).not.toContain("Allgemeine Anfrage");
+  });
+
+  it("uses deterministic type selection copy for ambiguous multi-type flow and allows only valid option values", async () => {
+    const result = await inferInquiryTypeSuggestion({
+      description: "Ich brauche Hilfe mit meinem Haus.",
+      allowedInquiryTypes: ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"],
+      market: "de",
+    });
+
+    expect(result.requiresTypeSelection).toBe(true);
+    expect(result.question).toBe("Welche Art von Anfrage möchten Sie senden?");
+    expect(result.options.every((option) => ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"].includes(option))).toBe(true);
   });
 });
