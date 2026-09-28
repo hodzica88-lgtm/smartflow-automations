@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { SITE_NAME } from "@/shared/config/site";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
+import PublicSiteHelp from "@/shared/ui/PublicSiteHelp";
 
 import "./globals.css";
 
@@ -54,11 +55,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { config } = await getRequestMarket();
+  const { config, market } = await getRequestMarket();
 
   return (
     <html lang={config.language}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PublicSiteHelp market={market} />
+      </body>
     </html>
   );
 }

@@ -1,0 +1,154 @@
+.container {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.launcher {
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.08));
+  color: var(--text);
+  border-radius: 999px;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  box-shadow: var(--shadow-xl);
+  cursor: pointer;
+}
+
+.launcher:hover {
+  transform: translateY(-1px);
+}
+
+.launcherIcon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.panel {
+  width: min(360px, calc(100vw - 24px));
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(11, 12, 17, 0.94);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 22px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.title {
+  font-size: 0.96rem;
+  font-weight: 700;
+}
+
+.closeButton {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: var(--text);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(17, 19, 27, 0.9);
+}
+
+.message {
+  max-width: 90%;
+  border-radius: 16px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  font-size: 0.92rem;
+}
+
+.assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.user {
+  align-self: flex-end;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.32);
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 54px;
+}
+
+.submitButton,
+.routeButton {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: var(--gold);
+  color: #101010;
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.routeButton {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .container {
+    right: 12px;
+    bottom: 12px;
+  }
+}
