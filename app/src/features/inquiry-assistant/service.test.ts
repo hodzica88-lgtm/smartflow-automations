@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildInquirySummary,
   getContactDetailsFields,
   getContactDetailsQuestion,
   inferInquiryTypeSuggestion,
   validateContactDetailsInput,
   validatePublicInquiryInput,
 } from "@/features/inquiry-assistant/service";
+import { buildInquirySummary } from "@/features/inquiry-assistant/summary";
 
 describe("inquiry assistant service", () => {
   it("infers the right German inquiry type from a heating problem", async () => {
@@ -182,17 +182,26 @@ describe("inquiry assistant service", () => {
     expect(result.ok).toBe(true);
   });
 
-  it("builds a concise customer summary for final confirmation", () => {
+  it("builds a complete customer summary with all relevant details before final submission", () => {
     const summary = buildInquirySummary({
       firstName: "Max",
-      lastName: "Mustermann",
-      address: "Musterstraße 1, Stuttgart",
-      inquiryType: "Heizungsreparatur",
-      description: "Heizung funktioniert seit heute Morgen nicht mehr.",
+      lastName: "Müller",
+      address: "Hauptstraße 1",
+      phone: "+49 176 1234567",
+      email: "max@example.com",
+      inquiryType: "Allgemeine Anfrage",
+      description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
+      contextualAnswer: "Die Heizkörper bleiben komplett kalt.",
       market: "de",
     });
 
-    expect(summary).toContain("Heizungsreparatur");
-    expect(summary).toContain("Max Mustermann");
+    expect(summary).toContain("Anliegen");
+    expect(summary).toContain("Meine Heizung funktioniert");
+    expect(summary).toContain("Die Heizkörper bleiben komplett kalt");
+    expect(summary).toContain("Max Müller");
+    expect(summary).toContain("Hauptstraße 1");
+    expect(summary).toContain("+49 176");
+    expect(summary).toContain("max@example.com");
+    expect(summary).not.toContain("Allgemeine Anfrage");
   });
 });

@@ -11,6 +11,8 @@ export const FALLBACK_INQUIRY_TYPE = "Allgemeine Anfrage";
 export type InquirySource = "public_ai_chat" | "public_form";
 export type MarketCode = "de" | "us" | "unknown";
 
+export { buildInquirySummary } from "./summary";
+
 export type InquiryTypeSuggestion = {
   suggestedInquiryType: string;
   summary: string;
@@ -107,34 +109,6 @@ const resolveAllowedType = (candidate: string | null | undefined, allowedInquiry
   }
 
   return null;
-};
-
-export const buildInquirySummary = ({
-  firstName,
-  lastName,
-  address,
-  inquiryType,
-  description,
-  market,
-}: {
-  firstName: string;
-  lastName: string;
-  address: string;
-  inquiryType: string;
-  description?: string | null;
-  market?: MarketCode | "unknown";
-}) => {
-  const name = `${firstName} ${lastName}`.trim();
-  const german = market === "de" || market === "unknown";
-  const summaryBits = [
-    inquiryType,
-    description && description.trim() ? description.trim() : german ? "Problembeschreibung" : "Issue summary",
-    name || (german ? "Kunde" : "Customer"),
-    address || (german ? "Adresse nicht angegeben" : "Address not provided"),
-  ];
-
-  const label = german ? "Ich habe:" : "I have:";
-  return `${label} ${summaryBits.join(" • ")}`;
 };
 
 const getNormalizedLeadEmail = (value: string) => value.trim().toLowerCase();

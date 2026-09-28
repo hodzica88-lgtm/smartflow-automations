@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { buildInquirySummary } from "@/features/inquiry-assistant/summary";
+
 type MarketCode = "de" | "us";
 
 type AssistantMessages = Array<{
@@ -73,6 +75,7 @@ export default function InquiryAssistantClient({
   ]);
   const [draft, setDraft] = useState("");
   const [description, setDescription] = useState("");
+  const [contextualAnswer, setContextualAnswer] = useState("");
   const [inquiryType, setInquiryType] = useState("");
   const [contactDetails, updateContactDetails] = useState({
     firstName: "",
@@ -122,6 +125,18 @@ export default function InquiryAssistantClient({
       .filter(Boolean)
       .join(" • ")}`;
   })();
+
+  const summaryText = buildInquirySummary({
+    firstName,
+    lastName,
+    address,
+    phone,
+    email,
+    inquiryType: inquiryType || fallbackInquiryType,
+    description,
+    contextualAnswer,
+    market,
+  });
 
   const validateAndContinueToSummary = () => {
     const trimmedFirstName = firstName.trim();
@@ -256,6 +271,7 @@ export default function InquiryAssistantClient({
       }
 
       if (step === "follow_up") {
+        setContextualAnswer(nextDraft);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
         setFollowUpQuestion("");
@@ -390,13 +406,7 @@ export default function InquiryAssistantClient({
 
             {step === "summary" ? (
               <div style={{ display: "grid", gap: 12, padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
-                <strong>{copy.summaryPrefix}</strong>
-                <ul style={{ margin: 0, paddingLeft: 16, display: "grid", gap: 6 }}>
-                  <li>{inquiryType || fallbackInquiryType}</li>
-                  <li>{[firstName, lastName].filter(Boolean).join(" ") || (market === "us" ? "Customer" : "Kunde")}</li>
-                  <li>{address || (market === "us" ? "Address" : "Adresse")}</li>
-                </ul>
-                <p style={{ margin: 0 }}>{copy.summaryFooter}</p>
+                <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.7, fontSize: "0.98rem" }}>{summaryText}</div>
               </div>
             ) : null}
 
