@@ -139,6 +139,80 @@ export const buildInquirySummary = ({
 
 const getNormalizedLeadEmail = (value: string) => value.trim().toLowerCase();
 
+export const getContactDetailsQuestion = (market?: MarketCode | "unknown") => {
+  if (market === "us") {
+    return "Thanks. Please provide your contact details so the business can reach you.";
+  }
+
+  return "Danke. Bitte geben Sie uns noch Ihre Kontaktdaten, damit der Betrieb Sie erreichen kann.";
+};
+
+export const getContactDetailsFields = (market?: MarketCode | "unknown") => {
+  const isUs = market === "us";
+
+  return [
+    { name: "firstName", label: isUs ? "First name" : "Vorname", placeholder: isUs ? "Jane" : "Max" },
+    { name: "lastName", label: isUs ? "Last name" : "Nachname", placeholder: isUs ? "Doe" : "Mustermann" },
+    { name: "address", label: isUs ? "Address" : "Adresse", placeholder: isUs ? "123 Main St" : "Musterstraße 1" },
+    { name: "phone", label: isUs ? "Phone number" : "Telefonnummer", placeholder: isUs ? "+1 555 123 4567" : "+49 711 123456" },
+    { name: "email", label: isUs ? "Email address" : "E-Mail-Adresse", placeholder: isUs ? "name@example.com" : "max@example.com" },
+  ] as const;
+};
+
+export const validateContactDetailsInput = ({
+  firstName,
+  lastName,
+  address,
+  phone,
+  email,
+  market,
+}: {
+  firstName: string;
+  lastName: string;
+  address: string;
+  phone: string;
+  email: string;
+  market?: MarketCode | "unknown";
+}): { ok: true; normalized: { firstName: string; lastName: string; address: string; phone: string; email: string } } | { ok: false; error: string } => {
+  const isUs = market === "us";
+  const trimmedFirstName = normalizeWhitespace(firstName);
+  const trimmedLastName = normalizeWhitespace(lastName);
+  const trimmedAddress = normalizeWhitespace(address);
+  const trimmedPhone = normalizeWhitespace(phone);
+  const trimmedEmail = normalizeWhitespace(email);
+
+  if (!trimmedFirstName) {
+    return { ok: false, error: isUs ? "Please enter your first name." : "Bitte geben Sie Ihren Vornamen ein." };
+  }
+
+  if (!trimmedLastName) {
+    return { ok: false, error: isUs ? "Please enter your last name." : "Bitte geben Sie Ihren Nachnamen ein." };
+  }
+
+  if (!trimmedAddress) {
+    return { ok: false, error: isUs ? "Please enter your address." : "Bitte geben Sie Ihre Adresse ein." };
+  }
+
+  if (!trimmedPhone || !isValidPhone(trimmedPhone)) {
+    return { ok: false, error: isUs ? "Please enter a valid phone number." : "Bitte geben Sie eine gültige Telefonnummer ein." };
+  }
+
+  if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
+    return { ok: false, error: isUs ? "Please enter a valid email address." : "Bitte geben Sie eine gültige E-Mail-Adresse ein." };
+  }
+
+  return {
+    ok: true,
+    normalized: {
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      address: trimmedAddress,
+      phone: trimmedPhone,
+      email: getNormalizedLeadEmail(trimmedEmail),
+    },
+  };
+};
+
 export const validatePublicInquiryInput = ({
   companyId,
   firstName,

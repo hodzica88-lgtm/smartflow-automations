@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildInquirySummary,
+  getContactDetailsFields,
+  getContactDetailsQuestion,
   inferInquiryTypeSuggestion,
+  validateContactDetailsInput,
   validatePublicInquiryInput,
 } from "@/features/inquiry-assistant/service";
 
@@ -110,6 +113,73 @@ describe("inquiry assistant service", () => {
     if (!result.ok) {
       expect(result.error).toContain("Pflichtfelder");
     }
+  });
+
+  it("uses a single contact-details step after the follow-up and shows all five fields together", () => {
+    const deQuestion = getContactDetailsQuestion("de");
+    const usQuestion = getContactDetailsQuestion("us");
+    const deFields = getContactDetailsFields("de");
+    const usFields = getContactDetailsFields("us");
+
+    expect(deQuestion).toBe("Danke. Bitte geben Sie uns noch Ihre Kontaktdaten, damit der Betrieb Sie erreichen kann.");
+    expect(usQuestion).toBe("Thanks. Please provide your contact details so the business can reach you.");
+    expect(deFields.map((field) => field.label)).toEqual([
+      "Vorname",
+      "Nachname",
+      "Adresse",
+      "Telefonnummer",
+      "E-Mail-Adresse",
+    ]);
+    expect(usFields.map((field) => field.label)).toEqual([
+      "First name",
+      "Last name",
+      "Address",
+      "Phone number",
+      "Email address",
+    ]);
+    expect(deFields).toHaveLength(5);
+    expect(usFields).toHaveLength(5);
+  });
+
+  it("rejects invalid email and phone before summary", () => {
+    const invalidEmail = validateContactDetailsInput({
+      firstName: "Max",
+      lastName: "Mustermann",
+      address: "Musterstraße 1",
+      phone: "+49 711 123456",
+      email: "max@",
+      market: "de",
+    });
+    const invalidPhone = validateContactDetailsInput({
+      firstName: "Max",
+      lastName: "Mustermann",
+      address: "Musterstraße 1",
+      phone: "invalid",
+      email: "max@example.com",
+      market: "de",
+    });
+
+    expect(invalidEmail.ok).toBe(false);
+    if (!invalidEmail.ok) {
+      expect(invalidEmail.error).toBe("Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+    }
+    expect(invalidPhone.ok).toBe(false);
+    if (!invalidPhone.ok) {
+      expect(invalidPhone.error).toBe("Bitte geben Sie eine gültige Telefonnummer ein.");
+    }
+  });
+
+  it("accepts valid contact details and proceeds directly to summary", () => {
+    const result = validateContactDetailsInput({
+      firstName: "Max",
+      lastName: "Mustermann",
+      address: "Musterstraße 1, Stuttgart",
+      phone: "+49 711 123456",
+      email: "max@example.com",
+      market: "de",
+    });
+
+    expect(result.ok).toBe(true);
   });
 
   it("builds a concise customer summary for final confirmation", () => {

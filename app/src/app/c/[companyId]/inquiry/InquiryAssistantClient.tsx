@@ -35,11 +35,28 @@ const getCopy = (market: MarketCode) => {
     addressPrompt: isUs ? "What is your address?" : "Bitte geben Sie Ihre Adresse ein.",
     phonePrompt: isUs ? "What is your phone number?" : "Wie können wir Sie telefonisch erreichen?",
     emailPrompt: isUs ? "What is your email address?" : "Wie können wir Ihnen per E-Mail antworten?",
+    contactDetailsPrompt: isUs ? "Thanks. Please provide your contact details so the business can reach you." : "Danke. Bitte geben Sie uns noch Ihre Kontaktdaten, damit der Betrieb Sie erreichen kann.",
+    contactDetailsTitle: isUs ? "Contact details" : "Kontaktdaten",
     summaryPrefix: isUs ? "Everything is clear. I have:" : "Alles klar. Ich habe:",
     summaryFooter: isUs ? "Do you want to send this request now?" : "Soll ich die Anfrage jetzt senden?",
     descriptionPlaceholder: isUs ? "Describe what you need..." : "Beschreiben Sie kurz Ihr Anliegen...",
     genericError: isUs ? "Please fill in the required information." : "Bitte füllen Sie die erforderlichen Informationen aus.",
     formTitle: isUs ? "Classic form" : "Klassisches Formular",
+    fieldLabels: isUs
+      ? {
+          firstName: "First name",
+          lastName: "Last name",
+          address: "Address",
+          phone: "Phone number",
+          email: "Email address",
+        }
+      : {
+          firstName: "Vorname",
+          lastName: "Nachname",
+          address: "Adresse",
+          phone: "Telefonnummer",
+          email: "E-Mail-Adresse",
+        },
   } as const;
 };
 
@@ -57,12 +74,22 @@ export default function InquiryAssistantClient({
   const [draft, setDraft] = useState("");
   const [description, setDescription] = useState("");
   const [inquiryType, setInquiryType] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"description" | "type" | "follow_up" | "first_name" | "last_name" | "address" | "phone" | "email" | "summary">("description");
+  const [contactDetails, updateContactDetails] = useState({
+    firstName: "",
+    lastName: "",
+    address: "",
+    phone: "",
+    email: "",
+  });
+  const { firstName, lastName, address, phone, email } = contactDetails;
+  const updateContactField =
+    (field: keyof typeof contactDetails) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      updateContactDetails((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
+    };
+  const [step, setStep] = useState<"description" | "type" | "follow_up" | "contact" | "summary">("description");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [assistantUnavailable, setAssistantUnavailable] = useState(false);
@@ -85,11 +112,7 @@ export default function InquiryAssistantClient({
     if (step === "description") return copy.greeting;
     if (step === "type") return copy.typeQuestion;
     if (step === "follow_up") return followUpQuestion || copy.greeting;
-    if (step === "first_name") return copy.firstNamePrompt;
-    if (step === "last_name") return copy.lastNamePrompt;
-    if (step === "address") return copy.addressPrompt;
-    if (step === "phone") return copy.phonePrompt;
-    if (step === "email") return copy.emailPrompt;
+    if (step === "contact") return copy.contactDetailsPrompt;
 
     return `${copy.summaryPrefix} ${[
       inquiryType,
@@ -99,6 +122,42 @@ export default function InquiryAssistantClient({
       .filter(Boolean)
       .join(" • ")}`;
   })();
+
+  const validateAndContinueToSummary = () => {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedAddress = address.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedFirstName) {
+      setErrorText(market === "us" ? "Please enter your first name." : "Bitte geben Sie Ihren Vornamen ein.");
+      return;
+    }
+
+    if (!trimmedLastName) {
+      setErrorText(market === "us" ? "Please enter your last name." : "Bitte geben Sie Ihren Nachnamen ein.");
+      return;
+    }
+
+    if (!trimmedAddress) {
+      setErrorText(market === "us" ? "Please enter your address." : "Bitte geben Sie Ihre Adresse ein.");
+      return;
+    }
+
+    if (!trimmedPhone || trimmedPhone.replace(/[^0-9+()\-\s]/g, "").length < 7 || !/\d/.test(trimmedPhone)) {
+      setErrorText(market === "us" ? "Please enter a valid phone number." : "Bitte geben Sie eine gültige Telefonnummer ein.");
+      return;
+    }
+
+    if (!trimmedEmail || !/\S+@\S+\.\S+/.test(trimmedEmail)) {
+      setErrorText(market === "us" ? "Please enter a valid email address." : "Bitte geben Sie eine gültige E-Mail-Adresse ein.");
+      return;
+    }
+
+    setErrorText("");
+    setStep("summary");
+  };
 
   const pushAssistantMessage = (content: string) => {
     setMessages((prev) => [
@@ -191,8 +250,8 @@ export default function InquiryAssistantClient({
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: selected }]);
         setDraft("");
         setSuggestions([]);
-        setStep("first_name");
-        pushAssistantMessage(copy.firstNamePrompt);
+        setStep("contact");
+        pushAssistantMessage(copy.contactDetailsPrompt);
         return;
       }
 
@@ -200,52 +259,12 @@ export default function InquiryAssistantClient({
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
         setFollowUpQuestion("");
-        setStep("first_name");
-        pushAssistantMessage(copy.firstNamePrompt);
+        setStep("contact");
+        pushAssistantMessage(copy.contactDetailsPrompt);
         return;
       }
 
-      if (step === "first_name") {
-        setFirstName(nextDraft);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
-        setDraft("");
-        setStep("last_name");
-        pushAssistantMessage(copy.lastNamePrompt);
-        return;
-      }
-
-      if (step === "last_name") {
-        setLastName(nextDraft);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
-        setDraft("");
-        setStep("address");
-        pushAssistantMessage(copy.addressPrompt);
-        return;
-      }
-
-      if (step === "address") {
-        setAddress(nextDraft);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
-        setDraft("");
-        setStep("phone");
-        pushAssistantMessage(copy.phonePrompt);
-        return;
-      }
-
-      if (step === "phone") {
-        setPhone(nextDraft);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
-        setDraft("");
-        setStep("email");
-        pushAssistantMessage(copy.emailPrompt);
-        return;
-      }
-
-      if (step === "email") {
-        setEmail(nextDraft);
-        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
-        setDraft("");
-        setStep("summary");
+      if (step === "contact") {
         return;
       }
 
@@ -401,6 +420,37 @@ export default function InquiryAssistantClient({
                   </button>
                   <button type="button" onClick={() => setStep("type")} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", color: "var(--text)", borderRadius: 12, border: "1px solid var(--border)", cursor: "pointer" }}>
                     {copy.change}
+                  </button>
+                </div>
+              ) : step === "contact" ? (
+                <div style={{ display: "grid", gap: 12, padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <strong>{copy.contactDetailsTitle}</strong>
+                    <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        {copy.fieldLabels.firstName}
+                        <input aria-label={copy.fieldLabels.firstName} value={firstName} onChange={updateContactField("firstName")} placeholder={market === "us" ? "Jane" : "Max"} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }} />
+                      </label>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        {copy.fieldLabels.lastName}
+                        <input aria-label={copy.fieldLabels.lastName} value={lastName} onChange={updateContactField("lastName")} placeholder={market === "us" ? "Doe" : "Mustermann"} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }} />
+                      </label>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        {copy.fieldLabels.address}
+                        <input aria-label={copy.fieldLabels.address} value={address} onChange={updateContactField("address")} placeholder={market === "us" ? "123 Main St" : "Musterstraße 1"} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }} />
+                      </label>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        {copy.fieldLabels.phone}
+                        <input aria-label={copy.fieldLabels.phone} value={phone} onChange={updateContactField("phone")} placeholder={market === "us" ? "+1 555 123 4567" : "+49 711 123456"} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }} />
+                      </label>
+                      <label style={{ display: "grid", gap: 6 }}>
+                        {copy.fieldLabels.email}
+                        <input aria-label={copy.fieldLabels.email} type="email" value={email} onChange={updateContactField("email")} placeholder={market === "us" ? "name@example.com" : "max@example.com"} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)" }} />
+                      </label>
+                    </div>
+                  </div>
+                  <button type="button" onClick={validateAndContinueToSummary} style={{ border: "none", borderRadius: 12, background: "var(--gold)", color: "#101010", padding: "16px 18px", fontWeight: 700, cursor: "pointer" }}>
+                    {copy.next}
                   </button>
                 </div>
               ) : (
