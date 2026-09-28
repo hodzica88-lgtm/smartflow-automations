@@ -103,8 +103,13 @@ export const resolveGuideResponse = (market: DemoMarket, question: string): Guid
     }
   }
 
+  const fallbackAnswer =
+    market === "us"
+      ? "I can only help you explore Varnito."
+      : "Ich helfe Ihnen ausschliesslich dabei, Varnito kennenzulernen.";
+
   return {
-    answer: copy.guide.safety,
+    answer: fallbackAnswer,
     constrained: true,
   };
 };
