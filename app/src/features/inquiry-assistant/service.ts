@@ -506,13 +506,17 @@ export const inferInquiryTypeSuggestion = async ({
             typeof parsed.summary === "string" && parsed.summary.trim().length > 0
               ? parsed.summary.trim()
               : `${description.trim().slice(0, 120)}${description.length > 120 ? "…" : ""}`;
-          const question =
-            typeof parsed.question === "string" && parsed.question.trim().length > 0
+          const contextualQuestion = buildContextualFollowUpQuestion({
+            description,
+            market,
+          });
+          const question = requiresTypeSelection
+            ? typeof parsed.question === "string" && parsed.question.trim().length > 0
               ? parsed.question.trim()
-              : buildContextualFollowUpQuestion({
-                  description,
-                  market,
-                });
+              : market === "us"
+                ? "Which request type fits best?"
+                : "Welche Anfrageart passt am besten?"
+            : contextualQuestion;
           const confidence = typeof parsed.confidence === "number" ? Math.max(0.2, Math.min(0.99, parsed.confidence)) : 0.8;
 
           const options = requiresTypeSelection ? safeAllowedInquiryTypes.slice(0, 4) : [];

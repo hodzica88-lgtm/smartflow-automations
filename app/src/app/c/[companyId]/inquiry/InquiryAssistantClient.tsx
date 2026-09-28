@@ -100,6 +100,13 @@ export default function InquiryAssistantClient({
       .join(" • ")}`;
   })();
 
+  const pushAssistantMessage = (content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: `assistant-${Date.now()}-${Math.random().toString(36).slice(2)}`, role: "assistant", content },
+    ]);
+  };
+
   const handleModeToggle = () => {
     const nextMode = mode === "chat" ? "form" : "chat";
     setMode(nextMode);
@@ -112,17 +119,6 @@ export default function InquiryAssistantClient({
         // No-op.
       });
     }
-  };
-
-  const goToNextStep = () => {
-    if (step === "description") return setStep("type");
-    if (step === "type") return setStep("first_name");
-    if (step === "follow_up") return setStep("first_name");
-    if (step === "first_name") return setStep("last_name");
-    if (step === "last_name") return setStep("address");
-    if (step === "address") return setStep("phone");
-    if (step === "phone") return setStep("email");
-    if (step === "email") return setStep("summary");
   };
 
   const handleSend = async () => {
@@ -194,7 +190,9 @@ export default function InquiryAssistantClient({
         setInquiryType(selected);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: selected }]);
         setDraft("");
-        goToNextStep();
+        setSuggestions([]);
+        setStep("first_name");
+        pushAssistantMessage(copy.firstNamePrompt);
         return;
       }
 
@@ -203,6 +201,7 @@ export default function InquiryAssistantClient({
         setDraft("");
         setFollowUpQuestion("");
         setStep("first_name");
+        pushAssistantMessage(copy.firstNamePrompt);
         return;
       }
 
@@ -210,7 +209,8 @@ export default function InquiryAssistantClient({
         setFirstName(nextDraft);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
-        goToNextStep();
+        setStep("last_name");
+        pushAssistantMessage(copy.lastNamePrompt);
         return;
       }
 
@@ -218,7 +218,8 @@ export default function InquiryAssistantClient({
         setLastName(nextDraft);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
-        goToNextStep();
+        setStep("address");
+        pushAssistantMessage(copy.addressPrompt);
         return;
       }
 
@@ -226,7 +227,8 @@ export default function InquiryAssistantClient({
         setAddress(nextDraft);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
-        goToNextStep();
+        setStep("phone");
+        pushAssistantMessage(copy.phonePrompt);
         return;
       }
 
@@ -234,7 +236,8 @@ export default function InquiryAssistantClient({
         setPhone(nextDraft);
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
         setDraft("");
-        goToNextStep();
+        setStep("email");
+        pushAssistantMessage(copy.emailPrompt);
         return;
       }
 
@@ -402,7 +405,7 @@ export default function InquiryAssistantClient({
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 10 }}>
-                  <label htmlFor="assistant-input" style={{ fontWeight: 600 }}>{activePrompt}</label>
+                  <label htmlFor="assistant-input" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>{activePrompt}</label>
                   <textarea id="assistant-input" aria-label={activePrompt} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={copy.descriptionPlaceholder} rows={step === "description" ? 4 : 2} style={{ width: "100%", minHeight: step === "description" ? 120 : 52, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", padding: 14, resize: "vertical" }} />
                   <button type="button" onClick={() => void handleSend()} disabled={pending} style={{ border: "none", borderRadius: 12, background: pending ? "rgba(212,175,55,0.5)" : "var(--gold)", color: "#101010", padding: "16px 18px", fontWeight: 700, cursor: pending ? "not-allowed" : "pointer" }}>
                     {pending ? (market === "us" ? "Sending..." : "Senden...") : copy.next}
