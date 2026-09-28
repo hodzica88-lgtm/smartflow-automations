@@ -18,6 +18,7 @@ export type InquiryTypeSuggestion = {
   options: string[];
   method: "deterministic" | "ai" | "fallback";
   confidence: number;
+  requiresTypeSelection: boolean;
 };
 
 export type PublicInquiryInput = {
@@ -341,6 +342,99 @@ const resolveAiInquiryType = (
   return null;
 };
 
+const matchesInquiryPattern = (text: string, patterns: RegExp[]) =>
+  patterns.some((pattern) => pattern.test(text));
+
+const shouldAskForInquiryType = ({
+  description,
+  allowedInquiryTypes,
+}: {
+  description: string;
+  allowedInquiryTypes: string[];
+}) => {
+  if (allowedInquiryTypes.length <= 1) {
+    return false;
+  }
+
+  const text = normalizeWhitespace(description).toLowerCase();
+  const normalizedTypes = allowedInquiryTypes.map((entry) => normalizeInquiryTypeName(entry).toLowerCase());
+
+  const typeMatchers = [
+    {
+      patterns: [/heizung|heizungsreparatur|heizungsanlage|heizkoerper|heizkörper|heating|boiler|radiator|hvac/i],
+      matches: normalizedTypes.filter((entry) => /heizung|heating|hvac|radiator/.test(entry)),
+    },
+    {
+      patterns: [/klima|klimaanlage|luftung|ac|air conditioning|cooling/i],
+      matches: normalizedTypes.filter((entry) => /klima|ac|air conditioning|cooling/.test(entry)),
+    },
+    {
+      patterns: [/rohr|wasser|leitung|sanitär|sanitar|plumbing|pipe|water|drain/i],
+      matches: normalizedTypes.filter((entry) => /rohr|wasser|plumbing|pipe|water|drain/.test(entry)),
+    },
+    {
+      patterns: [/elektro|strom|steckdose|installation|electrical|power|outlet|wiring/i],
+      matches: normalizedTypes.filter((entry) => /elektro|strom|electrical|power|outlet|wiring/.test(entry)),
+    },
+    {
+      patterns: [/dach|abdichtung|roof|waterproofing|repair/i],
+      matches: normalizedTypes.filter((entry) => /dach|roof|waterproofing|repair/.test(entry)),
+    },
+  ];
+
+  const matchedType = typeMatchers.find(({ patterns }) => matchesInquiryPattern(text, patterns));
+  if (!matchedType) {
+    return true;
+  }
+
+  return matchedType.matches.length === 0;
+};
+
+const buildContextualFollowUpQuestion = ({
+  description,
+  market,
+}: {
+  description: string;
+  market?: MarketCode | "unknown";
+}) => {
+  const text = normalizeWhitespace(description).toLowerCase();
+  const german = market !== "us";
+
+  if (/heizung|heizungs|heizkörper|heizkörper|heating|heater|boiler|radiator/.test(text)) {
+    return german
+      ? "Verstanden. Können Sie kurz beschreiben, was genau nicht funktioniert – wird die Heizung gar nicht warm, zeigt sie eine Fehlermeldung oder macht sie ungewöhnliche Geräusche?"
+      : "Understood. Can you briefly describe what is failing — is the heating not warming up at all, is there an error code, or is it making unusual noises?";
+  }
+
+  if (/klima|klimaanlage|ac|air conditioning|cooling/.test(text)) {
+    return german
+      ? "Verstanden. Funktioniert die Klimaanlage gar nicht, liefert sie zu wenig Kühlung oder zeigt sie eine Fehlermeldung?"
+      : "Understood. Is the cooling system not working at all, delivering too little cooling, or showing an error?";
+  }
+
+  if (/rohr|wasser|leitung|sanitär|plumbing|pipe|water|drain/.test(text)) {
+    return german
+      ? "Verstanden. Ist das Problem ein Wasserverlust, ein verstopfter Ablauf oder ein Defekt an einer Leitung?"
+      : "Understood. Is this a leak, a blocked drain, or a damaged pipe or fixture?";
+  }
+
+  if (/elektro|strom|steckdose|installation|electrical|power|outlet|wiring/.test(text)) {
+    return german
+      ? "Verstanden. Ist die Anlage komplett ohne Strom, gibt es ein Problem mit einer Sicherung oder einer Steckdose, oder ist ein Gerät betroffen?"
+      : "Understood. Is the issue total power loss, a tripped breaker or outlet, or a specific appliance affected?";
+  }
+
+  if (/dach|abdichtung|roof|waterproofing|leak/.test(text)) {
+    return german
+      ? "Verstanden. Ist das Problem ein Leck, eine undichte Stelle oder ein sichtbarer Schaden am Dachbereich?"
+      : "Understood. Is this a leak, a visible roof defect, or a damaged area that needs attention?";
+  }
+
+  return german
+    ? `Verstanden. Können Sie kurz beschreiben, was genau nicht funktioniert und welche Auswirkungen das auf Sie hat?`
+    : `Understood. Can you briefly describe what is failing and what impact it is having?`;
+};
+
 export const inferInquiryTypeSuggestion = async ({
   description,
   allowedInquiryTypes,
@@ -355,6 +449,10 @@ export const inferInquiryTypeSuggestion = async ({
     description,
     allowedInquiryTypes: safeAllowedInquiryTypes,
     market,
+  });
+  const requiresTypeSelection = shouldAskForInquiryType({
+    description,
+    allowedInquiryTypes: safeAllowedInquiryTypes,
   });
 
   const openAiApiKey = loadServerEnv().openAiApiKey;
@@ -411,21 +509,22 @@ export const inferInquiryTypeSuggestion = async ({
           const question =
             typeof parsed.question === "string" && parsed.question.trim().length > 0
               ? parsed.question.trim()
-              : market === "us"
-                ? "Which of these fits best?"
-                : "Welche dieser Optionen passt am besten?";
+              : buildContextualFollowUpQuestion({
+                  description,
+                  market,
+                });
           const confidence = typeof parsed.confidence === "number" ? Math.max(0.2, Math.min(0.99, parsed.confidence)) : 0.8;
 
-          const options = safeAllowedInquiryTypes.filter((option) => option !== fallbackType)
-            .slice(0, 3);
+          const options = requiresTypeSelection ? safeAllowedInquiryTypes.slice(0, 4) : [];
 
           return {
             suggestedInquiryType,
             summary,
             question,
-            options: options.length > 0 ? [suggestedInquiryType, ...options] : [suggestedInquiryType],
+            options,
             method: "ai",
             confidence,
+            requiresTypeSelection,
           };
         }
       }
@@ -435,14 +534,20 @@ export const inferInquiryTypeSuggestion = async ({
   }
 
   const summary = `${description.trim().slice(0, 120)}${description.length > 120 ? "…" : ""}`;
-  const question = market === "us" ? "Which request type fits best?" : "Welche Anfrageart passt am besten?";
+  const question = requiresTypeSelection
+    ? market === "us"
+      ? "Which request type fits best?"
+      : "Welche Anfrageart passt am besten?"
+    : buildContextualFollowUpQuestion({ description, market });
+
   return {
     suggestedInquiryType: fallbackType,
     summary,
     question,
-    options: safeAllowedInquiryTypes.slice(0, 4),
+    options: requiresTypeSelection ? safeAllowedInquiryTypes.slice(0, 4) : [],
     method: "deterministic",
     confidence: 0.75,
+    requiresTypeSelection,
   };
 };
 

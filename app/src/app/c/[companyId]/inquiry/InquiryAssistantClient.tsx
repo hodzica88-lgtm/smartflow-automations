@@ -62,8 +62,9 @@ export default function InquiryAssistantClient({
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"description" | "type" | "first_name" | "last_name" | "address" | "phone" | "email" | "summary">("description");
+  const [step, setStep] = useState<"description" | "type" | "follow_up" | "first_name" | "last_name" | "address" | "phone" | "email" | "summary">("description");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [assistantUnavailable, setAssistantUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -83,6 +84,7 @@ export default function InquiryAssistantClient({
   const activePrompt = (() => {
     if (step === "description") return copy.greeting;
     if (step === "type") return copy.typeQuestion;
+    if (step === "follow_up") return followUpQuestion || copy.greeting;
     if (step === "first_name") return copy.firstNamePrompt;
     if (step === "last_name") return copy.lastNamePrompt;
     if (step === "address") return copy.addressPrompt;
@@ -115,6 +117,7 @@ export default function InquiryAssistantClient({
   const goToNextStep = () => {
     if (step === "description") return setStep("type");
     if (step === "type") return setStep("first_name");
+    if (step === "follow_up") return setStep("first_name");
     if (step === "first_name") return setStep("last_name");
     if (step === "last_name") return setStep("address");
     if (step === "address") return setStep("phone");
@@ -151,6 +154,7 @@ export default function InquiryAssistantClient({
           options?: string[];
           question?: string;
           error?: string;
+          requiresTypeSelection?: boolean;
         };
 
         if (!response.ok || !payload.ok) {
@@ -164,12 +168,24 @@ export default function InquiryAssistantClient({
           { id: `user-${Date.now()}`, role: "user", content: nextDraft },
           { id: `assistant-${Date.now() + 1}`, role: "assistant", content: payload.question ?? copy.typeQuestion },
         ]);
-        setSuggestions(payload.options && payload.options.length > 0 ? payload.options : inquiryTypeOptions);
+
+        const questionText = payload.question ?? copy.typeQuestion;
+        setFollowUpQuestion(payload.requiresTypeSelection ? "" : questionText);
+
         if (payload.suggestedInquiryType) {
           setInquiryType(payload.suggestedInquiryType);
         }
+
+        if (payload.requiresTypeSelection) {
+          setSuggestions(payload.options && payload.options.length > 0 ? payload.options : inquiryTypeOptions);
+          setDraft("");
+          setStep("type");
+          return;
+        }
+
+        setSuggestions([]);
         setDraft("");
-        setStep("type");
+        setStep("follow_up");
         return;
       }
 
@@ -179,6 +195,14 @@ export default function InquiryAssistantClient({
         setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: selected }]);
         setDraft("");
         goToNextStep();
+        return;
+      }
+
+      if (step === "follow_up") {
+        setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: nextDraft }]);
+        setDraft("");
+        setFollowUpQuestion("");
+        setStep("first_name");
         return;
       }
 

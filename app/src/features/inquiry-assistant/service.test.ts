@@ -28,6 +28,36 @@ describe("inquiry assistant service", () => {
     expect(result.suggestedInquiryType).toBe("AC Repair");
   });
 
+  it("auto-selects the only available inquiry type without asking the category question", async () => {
+    const result = await inferInquiryTypeSuggestion({
+      description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
+      allowedInquiryTypes: ["Heizungsreparatur"],
+      market: "de",
+    });
+
+    expect(result.suggestedInquiryType).toBe("Heizungsreparatur");
+    expect(result.requiresTypeSelection).toBe(false);
+    expect(result.question).not.toContain("Welche Anfrageart");
+  });
+
+  it("asks for a category choice only when multiple types are genuinely ambiguous", async () => {
+    const clearResult = await inferInquiryTypeSuggestion({
+      description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
+      allowedInquiryTypes: ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"],
+      market: "de",
+    });
+    const ambiguousResult = await inferInquiryTypeSuggestion({
+      description: "Ich brauche Hilfe mit meinem Haus.",
+      allowedInquiryTypes: ["Heizungsreparatur", "Klimaanlage", "Allgemeine Anfrage"],
+      market: "de",
+    });
+
+    expect(clearResult.requiresTypeSelection).toBe(false);
+    expect(clearResult.question).toContain("nicht funktioniert");
+    expect(ambiguousResult.requiresTypeSelection).toBe(true);
+    expect(ambiguousResult.question).toContain("Welche Anfrageart");
+  });
+
   it("rejects a malicious inquiry type that is not in the active tenant list", () => {
     const result = validatePublicInquiryInput({
       companyId: "company-123",
