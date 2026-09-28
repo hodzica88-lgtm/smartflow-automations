@@ -292,6 +292,15 @@ describe("inquiry assistant service", () => {
     expect(summary).not.toContain("Angebot anfordern");
   });
 
+  it("keeps the visible user chat bubble localized in US while preserving canonical values internally", () => {
+    const visibleLabel = getInquiryTypeDisplayLabel("Angebot anfordern", "us");
+    const storedCanonicalValue = "Angebot anfordern";
+
+    expect(visibleLabel).toBe("Request a quote");
+    expect(storedCanonicalValue).toBe("Angebot anfordern");
+    expect(getInquiryTypeDisplayLabel("Angebot anfordern", "de")).toBe("Angebot anfordern");
+  });
+
   it("uses the final DE and US success copy exactly once for the terminal success state", () => {
     expect(getSubmissionSuccessText("de")).toBe("Vielen Dank! Ihre Anfrage wurde erfolgreich gesendet.");
     expect(getSubmissionSuccessText("us")).toBe("Thanks! Your request has been sent successfully.");

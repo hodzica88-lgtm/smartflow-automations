@@ -406,7 +406,7 @@ export default function InquiryAssistantClient({
     }
 
     setInquiryType(canonicalValue);
-    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: canonicalValue }]);
+    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", content: getInquiryTypeDisplayLabel(canonicalValue, market) }]);
     setDraft("");
     setSuggestions([]);
 
