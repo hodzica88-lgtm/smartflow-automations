@@ -87,6 +87,11 @@ export const buildContextualFollowUpQuestion = ({
     : "Understood. Can you briefly describe what is failing and what impact it is having?";
 };
 
+export const getSubmissionSuccessText = (market?: MarketCode | "unknown") =>
+  market === "us"
+    ? "Thanks! Your request has been sent successfully."
+    : "Vielen Dank! Ihre Anfrage wurde erfolgreich gesendet.";
+
 export const buildInquirySummary = ({
   firstName,
   lastName,
