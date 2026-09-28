@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { buildInquirySummary, combineInquiryDescription, resolveInquiryTypeOption } from "@/features/inquiry-assistant/summary";
+import {
+  buildContextualFollowUpQuestion,
+  buildInquirySummary,
+  combineInquiryDescription,
+  getSubmissionSuccessText,
+  resolveInquiryTypeOption,
+} from "@/features/inquiry-assistant/summary";
 
 type MarketCode = "de" | "us";
 
@@ -93,7 +99,7 @@ export default function InquiryAssistantClient({
         [field]: event.target.value,
       }));
     };
-  const [step, setStep] = useState<"description" | "type" | "follow_up" | "contact" | "summary">("description");
+  const [step, setStep] = useState<"description" | "type" | "follow_up" | "contact" | "summary" | "success">("description");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [assistantUnavailable, setAssistantUnavailable] = useState(false);
@@ -129,6 +135,7 @@ export default function InquiryAssistantClient({
 
   const validInquiryTypeOptions = inquiryTypeOptions.length > 0 ? inquiryTypeOptions : [fallbackInquiryType];
   const lockedInquiryType = resolveInquiryTypeOption(inquiryType, validInquiryTypeOptions, fallbackInquiryType);
+  const successText = getSubmissionSuccessText(market);
   const summaryText = buildInquirySummary({
     firstName,
     lastName,
@@ -200,6 +207,10 @@ export default function InquiryAssistantClient({
   };
 
   const handleSend = async () => {
+    if (pending || step === "success") {
+      return;
+    }
+
     const nextDraft = draft.trim();
     if (!nextDraft && step !== "summary") {
       setErrorText(copy.genericError);
@@ -236,6 +247,11 @@ export default function InquiryAssistantClient({
           return;
         }
 
+        const contextualQuestion = buildContextualFollowUpQuestion({
+          description: nextDraft,
+          market,
+        });
+
         setDescription(nextDraft);
         setMessages((prev) => [
           ...prev,
@@ -248,8 +264,7 @@ export default function InquiryAssistantClient({
           payload.options && payload.options.length > 0 ? payload.options : validInquiryTypeOptions,
           fallbackInquiryType,
         );
-        const questionText = payload.question ?? copy.typeQuestion;
-        setFollowUpQuestion(payload.requiresTypeSelection ? "" : questionText);
+        setFollowUpQuestion(contextualQuestion);
 
         if (payload.suggestedInquiryType) {
           setInquiryType(resolvedType);
@@ -281,9 +296,10 @@ export default function InquiryAssistantClient({
         setSuggestions([]);
         setStep("follow_up");
         pushAssistantMessage(
-          followUpQuestion || (market === "us"
-            ? "Understood. Can you briefly describe what is failing?"
-            : "Verstanden. Können Sie kurz beschreiben, was genau nicht funktioniert?"),
+          followUpQuestion || buildContextualFollowUpQuestion({
+            description,
+            market,
+          }),
         );
         return;
       }
@@ -329,12 +345,9 @@ export default function InquiryAssistantClient({
           return;
         }
 
-        setMessages((prev) => [
-          ...prev,
-          { id: `assistant-${Date.now() + 2}`, role: "assistant", content: market === "us" ? "Thanks! Your request has been sent." : "Vielen Dank! Ihre Anfrage wurde gesendet." },
-        ]);
         setDraft("");
-        setFormSuccess(market === "us" ? "Thanks! Your request has been sent." : "Vielen Dank! Ihre Anfrage wurde gesendet.");
+        setFormSuccess("");
+        setStep("success");
         return;
       }
     } catch {
@@ -429,9 +442,9 @@ export default function InquiryAssistantClient({
               </div>
             ) : null}
 
-            {formSuccess ? (
-              <div style={{ padding: 10, borderRadius: 12, background: "rgba(46,204,113,0.12)", border: "1px solid rgba(46,204,113,0.32)", color: "var(--text)" }}>
-                {formSuccess}
+            {step === "success" ? (
+              <div role="status" aria-live="polite" style={{ padding: 12, borderRadius: 12, background: "rgba(46,204,113,0.12)", border: "1px solid rgba(46,204,113,0.32)", color: "var(--text)" }}>
+                {successText}
               </div>
             ) : null}
 
@@ -444,10 +457,10 @@ export default function InquiryAssistantClient({
 
               {step === "summary" ? (
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button type="button" onClick={() => void handleSend()} style={{ padding: "14px 18px", background: "var(--gold)", color: "#101010", borderRadius: 12, border: "none", fontWeight: 700, cursor: "pointer" }}>
-                    {copy.send}
+                  <button type="button" onClick={() => void handleSend()} disabled={pending} style={{ padding: "14px 18px", background: pending ? "rgba(212,175,55,0.5)" : "var(--gold)", color: "#101010", borderRadius: 12, border: "none", fontWeight: 700, cursor: pending ? "not-allowed" : "pointer" }}>
+                    {pending ? (market === "us" ? "Sending..." : "Senden...") : copy.send}
                   </button>
-                  <button type="button" onClick={() => setStep("contact")} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", color: "var(--text)", borderRadius: 12, border: "1px solid var(--border)", cursor: "pointer" }}>
+                  <button type="button" onClick={() => setStep("contact")} disabled={pending} style={{ padding: "14px 18px", background: "rgba(255,255,255,0.03)", color: "var(--text)", borderRadius: 12, border: "1px solid var(--border)", cursor: pending ? "not-allowed" : "pointer" }}>
                     {copy.change}
                   </button>
                 </div>
@@ -482,7 +495,7 @@ export default function InquiryAssistantClient({
                     {copy.next}
                   </button>
                 </div>
-              ) : (
+              ) : step === "success" ? null : (
                 <div style={{ display: "grid", gap: 10 }}>
                   <label htmlFor="assistant-input" style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", border: 0 }}>{activePrompt}</label>
                   <textarea id="assistant-input" aria-label={activePrompt} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={copy.descriptionPlaceholder} rows={step === "description" ? 4 : 2} style={{ width: "100%", minHeight: step === "description" ? 120 : 52, borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", padding: 14, resize: "vertical" }} />

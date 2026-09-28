@@ -8,8 +8,10 @@ import {
   validatePublicInquiryInput,
 } from "@/features/inquiry-assistant/service";
 import {
+  buildContextualFollowUpQuestion,
   buildInquirySummary,
   combineInquiryDescription,
+  getSubmissionSuccessText,
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
 
@@ -244,6 +246,20 @@ describe("inquiry assistant service", () => {
     expect(summary).toContain("+49 176");
     expect(summary).toContain("max@example.com");
     expect(summary).not.toContain("Allgemeine Anfrage");
+  });
+
+  it("keeps the heating contextual follow-up after a manual type-selection step", () => {
+    const originalDescription = "Meine Heizung funktioniert seit heute Morgen nicht mehr.";
+    const followUp = buildContextualFollowUpQuestion({ description: originalDescription, market: "de" });
+
+    expect(followUp).toContain("Heizung");
+    expect(followUp).toContain("Fehlermeldung");
+    expect(followUp).not.toContain("Welche Art von Anfrage");
+  });
+
+  it("uses the final DE and US success copy exactly once for the terminal success state", () => {
+    expect(getSubmissionSuccessText("de")).toBe("Vielen Dank! Ihre Anfrage wurde erfolgreich gesendet.");
+    expect(getSubmissionSuccessText("us")).toBe("Thanks! Your request has been sent successfully.");
   });
 
   it("uses deterministic type selection copy for ambiguous multi-type flow and allows only valid option values", async () => {
