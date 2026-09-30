@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getSafePostLoginPath } from "@/features/auth/redirects";
+import { getDefaultPostLoginPath, getSafePostLoginPath } from "@/features/auth/redirects";
 import { createSupabaseMiddlewareClient } from "@/shared/lib/supabase/middleware";
 
 const protectedRoutePrefixes = ["/dashboard", "/onboarding", "/operator"];
@@ -26,7 +26,8 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/login" && user) {
     const nextPath = getSafePostLoginPath(request.nextUrl.searchParams.get("next"));
     const destinationUrl = request.nextUrl.clone();
-    destinationUrl.pathname = nextPath ?? "/dashboard";
+    const destination = nextPath?.startsWith("/operator") ? nextPath : getDefaultPostLoginPath(user);
+    destinationUrl.pathname = destination;
     destinationUrl.search = "";
 
     return NextResponse.redirect(destinationUrl);

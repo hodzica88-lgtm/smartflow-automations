@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { loginAction } from "@/features/auth/actions";
-import { getSafePostLoginPath } from "@/features/auth/redirects";
+import { getDefaultPostLoginPath, getSafePostLoginPath } from "@/features/auth/redirects";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
@@ -30,7 +30,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect(nextPath ?? "/dashboard");
+    const destination = nextPath?.startsWith("/operator") ? nextPath : getDefaultPostLoginPath(user);
+    redirect(destination);
   }
 
   return (

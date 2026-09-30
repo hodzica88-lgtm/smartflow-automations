@@ -8,6 +8,7 @@ import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { normalizeGrowthSource } from "@/features/analytics/growth";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
+import { getDefaultPostLoginPath, isOperatorUser } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
@@ -160,6 +161,10 @@ export const completeOnboardingAction = async (formData: FormData) => {
     await ensureUserProfile(user);
   } catch {
     redirectWithError(onboardingCopy.errors.profilePreparationFailed);
+  }
+
+  if (isOperatorUser(user)) {
+    redirect(getDefaultPostLoginPath(user));
   }
 
   const existingCompany = await getUserCompanyState(user.id, { allowMember: true });

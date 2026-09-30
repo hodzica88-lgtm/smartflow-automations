@@ -1,11 +1,18 @@
 import Link from "next/link";
 
-import { GROWTH_SOURCES } from "@/features/analytics/growth";
+import {
+  GROWTH_SOURCES,
+  getGrowthMonthOptions,
+  getGrowthMonthRange,
+  getMonthKeyInBerlin,
+} from "@/features/analytics/growth";
 import { logoutAction } from "@/features/auth/actions";
 import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { requireOperatorUser } from "@/features/operator/access";
-import { getOwnerControlCenterData } from "@/features/operator/data";
+import { listOwnerBusinessNotifications } from "@/features/notifications/service";
+import { getOwnerControlCenterData, getOwnerGrowthMonthData } from "@/features/operator/data";
 import { getRequestMarket } from "@/shared/i18n/request";
+import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
 import styles from "./owner.module.css";
 
@@ -33,11 +40,23 @@ const formatTimestamp = (value: string | null, locale: "de-DE" | "en-US") => {
   }
 };
 
-export default async function OwnerControlCenterPage() {
+export default async function OwnerControlCenterPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { market } = await getRequestMarket();
   const locale = market === "us" ? "en-US" : "de-DE";
   const operator = await requireOperatorUser({ nextPath: "/operator/owner" });
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const selectedMonth = typeof resolvedSearchParams?.month === "string" && /^\d{4}-\d{2}$/.test(resolvedSearchParams.month)
+    ? resolvedSearchParams.month
+    : getMonthKeyInBerlin(new Date());
+  const monthRange = getGrowthMonthRange(selectedMonth);
+  const monthOptions = getGrowthMonthOptions();
+  const growthReport = await getOwnerGrowthMonthData(selectedMonth);
   const data = await getOwnerControlCenterData();
+  const recentNotifications = await listOwnerBusinessNotifications(5);
 
   const warnings = data.warnings.length > 0 ? data.warnings : [market === "us" ? "No current warnings." : "Aktuell keine Warnungen."];
   const sourceLabels: Record<(typeof GROWTH_SOURCES)[number], string> = {
@@ -52,27 +71,27 @@ export default async function OwnerControlCenterPage() {
 
   return (
     <main className={styles.shell}>
-      <section className={styles.header} aria-labelledby="owner-control-center-title">
+      <section className={styles.header} aria-labelledby="owner-dashboard-title">
         <div className={styles.topRow}>
           <div>
-            <p className={styles.eyebrow}>{market === "us" ? "Owner desktop" : "Owner Desktop"}</p>
-            <h1 className={styles.title} id="owner-control-center-title">Varnito Control Center</h1>
+            <VarnitoLogo href="/operator/owner" subtitle={market === "us" ? "Dashboard" : "Dashboard"} />
+            <h1 className={styles.title} id="owner-dashboard-title">Dashboard</h1>
             <p className={styles.copy}>
               {market === "us"
-                ? "One compact owner view for recurring revenue, company health, queue risk, and platform status."
-                : "Eine kompakte Owner-Ansicht für wiederkehrende Umsätze, Firmenzustand, Queue-Risiken und Plattformstatus."}
+                ? "One compact view for recurring revenue, growth, customer health, and platform status."
+                : "Eine kompakte Übersicht für wiederkehrende Umsätze, Wachstum, Kundenstatus und Plattformzustand."}
             </p>
             <p className={styles.muted}>{operator.email ?? operator.id}</p>
           </div>
-          <div className={styles.actions}>
-            <Link className={styles.linkButton} href="/operator">Operator</Link>
-            <Link className={styles.linkButton} href="/dashboard">Dashboard</Link>
+          <nav className={styles.actions} aria-label={market === "us" ? "Owner navigation" : "Owner-Navigation"}>
+            <Link className={styles.linkButton} href="/operator/owner">Dashboard</Link>
+            <Link className={styles.linkButton} href="/operator/notifications">{market === "us" ? "Notifications" : "Benachrichtigungen"}</Link>
             <form action={logoutAction}>
               <button className="premium-button" type="submit">
                 {market === "us" ? "Log out" : "Abmelden"}
               </button>
             </form>
-          </div>
+          </nav>
         </div>
 
         <OwnerInstallPrompt
@@ -117,14 +136,25 @@ export default async function OwnerControlCenterPage() {
           <p className={styles.metricValue}>{data.newCompaniesLast7d}</p>
         </article>
         <article className={`${styles.panel} ${styles.span4}`}>
-          <p className={styles.metricLabel}>Analytics DE</p>
-          <p className={styles.metricValue}>{data.analytics.de30d}</p>
-          <p className={styles.statusMeta}>{market === "us" ? "30-day events" : "30-Tage-Events"} · 7d: {data.analytics.de7d}</p>
+          <p className={styles.metricLabel}>{market === "us" ? "Visits DE" : "Besuche DE"}</p>
+          <p className={styles.metricValue}>{growthReport.summary.sources.g2.visitors + growthReport.summary.sources.direct.visitors + growthReport.summary.sources.producthunt.visitors + growthReport.summary.sources.other.visitors + growthReport.summary.sources.google.visitors + growthReport.summary.sources.saasworthy.visitors + growthReport.summary.sources.sourceforge.visitors}</p>
+          <p className={styles.statusMeta}>{monthRange.monthKey} · {market === "us" ? "selected month" : "gewählter Monat"}</p>
         </article>
         <article className={`${styles.panel} ${styles.span4}`}>
-          <p className={styles.metricLabel}>Analytics US</p>
-          <p className={styles.metricValue}>{data.analytics.us30d}</p>
-          <p className={styles.statusMeta}>{market === "us" ? "30-day events" : "30-Tage-Events"} · 7d: {data.analytics.us7d}</p>
+          <p className={styles.metricLabel}>{market === "us" ? "Visits US" : "Besuche US"}</p>
+          <p className={styles.metricValue}>{growthReport.summary.visitors}</p>
+          <p className={styles.statusMeta}>{monthRange.monthKey} · {market === "us" ? "selected month" : "gewählter Monat"}</p>
+        </article>
+
+        <article className={`${styles.panel} ${styles.span4}`}>
+          <div className={styles.monthSelectorRow}>
+            <span className={styles.metricLabel}>{market === "us" ? "Growth month" : "Wachstumsmonat"}</span>
+            <div className={styles.monthButtons}>
+              <a className={styles.linkButton} href={`/operator/owner?month=${encodeURIComponent(monthOptions[Math.max(0, monthOptions.indexOf(selectedMonth) - 1)] ?? selectedMonth)}`} aria-label={market === "us" ? "Previous month" : "Vorheriger Monat"}>‹</a>
+              <span className={styles.monthLabel}>{monthRange.monthKey === "2026-09" ? "September 2026" : monthRange.monthKey}</span>
+              <a className={styles.linkButton} href={`/operator/owner?month=${encodeURIComponent(monthOptions[Math.min(monthOptions.length - 1, monthOptions.indexOf(selectedMonth) + 1)] ?? selectedMonth)}`} aria-label={market === "us" ? "Next month" : "Nächster Monat"}>›</a>
+            </div>
+          </div>
         </article>
 
         <article className={`${styles.panel} ${styles.span6}`}>
@@ -132,27 +162,31 @@ export default async function OwnerControlCenterPage() {
           <div className={styles.summaryGrid}>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Visits" : "Besuche"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.visitors}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.visitors}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.visitors - growthReport.previousSummary.visitors} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Demos" : "Demos"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.demoOpened}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.demoOpened}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.demoOpened - growthReport.previousSummary.demoOpened} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Trials" : "Tests"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.trialsStarted}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.trialsStarted}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.trialsStarted - growthReport.previousSummary.trialsStarted} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Paying" : "Bezahlend"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.payingCustomers}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.payingCustomers}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.payingCustomers - growthReport.previousSummary.payingCustomers} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Trial cancels" : "Testabbrüche"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.trialCancellations}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.trialCancellations}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Subs cancels" : "Abo-Abbrüche"}</p>
-              <p className={styles.metricValueSmall}>{data.growth.subscriptionCancellations}</p>
+              <p className={styles.metricValueSmall}>{growthReport.summary.subscriptionCancellations}</p>
             </div>
           </div>
         </article>
@@ -161,7 +195,7 @@ export default async function OwnerControlCenterPage() {
           <h2 className={styles.sectionTitle}>{market === "us" ? "Source mix" : "Quellenmix"}</h2>
           <div className={styles.sourceList}>
             {GROWTH_SOURCES.map((source) => {
-              const summary = data.growth.sources[source];
+              const summary = growthReport.summary.sources[source];
               return (
                 <div key={source} className={styles.sourceRow}>
                   <div className={styles.sourceMeta}>
@@ -214,7 +248,34 @@ export default async function OwnerControlCenterPage() {
           </div>
         </article>
 
-        <article className={`${styles.panel} ${styles.span12}`}>
+        <article className={`${styles.panel} ${styles.span12}`} id="recent-notifications">
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>{market === "us" ? "Recent Notifications" : "Aktuelle Benachrichtigungen"}</h2>
+            <Link className={styles.linkButton} href="/operator/notifications">
+              {market === "us" ? "View all notifications" : "Alle Benachrichtigungen anzeigen"}
+            </Link>
+          </div>
+          {recentNotifications.length === 0 ? (
+            <p className={styles.muted}>{market === "us" ? "No recent business notifications." : "Keine aktuellen Geschäftsbemerkungen."}</p>
+          ) : (
+            <div className={styles.notificationList}>
+              {recentNotifications.map((notification) => (
+                <div key={notification.id} className={`${styles.notificationItem} ${notification.is_read ? styles.notificationRead : styles.notificationUnread}`}>
+                  <div className={styles.notificationHeader}>
+                    <strong>{notification.title}</strong>
+                    <span className={styles.notificationStatus}>{notification.is_read ? (market === "us" ? "Read" : "Gelesen") : (market === "us" ? "Unread" : "Ungelesen")}</span>
+                  </div>
+                  <p className={styles.notificationBody}>{notification.message}</p>
+                  <div className={styles.notificationMeta}>
+                    <span>{new Date(notification.created_at).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <article className={`${styles.panel} ${styles.span12}`} id="notifications">
           <h2 className={styles.sectionTitle}>{market === "us" ? "Current warnings" : "Aktuelle Warnungen"}</h2>
           <ul className={styles.list}>
             {warnings.map((warning) => (

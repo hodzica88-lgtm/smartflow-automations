@@ -129,10 +129,6 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
           <strong>{metrics.activeCompanies}</strong>
         </article>
         <article className={styles.metricCard}>
-          <p>{copy.metrics.totalUsers}</p>
-          <strong>{metrics.totalUsers}</strong>
-        </article>
-        <article className={styles.metricCard}>
           <p>{copy.metrics.leadsLast30d}</p>
           <strong>{metrics.leadsLast30d}</strong>
         </article>
@@ -279,8 +275,8 @@ export default async function OperatorPage({ searchParams }: OperatorPageProps) 
 
         {filteredCompanies.length === 0 ? (
           <div className={styles.emptyState}>
-            <h3>Noch keine Unternehmen</h3>
-            <p>Sobald sich ein Kunde registriert, erscheint er hier.</p>
+            <h3>{market === "us" ? "No customer companies yet" : "Noch keine echten Kundenunternehmen."}</h3>
+            <p>{market === "us" ? "As soon as a real customer signs up, it will appear here." : "Sobald ein echtes Kundenunternehmen registriert wird, erscheint es hier."}</p>
           </div>
         ) : (
           <div className={styles.tableWrapper}>

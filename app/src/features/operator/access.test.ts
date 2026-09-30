@@ -36,6 +36,7 @@ vi.mock("@/shared/lib/supabase/server", () => ({
   })),
 }));
 
+const { getDefaultPostLoginPath, isOperatorUser } = await import("@/features/auth/redirects");
 const { requireOperatorUser } = await import("@/features/operator/access");
 
 describe("requireOperatorUser", () => {
@@ -44,7 +45,7 @@ describe("requireOperatorUser", () => {
     state.operatorUserEmails = [];
     state.operatorUserIds = [];
 
-    await expect(requireOperatorUser()).rejects.toThrow("REDIRECT:/login?next=%2Foperator");
+    await expect(requireOperatorUser()).rejects.toThrow("REDIRECT:/login?next=%2Foperator%2Fowner");
   });
 
   it("allows configured operator id", async () => {
@@ -77,5 +78,14 @@ describe("requireOperatorUser", () => {
     state.operatorUserEmails = [];
 
     await expect(requireOperatorUser()).rejects.toThrow("NOT_FOUND");
+  });
+
+  it("routes authenticated operators to the owner dashboard by default", () => {
+    state.user = { id: "operator-id", email: "ops@example.com" };
+    state.operatorUserIds = ["operator-id"];
+    state.operatorUserEmails = [];
+
+    expect(isOperatorUser(state.user)).toBe(true);
+    expect(getDefaultPostLoginPath(state.user)).toBe("/operator/owner");
   });
 });

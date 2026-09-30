@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
 import { ensureUserProfile } from "@/features/auth/profile";
-import { getSafePostLoginPath } from "@/features/auth/redirects";
+import { getSafePostLoginPath, isOperatorUser } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
@@ -110,6 +110,10 @@ export const loginAction = async (formData: FormData) => {
       authCopy.errors.loginProfilePreparationFailed,
       nextPath,
     );
+  }
+
+  if (isOperatorUser(user)) {
+    redirect(nextPath?.startsWith("/operator") ? nextPath : "/operator/owner");
   }
 
   if (nextPath?.startsWith("/operator")) {

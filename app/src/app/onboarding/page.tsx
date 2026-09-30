@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { getDefaultPostLoginPath, isOperatorUser } from "@/features/auth/redirects";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { completeOnboardingAction } from "@/features/onboarding/actions";
 import { INDUSTRY_OPTIONS } from "@/shared/config/inquiryTypes";
@@ -33,6 +34,10 @@ export default async function OnboardingPage({
   }
 
   const companyState = await getUserCompanyState(user.id, { allowMember: true });
+
+  if (user && isOperatorUser(user)) {
+    redirect(getDefaultPostLoginPath(user));
+  }
 
   if (companyState.companyId) {
     redirect(companyState.isOwner ? "/dashboard" : "/dashboard/leads");

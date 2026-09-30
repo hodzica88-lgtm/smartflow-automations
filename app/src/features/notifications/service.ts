@@ -1,3 +1,4 @@
+import { isVisibleOwnerBusinessNotification } from "@/features/operator/internal-company";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export const APP_NOTIFICATION_TYPES = [
@@ -93,6 +94,43 @@ export const listCompanyNotifications = async (companyId: string, limit = 50) =>
     read_at: row.read_at ? String(row.read_at) : null,
     created_at: String(row.created_at),
   })) as AppNotification[];
+};
+
+export const listOwnerBusinessNotifications = async (limit = 20) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("app_notifications")
+    .select("id, company_id, actor_user_id, type, title, message, metadata, is_read, read_at, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit * 6);
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map((row) => ({
+      id: String(row.id),
+      company_id: row.company_id ? String(row.company_id) : "",
+      actor_user_id: row.actor_user_id ? String(row.actor_user_id) : null,
+      type: toNotificationType(String(row.type)),
+      title: String(row.title),
+      message: String(row.message),
+      metadata: (row.metadata as Record<string, unknown>) ?? {},
+      is_read: Boolean(row.is_read),
+      read_at: row.read_at ? String(row.read_at) : null,
+      created_at: String(row.created_at),
+    }))
+    .filter((entry) => isVisibleOwnerBusinessNotification({
+      company_id: entry.company_id || null,
+      created_at: entry.created_at,
+    }))
+    .slice(0, limit) as AppNotification[];
+};
+
+export const getOwnerBusinessNotificationCount = async () => {
+  const notifications = await listOwnerBusinessNotifications(200);
+  return notifications.length;
 };
 
 export const getCompanyUnreadNotificationCount = async (companyId: string) => {

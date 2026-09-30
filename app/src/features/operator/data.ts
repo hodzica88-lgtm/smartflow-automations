@@ -1,4 +1,15 @@
-import { buildGrowthSummary, type GrowthSummary } from "@/features/analytics/growth";
+import {
+  buildGrowthSummary,
+  GROWTH_ANALYTICS_V1_START_AT,
+  getGrowthMonthRange,
+  getMonthKeyInBerlin,
+  type GrowthSummary,
+} from "@/features/analytics/growth";
+import {
+  filterExternalBusinessCompany,
+  INTERNAL_OWNER_COMPANY_ID,
+  isInternalOwnerCompany,
+} from "@/features/operator/internal-company";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export type OperatorCompany = {
@@ -350,19 +361,27 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
     supabase
       .from("operator_company_overview")
       .select("*")
+      .neq("id", INTERNAL_OWNER_COMPANY_ID)
       .order("created_at", { ascending: false })
       .limit(100),
     readCount(
       supabase
         .from("companies")
         .select("id", { count: "exact", head: true })
+        .neq("id", INTERNAL_OWNER_COMPANY_ID)
         .is("deleted_at", null),
     ),
-    readCount(supabase.from("users").select("id", { count: "exact", head: true })),
+    readCount(
+      supabase
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .neq("default_company_id", INTERNAL_OWNER_COMPANY_ID),
+    ),
     readCount(
       supabase
         .from("leads")
         .select("id", { count: "exact", head: true })
+        .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
         .is("deleted_at", null)
         .gte("created_at", last30Days),
     ),
@@ -370,6 +389,7 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
       supabase
         .from("notification_queue")
         .select("id", { count: "exact", head: true })
+        .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
         .eq("status", "failed")
         .gte("updated_at", last24Hours),
     ),
@@ -377,6 +397,7 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
       supabase
         .from("notification_queue")
         .select("id", { count: "exact", head: true })
+        .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
         .eq("status", "pending")
         .lte("scheduled_for", nowIso),
     ),
@@ -384,6 +405,7 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
       supabase
         .from("notification_queue")
         .select("id", { count: "exact", head: true })
+        .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
         .eq("status", "processing")
         .lte("processing_started_at", staleBefore),
     ),
@@ -438,11 +460,13 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
     ),
     supabase
       .from("subscriptions")
-      .select("company_id, status, trial_ends_at, cancel_at_period_end"),
+      .select("company_id, status, trial_ends_at, cancel_at_period_end")
+      .neq("company_id", INTERNAL_OWNER_COMPANY_ID),
     supabase
       .from("analytics_events")
       .select("company_id, market, occurred_at")
       .not("company_id", "is", null)
+      .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
       .order("occurred_at", { ascending: false })
       .limit(5000),
   ]);
@@ -474,24 +498,26 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
     subscriptions.map((subscription) => [subscription.company_id, subscription]),
   );
 
-  const companies = ((companyOverviewResult.data ?? []) as RawCompanyOverview[]).map((entry) => {
-    const overview = mapCompanyOverview(entry);
-    const market = getMarketForCompany(overview.id, latestCompanyMarkets);
-    const subscription = subscriptionsByCompanyId.get(overview.id);
+  const companies = ((companyOverviewResult.data ?? []) as RawCompanyOverview[])
+    .filter((entry) => filterExternalBusinessCompany(entry.id))
+    .map((entry) => {
+      const overview = mapCompanyOverview(entry);
+      const market = getMarketForCompany(overview.id, latestCompanyMarkets);
+      const subscription = subscriptionsByCompanyId.get(overview.id);
 
-    const estimatedMrr =
-      (overview.subscriptionStatus === "active" || overview.subscriptionStatus === "trialing") &&
-      market !== "unknown"
-        ? ESTIMATED_MONTHLY_MRR_BY_MARKET[market]
-        : 0;
+      const estimatedMrr =
+        (overview.subscriptionStatus === "active" || overview.subscriptionStatus === "trialing") &&
+        market !== "unknown"
+          ? ESTIMATED_MONTHLY_MRR_BY_MARKET[market]
+          : 0;
 
-    return {
-      ...overview,
-      market,
-      trialEndsAt: subscription?.trial_ends_at ?? null,
-      estimatedMrr,
-    };
-  });
+      return {
+        ...overview,
+        market,
+        trialEndsAt: subscription?.trial_ends_at ?? null,
+        estimatedMrr,
+      };
+    });
 
   const companiesNeedingAttention = companies.filter(
     (company) =>
@@ -500,17 +526,18 @@ export const getOperatorDashboardData = async (): Promise<OperatorDashboardData>
   ).length;
 
   const activeSubscriptions = subscriptions.filter(
-    (subscription) => subscription.status === "active",
+    (subscription) => filterExternalBusinessCompany(subscription.company_id) && subscription.status === "active",
   ).length;
   const trialingSubscriptions = subscriptions.filter(
-    (subscription) => subscription.status === "trialing",
+    (subscription) => filterExternalBusinessCompany(subscription.company_id) && subscription.status === "trialing",
   ).length;
   const paymentRiskSubscriptions = subscriptions.filter(
     (subscription) =>
-      subscription.status === "past_due" || subscription.status === "unpaid",
+      filterExternalBusinessCompany(subscription.company_id) &&
+      (subscription.status === "past_due" || subscription.status === "unpaid"),
   ).length;
   const scheduledCancellationSubscriptions = subscriptions.filter(
-    (subscription) => subscription.cancel_at_period_end === true,
+    (subscription) => filterExternalBusinessCompany(subscription.company_id) && subscription.cancel_at_period_end === true,
   ).length;
 
   const estimatedMrrEur = companies
@@ -776,6 +803,47 @@ export const getOperatorCompanyDetailData = async (
   };
 };
 
+export const getOwnerGrowthMonthData = async (monthKey?: string) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const selectedMonthKey = monthKey ?? getMonthKeyInBerlin(new Date());
+  const currentRange = getGrowthMonthRange(selectedMonthKey);
+  const previousRange = currentRange.previousMonthKey ? getGrowthMonthRange(currentRange.previousMonthKey) : null;
+
+  const { data: growthEventsResult, error: growthEventsError } = await supabase
+    .from("analytics_events")
+    .select("event_name, metadata, occurred_at, company_id")
+    .in("event_name", [
+      "visitor",
+      "landing_view",
+      "demo_opened",
+      "demo_entry",
+      "trial_started",
+      "trial_cancelled",
+      "paid_customer",
+      "subscription_cancelled",
+    ])
+    .gte("occurred_at", GROWTH_ANALYTICS_V1_START_AT)
+    .order("occurred_at", { ascending: true });
+
+  if (growthEventsError) {
+    throw growthEventsError;
+  }
+
+  const events = ((growthEventsResult ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null; occurred_at?: string | null; company_id?: string | null }>).filter(
+    (event) => !isInternalOwnerCompany(event.company_id ?? null),
+  );
+
+  return {
+    monthKey: selectedMonthKey,
+    monthRange: currentRange,
+    previousMonthRange: previousRange,
+    summary: buildGrowthSummary(events, { startAt: currentRange.start, endAt: currentRange.end }),
+    previousSummary: previousRange
+      ? buildGrowthSummary(events, { startAt: previousRange.start, endAt: previousRange.end })
+      : null,
+  };
+};
+
 export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterData> => {
   const supabase = createSupabaseServiceRoleClient();
   const now = new Date();
@@ -788,19 +856,21 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
       supabase
         .from("companies")
         .select("id", { count: "exact", head: true })
+        .neq("id", INTERNAL_OWNER_COMPANY_ID)
         .is("deleted_at", null)
         .gte("created_at", last7Days),
     ),
     supabase
       .from("notification_queue")
       .select("id, company_id, error_message, updated_at")
+      .neq("company_id", INTERNAL_OWNER_COMPANY_ID)
       .eq("status", "failed")
       .gte("updated_at", last24Hours)
       .order("updated_at", { ascending: false })
       .limit(5),
     supabase
       .from("analytics_events")
-      .select("event_name, metadata")
+      .select("event_name, metadata, company_id")
       .in("event_name", [
         "visitor",
         "landing_view",
@@ -838,7 +908,13 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
   ].filter((entry): entry is string => Boolean(entry));
 
   const growth = buildGrowthSummary(
-    ((growthEventsResult.data ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null }>) ?? [],
+    (((growthEventsResult.data ?? []) as Array<{
+      event_name?: string | null;
+      metadata?: Record<string, unknown> | null;
+      occurred_at?: string | null;
+      company_id?: string | null;
+    }>) ?? []).filter((event) => !isInternalOwnerCompany(event.company_id ?? null)),
+    { startAt: GROWTH_ANALYTICS_V1_START_AT },
   );
 
   return {
@@ -861,12 +937,14 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
     serverStatus: queue.stale > 0 ? "degraded" : "ok",
     healthStatus: queue.stale > 0 ? "degraded" : "ok",
     queue,
-    lastErrors: ((recentErrorsResult.data ?? []) as RawRecentQueueError[]).map((entry) => ({
-      id: entry.id,
-      companyId: entry.company_id,
-      message: entry.error_message?.trim() || "Unknown delivery error",
-      updatedAt: entry.updated_at,
-    })),
+    lastErrors: ((recentErrorsResult.data ?? []) as RawRecentQueueError[])
+      .filter((entry) => filterExternalBusinessCompany(entry.company_id))
+      .map((entry) => ({
+        id: entry.id,
+        companyId: entry.company_id,
+        message: entry.error_message?.trim() || "Unknown delivery error",
+        updatedAt: entry.updated_at,
+      })),
     lastBackup: {
       label: "Backup restore verification",
       checkedAt: "2026-07-23T00:00:00.000Z",
