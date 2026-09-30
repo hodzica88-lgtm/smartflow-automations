@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import {
   buildGrowthSummary,
   GROWTH_ANALYTICS_V1_START_AT,
@@ -11,6 +13,112 @@ import {
   isInternalOwnerCompany,
 } from "@/features/operator/internal-company";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+
+const BACKUP_STATUS_PATH = process.env.VARNITO_RUNTIME_BACKUP_STATUS_PATH ?? "/app/runtime/backup-status.json";
+const EXPECTED_BACKUP_INTERVAL_MS = 8 * 24 * 60 * 60 * 1000;
+
+export const parseBackupStatusFile = (raw: string | null): {
+  lastSuccessfulBackupAt: string | null;
+  version: string | null;
+} => {
+  if (!raw || !raw.trim()) {
+    return {
+      lastSuccessfulBackupAt: null,
+      version: null,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<{
+      lastSuccessfulBackupAt?: unknown;
+      version?: unknown;
+    }>;
+
+    const lastSuccessfulBackupAt = typeof parsed.lastSuccessfulBackupAt === "string"
+      ? parsed.lastSuccessfulBackupAt.trim() || null
+      : null;
+    const version = typeof parsed.version === "string"
+      ? parsed.version.trim() || null
+      : null;
+
+    return {
+      lastSuccessfulBackupAt: normalizeBackupTimestamp(lastSuccessfulBackupAt),
+      version,
+    };
+  } catch {
+    return {
+      lastSuccessfulBackupAt: null,
+      version: null,
+    };
+  }
+};
+
+export const normalizeBackupTimestamp = (value?: string | null): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const underscoreMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})$/);
+  if (underscoreMatch) {
+    const [, year, month, day, hour, minute, second] = underscoreMatch;
+    const iso = `${year}-${month}-${day}T${hour}:${minute}:${second}.000Z`;
+    const parsed = new Date(iso);
+    return Number.isNaN(parsed.getTime()) ? null : iso;
+  }
+
+  const dateOnlyMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    const iso = `${year}-${month}-${day}T00:00:00.000Z`;
+    const parsed = new Date(iso);
+    return Number.isNaN(parsed.getTime()) ? null : iso;
+  }
+
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+};
+
+export const deriveBackupStatus = (value?: string | null): "Aktuell" | "Überfällig" | "Unbekannt" => {
+  const normalized = normalizeBackupTimestamp(value);
+  if (!normalized) {
+    return "Unbekannt";
+  }
+
+  const timestamp = new Date(normalized);
+  if (Number.isNaN(timestamp.getTime())) {
+    return "Unbekannt";
+  }
+
+  const ageMs = Date.now() - timestamp.getTime();
+  return ageMs <= EXPECTED_BACKUP_INTERVAL_MS ? "Aktuell" : "Überfällig";
+};
+
+const readRuntimeBackupStatus = async (): Promise<{ lastSuccessfulBackupAt: string | null; version: string | null }> => {
+  try {
+    const raw = await readFile(BACKUP_STATUS_PATH, "utf8");
+    return parseBackupStatusFile(raw);
+  } catch {
+    return {
+      lastSuccessfulBackupAt: null,
+      version: null,
+    };
+  }
+};
+
+export const readOwnerBackupState = async () => {
+  const { lastSuccessfulBackupAt } = await readRuntimeBackupStatus();
+
+  return {
+    label: "Backup",
+    checkedAt: lastSuccessfulBackupAt,
+    status: deriveBackupStatus(lastSuccessfulBackupAt),
+  };
+};
 
 export type OperatorCompany = {
   id: string;
@@ -180,6 +288,7 @@ export type OwnerControlCenterData = {
   lastBackup: {
     label: string;
     checkedAt: string | null;
+    status: "Aktuell" | "Überfällig" | "Unbekannt";
   };
   warnings: string[];
 };
@@ -945,10 +1054,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
         message: entry.error_message?.trim() || "Unknown delivery error",
         updatedAt: entry.updated_at,
       })),
-    lastBackup: {
-      label: "Backup restore verification",
-      checkedAt: "2026-07-23T00:00:00.000Z",
-    },
+    lastBackup: await readOwnerBackupState(),
     warnings,
   };
 };

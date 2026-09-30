@@ -241,10 +241,15 @@ export default async function OwnerControlCenterPage({
         </article>
 
         <article className={`${styles.panel} ${styles.span4}`}>
-          <h2 className={styles.sectionTitle}>{market === "us" ? "Latest backup" : "Letzte Sicherung"}</h2>
+          <h2 className={styles.sectionTitle}>{market === "us" ? "Backup" : "Sicherung"}</h2>
+          <span className={data.lastBackup.status === "Aktuell" ? styles.badgeOk : styles.badgeWarn}>
+            {data.lastBackup.status}
+          </span>
           <div className={styles.statusRow}>
             <strong>{data.lastBackup.label}</strong>
-            <span className={styles.statusMeta}>{formatTimestamp(data.lastBackup.checkedAt, locale)}</span>
+            <span className={styles.statusMeta}>
+              {data.lastBackup.checkedAt ? formatTimestamp(data.lastBackup.checkedAt, locale) : (market === "us" ? "Unavailable" : "Unbekannt")}
+            </span>
           </div>
         </article>
 

@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import dashboardStyles from "@/app/operator/owner/owner.module.css";
 import { logoutAction } from "@/features/auth/actions";
 import {
   listOwnerBusinessNotifications,
@@ -68,128 +69,74 @@ export default async function OwnerNotificationsPage() {
   const items = await listOwnerBusinessNotifications(100);
 
   return (
-    <main style={{ padding: 24, maxWidth: 980, margin: "0 auto", display: "grid", gap: 18 }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
-          padding: "16px 18px",
-          border: "1px solid var(--border)",
-          borderRadius: 18,
-          background: "linear-gradient(155deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012))",
-          boxShadow: "var(--shadow-xl)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <Link href="/operator/owner" style={{ color: "var(--text)", textDecoration: "none", fontWeight: 900 }}>
-            Varnito
-          </Link>
-          <nav style={{ display: "flex", gap: 10, flexWrap: "wrap" }} aria-label="Owner navigation">
-            <Link href="/operator/owner" style={{ color: "var(--text)", textDecoration: "none", border: "1px solid var(--border)", borderRadius: 999, padding: "0.55rem 0.9rem", background: "rgba(255,255,255,0.02)" }}>
-              Dashboard
+    <main className={dashboardStyles.shell}>
+      <header className={`${dashboardStyles.header} ${dashboardStyles.notificationHeader}`}>
+        <div className={dashboardStyles.topRow}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <Link href="/operator/owner" className={dashboardStyles.linkButton}>
+              Varnito
             </Link>
-            <Link href="/operator/notifications" style={{ color: "var(--text)", textDecoration: "none", border: "1px solid var(--border)", borderRadius: 999, padding: "0.55rem 0.9rem", background: "rgba(255,255,255,0.02)" }}>
-              {copy.sectionLabel}
-            </Link>
-          </nav>
-        </div>
+            <nav className={dashboardStyles.actions} aria-label="Owner navigation">
+              <Link className={dashboardStyles.linkButton} href="/operator/owner">
+                Dashboard
+              </Link>
+              <Link className={dashboardStyles.linkButton} href="/operator/notifications">
+                {copy.sectionLabel}
+              </Link>
+            </nav>
+          </div>
 
-        <form action={logoutAction}>
-          <button type="submit" className="premium-button">
-            {market === "us" ? "Log out" : "Abmelden"}
-          </button>
-        </form>
+          <form action={logoutAction}>
+            <button type="submit" className="premium-button">
+              {market === "us" ? "Log out" : "Abmelden"}
+            </button>
+          </form>
+        </div>
       </header>
 
-      <section>
-        <p style={{ margin: 0, fontSize: 13, textTransform: "uppercase", letterSpacing: "0.08em", color: "#475569" }}>
-          {copy.sectionLabel}
-        </p>
-        <h1 style={{ margin: "6px 0", color: "#0f172a" }}>{copy.heading}</h1>
-        <p style={{ margin: 0, color: "#475569" }}>{copy.subheading}</p>
+      <section className={dashboardStyles.notificationIntro}>
+        <p className={dashboardStyles.eyebrow}>{copy.sectionLabel}</p>
+        <h1 className={dashboardStyles.notificationTitle}>{copy.heading}</h1>
+        <p className={dashboardStyles.notificationSubheading}>{copy.subheading}</p>
       </section>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+      <div className={dashboardStyles.notificationToolbar}>
         <form action={markOwnerAllNotificationsReadAction}>
-          <button
-            type="submit"
-            style={{
-              border: "1px solid #cbd5e1",
-              borderRadius: 8,
-              padding: "10px 12px",
-              background: "#1f2937",
-              color: "#f8fafc",
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
-          >
+          <button type="submit" className={`${dashboardStyles.linkButton} ${dashboardStyles.notificationActionButton}`}>
             {copy.markAllRead}
           </button>
         </form>
 
-        <Link
-          href="/operator/owner"
-          style={{
-            border: "1px solid #cbd5e1",
-            borderRadius: 8,
-            padding: "10px 12px",
-            textDecoration: "none",
-            color: "#0f172a",
-            background: "#f8fafc",
-            fontWeight: 700,
-          }}
-        >
+        <Link href="/operator/owner" className={`${dashboardStyles.linkButton} ${dashboardStyles.notificationActionButton}`}>
           {copy.backToDashboard}
         </Link>
       </div>
 
       {items.length === 0 ? (
-        <section style={{ border: "1px solid #dbe4ee", borderRadius: 12, padding: 20, background: "#f8fafc", color: "#0f172a" }}>
+        <section className={dashboardStyles.notificationEmptyState}>
           {copy.empty}
         </section>
       ) : (
-        <section style={{ display: "grid", gap: 12 }}>
+        <section className={dashboardStyles.notificationList}>
           {items.map((item) => (
             <article
               key={item.id}
-              style={{
-                border: `1px solid ${item.is_read ? "#dbe4ee" : "#fbbf24"}`,
-                borderRadius: 12,
-                padding: 14,
-                background: item.is_read ? "#f8fafc" : "#fff7ed",
-                boxShadow: item.is_read ? "none" : "0 0 0 1px rgba(251,191,36,0.2)",
-                display: "grid",
-                gap: 10,
-              }}
+              className={`${dashboardStyles.notificationCard} ${item.is_read ? "" : dashboardStyles.notificationCardUnread}`}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                <strong style={{ color: "#0f172a" }}>{item.title}</strong>
-                <span style={{ color: "#64748b", fontSize: 13 }}>{formatDateTimeByLocale(item.created_at, config.locale)}</span>
+              <div className={dashboardStyles.notificationHeaderRow}>
+                <strong className={dashboardStyles.notificationTitleText}>{item.title}</strong>
+                <span className={dashboardStyles.notificationTimestamp}>{formatDateTimeByLocale(item.created_at, config.locale)}</span>
               </div>
-              <p style={{ margin: 0, color: "#334155", lineHeight: 1.6 }}>{item.message}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ color: item.is_read ? "#475569" : "#7c2d12", fontWeight: 700, fontSize: 12 }}>
+              <p className={dashboardStyles.notificationBodyText}>{item.message}</p>
+              <div className={dashboardStyles.notificationFooterRow}>
+                <span className={`${dashboardStyles.notificationStatus} ${item.is_read ? dashboardStyles.notificationStatusRead : dashboardStyles.notificationStatusUnread}`}>
                   {item.is_read ? copy.read : copy.unread}
                 </span>
                 {!item.is_read ? (
                   <form action={markOwnerNotificationReadAction}>
                     <input type="hidden" name="notification_id" value={item.id} />
                     <input type="hidden" name="company_id" value={item.company_id} />
-                    <button
-                      type="submit"
-                      style={{
-                        border: "1px solid #cbd5e1",
-                        borderRadius: 8,
-                        padding: "8px 10px",
-                        background: "#0f172a",
-                        color: "#f8fafc",
-                        cursor: "pointer",
-                        fontWeight: 700,
-                      }}
-                    >
+                    <button type="submit" className={dashboardStyles.notificationPrimaryButton}>
                       {copy.markRead}
                     </button>
                   </form>

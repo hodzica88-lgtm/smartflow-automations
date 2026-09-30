@@ -21,6 +21,8 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+    volumes:
+      - /opt/anfragepilot/runtime:/app/runtime:ro
     healthcheck:
       test:
         [

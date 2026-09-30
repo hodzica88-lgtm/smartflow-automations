@@ -8,6 +8,8 @@ APP_DIR="${VARNITO_APP_DIR:-${PROJECT_ROOT}/app}"
 ENV_FILE="${VARNITO_ENV_FILE:-${APP_DIR}/.env.production}"
 DOCKER_IMAGE="${VARNITO_DOCKER_IMAGE:-anfragepilot-app:latest}"
 BACKUP_BASE_DIR="${VARNITO_BACKUP_BASE_DIR:-/home/varnitoadmin/backups/releases}"
+RUNTIME_STATUS_DIR="${VARNITO_RUNTIME_STATUS_DIR:-/opt/anfragepilot/runtime}"
+RUNTIME_STATUS_PATH="${VARNITO_RUNTIME_STATUS_PATH:-${RUNTIME_STATUS_DIR}/backup-status.json}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -310,6 +312,28 @@ validate_backup_outputs() {
   [[ -s "${info_file}" ]] || fail "release-info.txt missing or empty: ${info_file}"
 }
 
+write_runtime_backup_status() {
+  local successful_at="$1"
+  local version_value="$2"
+
+  mkdir -p -- "${RUNTIME_STATUS_DIR}"
+  chmod 755 "${RUNTIME_STATUS_DIR}"
+
+  local tmp_file
+  tmp_file="$(mktemp "${RUNTIME_STATUS_DIR}/.backup-status.XXXXXX.json")"
+
+  cat >"${tmp_file}" <<EOF
+{
+  "lastSuccessfulBackupAt": "${successful_at}",
+  "version": "${version_value}"
+}
+EOF
+
+  chmod 600 "${tmp_file}"
+  mv -f -- "${tmp_file}" "${RUNTIME_STATUS_PATH}"
+  chmod 600 "${RUNTIME_STATUS_PATH}"
+}
+
 print_summary() {
   local commit_sha="$1"
   local source_archive="$2"
@@ -454,6 +478,11 @@ main() {
 
   log "Validating backup integrity..."
   validate_backup_outputs "${source_archive}" "${docker_archive}" "${env_backup}" "${db_dump}" "${info_file}"
+
+  local runtime_success_at
+  runtime_success_at="$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")"
+  write_runtime_backup_status "${runtime_success_at}" "${VERSION}"
+  log "Updated runtime backup status: ${RUNTIME_STATUS_PATH}"
 
   print_summary "${commit_sha}" "${source_archive}" "${docker_archive}" "${env_backup}" "${db_dump}" "${info_file}"
 }

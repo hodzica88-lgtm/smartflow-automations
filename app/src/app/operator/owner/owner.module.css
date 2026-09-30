@@ -293,6 +293,129 @@
   gap: 0.75rem;
 }
 
+.notificationHeader {
+  width: min(100%, 68rem);
+}
+
+.notificationIntro {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.notificationTitle {
+  margin: 0;
+  font-size: clamp(2.3rem, 5vw, 3.5rem);
+  line-height: 1;
+  color: var(--text);
+}
+
+.notificationSubheading {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.notificationToolbar {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.notificationActionButton {
+  min-height: 46px;
+}
+
+.notificationEmptyState,
+.notificationCard {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: var(--shadow-xl);
+}
+
+.notificationEmptyState {
+  padding: 1rem 1.15rem;
+  color: var(--text);
+}
+
+.notificationList {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.notificationCard {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+}
+
+.notificationCardUnread {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.notificationHeaderRow,
+.notificationFooterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.notificationTitleText {
+  color: var(--text);
+}
+
+.notificationTimestamp,
+.notificationBodyText {
+  color: var(--muted);
+}
+
+.notificationBodyText {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.notificationStatus {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.notificationStatusRead {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--muted);
+}
+
+.notificationStatusUnread {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+}
+
+.notificationPrimaryButton {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.7rem 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
