@@ -1,5 +1,10 @@
+import { headers } from "next/headers";
 import Link from "next/link";
 
+import {
+  appendGrowthSourceToHref,
+  resolveGrowthSourceFromRequest,
+} from "@/features/analytics/growth";
 import DemoAssistants from "@/features/demo/DemoAssistants";
 import DemoBanner from "@/features/demo/DemoBanner";
 import { DemoProvider } from "@/features/demo/DemoProvider";
@@ -24,10 +29,20 @@ const linkStyle = {
   fontSize: 14,
 } as const;
 
-export default async function DemoLayout({ children }: { children: React.ReactNode }) {
-  const { market, config } = await getRequestMarket();
+export default async function DemoLayout({
+  children,
+  searchParams,
+}: {
+  children: React.ReactNode;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { market } = await getRequestMarket();
   const copy = getDemoCopy(market);
-  const registerHref = `${config.siteUrl}/registrierung`;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const headerStore = await headers();
+  const referrer = headerStore.get("referer");
+  const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams, referrer });
+  const registerHref = appendGrowthSourceToHref("/registrierung", source);
 
   return (
     <DemoProvider key={market} market={market}>

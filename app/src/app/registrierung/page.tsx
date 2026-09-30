@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import LegalFooter from "@/shared/ui/LegalFooter";
+import { appendGrowthSourceToHref, resolveGrowthSourceFromRequest } from "@/features/analytics/growth";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
@@ -17,9 +18,17 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-export default async function RegistrationPage() {
-  const { config, market } = await getRequestMarket();
+export default async function RegistrationPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { market } = await getRequestMarket();
   const copy = getMarketCopy(market).shared.auth;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams });
+  const loginHref = appendGrowthSourceToHref("/login?next=%2Fonboarding", source);
+  const homeHref = appendGrowthSourceToHref("/", source);
 
   return (
     <main style={{ maxWidth: 860, margin: "0 auto", padding: "48px 20px", display: "grid", gap: 24 }}>
@@ -35,10 +44,10 @@ export default async function RegistrationPage() {
       </section>
 
       <section style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <Link href={`${config.siteUrl}/login`} style={{ display: "inline-flex", minHeight: 48, alignItems: "center", justifyContent: "center", padding: "0 18px", borderRadius: 12, border: "1px solid var(--gold)", background: "var(--gold)", color: "#111", fontWeight: 700 }}>
+        <Link href={loginHref} style={{ display: "inline-flex", minHeight: 48, alignItems: "center", justifyContent: "center", padding: "0 18px", borderRadius: 12, border: "1px solid var(--gold)", background: "var(--gold)", color: "#111", fontWeight: 700 }}>
           {copy.registrationLoginCta}
         </Link>
-        <Link href={config.siteUrl} style={{ display: "inline-flex", minHeight: 48, alignItems: "center", justifyContent: "center", padding: "0 18px", borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontWeight: 700 }}>
+        <Link href={homeHref} style={{ display: "inline-flex", minHeight: 48, alignItems: "center", justifyContent: "center", padding: "0 18px", borderRadius: 12, border: "1px solid var(--border)", background: "rgba(255,255,255,0.03)", color: "var(--text)", fontWeight: 700 }}>
           {copy.registrationHomeCta}
         </Link>
       </section>

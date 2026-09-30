@@ -6,6 +6,7 @@ import { ensureUserProfile } from "@/features/auth/profile";
 import { recordCompanyAuditLog } from "@/features/audit-log/service";
 import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
+import { normalizeGrowthSource } from "@/features/analytics/growth";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getMarketCopy } from "@/shared/i18n/copy";
@@ -34,6 +35,49 @@ const redirectWithError = (message: string): never => {
 
 const isValidEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
 
+const persistAcquisitionAttribution = async ({
+  companyId,
+  source,
+  market,
+}: {
+  companyId: string;
+  source?: string | null;
+  market: "de" | "us";
+}) => {
+  const normalizedSource = normalizeGrowthSource(source ?? null);
+  const supabase = createSupabaseServiceRoleClient();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("analytics_events")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("event_name", "acquisition_attributed")
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  if (existing) {
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("analytics_events").insert({
+    event_name: "acquisition_attributed",
+    market,
+    company_id: companyId,
+    is_authenticated: true,
+    metadata: {
+      source: normalizedSource,
+    },
+  });
+
+  if (insertError) {
+    throw insertError;
+  }
+};
+
 const isValidWebsite = (website: string) => {
   if (!website) {
     return true;
@@ -60,6 +104,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
   const onboardingCopy = getMarketCopy(market).shared.auth;
   const trialStart = new Date();
   const trialEnd = new Date(trialStart.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const source = getStringValue(formData, "source") || getStringValue(formData, "utm_source");
   const companyName = getStringValue(formData, "companyName");
   const contactPerson = getStringValue(formData, "contactPerson");
   const email = getStringValue(formData, "email");
@@ -200,6 +245,12 @@ export const completeOnboardingAction = async (formData: FormData) => {
       throw profileError;
     }
 
+    await persistAcquisitionAttribution({
+      companyId,
+      source,
+      market,
+    });
+
     await recordCompanyAuditLog({
       companyId,
       actorUserId: user.id,
@@ -208,6 +259,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
       details: {
         companyName,
         industry,
+        acquisitionSource: normalizeGrowthSource(source ?? null),
       },
     });
   } catch {

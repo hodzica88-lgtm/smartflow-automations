@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import LegalFooter from "@/shared/ui/LegalFooter";
 import { SITE_NAME } from "@/shared/config/site";
-import { trackAnalyticsEvent } from "@/features/analytics/events";
+import {
+  appendGrowthSourceToHref,
+  resolveGrowthSourceFromRequest,
+  trackGrowthEvent,
+} from "@/features/analytics/growth";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
@@ -34,9 +39,20 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { market, config } = await getRequestMarket();
   const copy = getMarketCopy(config.code).landing;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const headerStore = await headers();
+  const referrer = headerStore.get("referer");
+  const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams, referrer });
+  const registrationHref = appendGrowthSourceToHref("/registrierung", source);
+  const demoHref = appendGrowthSourceToHref("/demo", source);
+  const loginHref = appendGrowthSourceToHref("/login", source);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -52,10 +68,13 @@ export default async function Home() {
     url: config.siteUrl,
   };
 
-  trackAnalyticsEvent({
-    eventName: "landing_view",
+  await trackGrowthEvent({
+    eventName: "visitor",
     market,
     isAuthenticated: false,
+    source,
+    searchParams: resolvedSearchParams,
+    referrer,
   });
 
   return (
@@ -67,13 +86,13 @@ export default async function Home() {
       <header className={styles.topBar}>
         <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
         <div className={styles.topActions}>
-          <Link className={styles.secondaryButton} href="/demo">
+          <Link className={styles.secondaryButton} href={demoHref}>
             {market === "us" ? "View demo" : "Demo ansehen"}
           </Link>
-          <Link className={styles.secondaryButton} href="/login">
+          <Link className={styles.secondaryButton} href={loginHref}>
             {market === "us" ? "Sign in" : "Anmelden"}
           </Link>
-          <Link className={styles.primaryButton} href="/registrierung">
+          <Link className={styles.primaryButton} href={registrationHref}>
             {copy.primaryCta}
           </Link>
         </div>
@@ -90,10 +109,10 @@ export default async function Home() {
           </p>
 
           <div className={styles.actions}>
-            <Link className={styles.primaryButton} href="/registrierung">
+            <Link className={styles.primaryButton} href={registrationHref}>
               {copy.primaryCta}
             </Link>
-            <Link className={styles.secondaryButton} href="/demo">
+            <Link className={styles.secondaryButton} href={demoHref}>
               {market === "us" ? "View demo" : "Demo ansehen"}
             </Link>
           </div>
@@ -106,7 +125,7 @@ export default async function Home() {
         </div>
 
         <div className={styles.actions}>
-          <Link className={styles.primaryButton} href="/demo">
+          <Link className={styles.primaryButton} href={demoHref}>
             {market === "us" ? "View demo" : "Demo ansehen"}
           </Link>
         </div>
@@ -146,7 +165,7 @@ export default async function Home() {
 
       <section className={styles.ctaBand} aria-label={market === "us" ? "Start your 30-day free trial" : "30 Tage kostenlos testen"}>
         <div className={styles.actions}>
-          <Link className={styles.primaryButton} href="/registrierung">
+          <Link className={styles.primaryButton} href={registrationHref}>
             {copy.primaryCta}
           </Link>
         </div>

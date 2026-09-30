@@ -13,6 +13,8 @@ import styles from "./onboarding.module.css";
 type OnboardingPageProps = {
   searchParams: Promise<{
     error?: string;
+    source?: string;
+    utm_source?: string;
   }>;
 };
 
@@ -44,7 +46,8 @@ export default async function OnboardingPage({
     );
   }
 
-  const { error } = await searchParams;
+  const { error, source, utm_source } = await searchParams;
+  const firstTouchSource = source ?? utm_source ?? "";
 
   return (
     <main className={styles.shell}>
@@ -62,6 +65,8 @@ export default async function OnboardingPage({
         {error ? <p className={styles.message}>{error}</p> : null}
 
         <form action={completeOnboardingAction} className={styles.form}>
+          {firstTouchSource ? <input name="source" type="hidden" value={firstTouchSource} /> : null}
+
           <label className={styles.field}>
             <span className={styles.label}>{copy.onboardingFields.companyName}</span>
             <input

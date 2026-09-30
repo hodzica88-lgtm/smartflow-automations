@@ -4,7 +4,14 @@ import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export type AnalyticsEventName =
   | "landing_view"
+  | "visitor"
   | "demo_entry"
+  | "demo_opened"
+  | "acquisition_attributed"
+  | "trial_started"
+  | "trial_cancelled"
+  | "paid_customer"
+  | "subscription_cancelled"
   | "auth_login_success"
   | "auth_forgot_password_requested"
   | "billing_checkout_started"

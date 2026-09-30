@@ -1,11 +1,24 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { trackAnalyticsEvent } from "@/features/analytics/events";
+import {
+  appendGrowthSourceToHref,
+  resolveGrowthSourceFromRequest,
+  trackGrowthEvent,
+} from "@/features/analytics/growth";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 
-export default async function DemoIndexPage() {
+export default async function DemoIndexPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { market } = await getRequestMarket();
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const headerStore = await headers();
+  const referrer = headerStore.get("referer");
+  const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams, referrer });
 
   const rateLimit = await enforceActionRateLimit({
     scope: "demo_entry",
@@ -17,11 +30,14 @@ export default async function DemoIndexPage() {
     redirect("/?error=demo_rate_limited");
   }
 
-  trackAnalyticsEvent({
-    eventName: "demo_entry",
+  await trackGrowthEvent({
+    eventName: "demo_opened",
     market,
     isAuthenticated: false,
+    source,
+    searchParams: resolvedSearchParams,
+    referrer,
   });
 
-  redirect("/demo/dashboard");
+  redirect(appendGrowthSourceToHref("/demo/dashboard", source));
 }

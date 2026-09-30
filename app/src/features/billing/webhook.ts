@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { resolveCompanyGrowthSource, trackGrowthEvent } from "@/features/analytics/growth";
 import { BILLING_LOOKUP_KEY, normalizeBillingStatus, upsertCompanySubscription } from "@/features/billing/service";
 import { createAppNotification } from "@/features/notifications/service";
 import { loadServerEnv } from "@/shared/config/env";
@@ -288,6 +289,72 @@ const createAppNotificationSafe = async (
   }
 };
 
+const emitSubscriptionGrowthEvents = async (
+  companyId: string,
+  subscription: Stripe.Subscription,
+  previousStatus: string,
+  nextStatus: string,
+) => {
+  const market = await getCompanyMarket(companyId);
+  const source = await resolveCompanyGrowthSource(companyId);
+
+  if (nextStatus === "trialing" && previousStatus !== "trialing") {
+    await trackGrowthEvent({
+      eventName: "trial_started",
+      market,
+      companyId,
+      isAuthenticated: true,
+      source,
+      metadata: {
+        stripeSubscriptionId: subscription.id,
+        status: nextStatus,
+      },
+    });
+  }
+
+  if (previousStatus === "trialing" && nextStatus === "canceled") {
+    await trackGrowthEvent({
+      eventName: "trial_cancelled",
+      market,
+      companyId,
+      isAuthenticated: true,
+      source,
+      metadata: {
+        stripeSubscriptionId: subscription.id,
+        status: nextStatus,
+      },
+    });
+  }
+
+  if (nextStatus === "active" && previousStatus !== "active") {
+    await trackGrowthEvent({
+      eventName: "paid_customer",
+      market,
+      companyId,
+      isAuthenticated: true,
+      source,
+      metadata: {
+        stripeSubscriptionId: subscription.id,
+        status: nextStatus,
+      },
+    });
+  }
+
+  if (nextStatus === "canceled" && previousStatus !== "canceled" && previousStatus !== "trialing") {
+    await trackGrowthEvent({
+      eventName: "subscription_cancelled",
+      market,
+      companyId,
+      isAuthenticated: true,
+      source,
+      metadata: {
+        stripeSubscriptionId: subscription.id,
+        status: nextStatus,
+      },
+    });
+  }
+};
+
 const handleSubscriptionEvent = async (
   subscription: Stripe.Subscription,
   stripe: Stripe,
@@ -311,6 +378,7 @@ const handleSubscriptionEvent = async (
 
   if (eventType === "customer.subscription.deleted") {
     await syncSubscription(companyId, subscription);
+    await emitSubscriptionGrowthEvents(companyId, subscription, previousStatus, "canceled");
     await createAppNotificationSafe({
       companyId,
       type: "subscription_canceled",
@@ -342,6 +410,8 @@ const handleSubscriptionEvent = async (
         metadata: { stripeSubscriptionId: subscription.id },
       });
     }
+
+    await emitSubscriptionGrowthEvents(companyId, refreshed, previousStatus, nextStatus);
 
     if (nextStatus === "canceled" || nextCancelAtPeriodEnd) {
       if (!(previousStatus === "canceled" || previousCancelAtPeriodEnd)) {

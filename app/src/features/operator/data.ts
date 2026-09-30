@@ -1,3 +1,4 @@
+import { buildGrowthSummary, type GrowthSummary } from "@/features/analytics/growth";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export type OperatorCompany = {
@@ -145,6 +146,7 @@ export type OwnerControlCenterData = {
   paymentRisks: number;
   scheduledCancellations: number;
   newCompaniesLast7d: number;
+  growth: GrowthSummary;
   analytics: {
     de7d: number;
     us7d: number;
@@ -780,7 +782,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [dashboard, newCompaniesLast7d, recentErrorsResult] = await Promise.all([
+  const [dashboard, newCompaniesLast7d, recentErrorsResult, growthEventsResult] = await Promise.all([
     getOperatorDashboardData(),
     readCount(
       supabase
@@ -796,6 +798,20 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
       .gte("updated_at", last24Hours)
       .order("updated_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("analytics_events")
+      .select("event_name, metadata")
+      .in("event_name", [
+        "visitor",
+        "landing_view",
+        "demo_opened",
+        "demo_entry",
+        "trial_started",
+        "trial_cancelled",
+        "paid_customer",
+        "subscription_cancelled",
+      ])
+      .gte("occurred_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()),
   ]);
 
   if (recentErrorsResult.error) {
@@ -821,6 +837,10 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
       : null,
   ].filter((entry): entry is string => Boolean(entry));
 
+  const growth = buildGrowthSummary(
+    ((growthEventsResult.data ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null }>) ?? [],
+  );
+
   return {
     mrr: {
       de: dashboard.metrics.owner.estimatedMrrEur,
@@ -831,6 +851,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
     paymentRisks: dashboard.metrics.owner.paymentRiskSubscriptions,
     scheduledCancellations: dashboard.metrics.owner.scheduledCancellationSubscriptions,
     newCompaniesLast7d,
+    growth,
     analytics: {
       de7d: dashboard.metrics.analytics.eventsLast7d.de,
       us7d: dashboard.metrics.analytics.eventsLast7d.us,

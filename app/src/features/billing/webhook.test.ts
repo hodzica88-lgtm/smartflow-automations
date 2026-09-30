@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   createAppNotification: vi.fn(),
+  resolveCompanyGrowthSource: vi.fn().mockResolvedValue("direct"),
+  trackGrowthEvent: vi.fn(),
   upsertCompanySubscription: vi.fn(),
   webhookEvents: new Map<string, { id: string; processed_at: string | null }>(),
   retrievedSubscription: {
@@ -29,8 +31,8 @@ const testState = vi.hoisted(() => ({
       company_id: "company_test_123",
     },
     status: "active",
-    trial_end: null,
-    trial_start: null,
+    trial_end: null as number | null,
+    trial_start: null as number | null,
   },
 }));
 
@@ -138,6 +140,11 @@ vi.mock("@/shared/lib/stripe/server", async () => {
   };
 });
 
+vi.mock("@/features/analytics/growth", () => ({
+  resolveCompanyGrowthSource: testState.resolveCompanyGrowthSource,
+  trackGrowthEvent: testState.trackGrowthEvent,
+}));
+
 vi.mock("@/features/billing/service", () => ({
   BILLING_LOOKUP_KEY: "varnito_pro_monthly",
   normalizeBillingStatus: (value: string) => value,
@@ -163,6 +170,9 @@ describe("processStripeWebhookRequest", () => {
   beforeEach(() => {
     testState.webhookEvents.clear();
     testState.createAppNotification.mockReset();
+    testState.resolveCompanyGrowthSource.mockReset();
+    testState.trackGrowthEvent.mockReset();
+    testState.resolveCompanyGrowthSource.mockResolvedValue("direct");
     testState.upsertCompanySubscription.mockReset();
     process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
     testState.retrievedSubscription.cancel_at_period_end = false;
@@ -257,6 +267,66 @@ describe("processStripeWebhookRequest", () => {
       }),
     );
     expect(testState.webhookEvents.get("evt_test_123")?.processed_at).toBeTruthy();
+  });
+
+  it("records trial_started only when Stripe moves a subscription into trialing", async () => {
+    testState.retrievedSubscription.status = "trialing";
+    testState.retrievedSubscription.trial_end = 2_000_000_000;
+    testState.retrievedSubscription.trial_start = 1_999_000_000;
+
+    const payload = JSON.stringify({
+      id: "evt_trial_start_123",
+      object: "event",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: "sub_test_123",
+          object: "subscription",
+          customer: "cus_test_123",
+          metadata: {
+            company_id: "company_test_123",
+          },
+          items: {
+            data: [
+              {
+                current_period_end: 2_000_000_000,
+                current_period_start: 1_999_000_000,
+                price: {
+                  id: "price_test_123",
+                  product: "prod_test_123",
+                },
+              },
+            ],
+          },
+          status: "trialing",
+          trial_end: 2_000_000_000,
+          trial_start: 1_999_000_000,
+        },
+      },
+    });
+
+    const signature = stripeClient.webhooks.generateTestHeaderString({
+      payload,
+      secret: webhookSecret,
+    });
+
+    await processStripeWebhookRequest(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "stripe-signature": signature,
+        },
+        body: payload,
+      }),
+    );
+
+    expect(testState.trackGrowthEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventName: "trial_started",
+        companyId: "company_test_123",
+      }),
+    );
   });
 
   it("persists cancel_at_period_end from customer.subscription.updated", async () => {

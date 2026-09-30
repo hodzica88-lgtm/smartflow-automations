@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { GROWTH_SOURCES } from "@/features/analytics/growth";
 import { logoutAction } from "@/features/auth/actions";
 import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { requireOperatorUser } from "@/features/operator/access";
@@ -39,6 +40,15 @@ export default async function OwnerControlCenterPage() {
   const data = await getOwnerControlCenterData();
 
   const warnings = data.warnings.length > 0 ? data.warnings : [market === "us" ? "No current warnings." : "Aktuell keine Warnungen."];
+  const sourceLabels: Record<(typeof GROWTH_SOURCES)[number], string> = {
+    producthunt: "ProductHunt",
+    g2: "G2",
+    saasworthy: "SaaSworthy",
+    sourceforge: "SourceForge",
+    google: "Google",
+    direct: "Direct",
+    other: "Other",
+  };
 
   return (
     <main className={styles.shell}>
@@ -115,6 +125,54 @@ export default async function OwnerControlCenterPage() {
           <p className={styles.metricLabel}>Analytics US</p>
           <p className={styles.metricValue}>{data.analytics.us30d}</p>
           <p className={styles.statusMeta}>{market === "us" ? "30-day events" : "30-Tage-Events"} · 7d: {data.analytics.us7d}</p>
+        </article>
+
+        <article className={`${styles.panel} ${styles.span6}`}>
+          <h2 className={styles.sectionTitle}>{market === "us" ? "Growth overview" : "Wachstumsübersicht"}</h2>
+          <div className={styles.summaryGrid}>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Visits" : "Besuche"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.visitors}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Demos" : "Demos"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.demoOpened}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Trials" : "Tests"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.trialsStarted}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Paying" : "Bezahlend"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.payingCustomers}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Trial cancels" : "Testabbrüche"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.trialCancellations}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Subs cancels" : "Abo-Abbrüche"}</p>
+              <p className={styles.metricValueSmall}>{data.growth.subscriptionCancellations}</p>
+            </div>
+          </div>
+        </article>
+
+        <article className={`${styles.panel} ${styles.span6}`}>
+          <h2 className={styles.sectionTitle}>{market === "us" ? "Source mix" : "Quellenmix"}</h2>
+          <div className={styles.sourceList}>
+            {GROWTH_SOURCES.map((source) => {
+              const summary = data.growth.sources[source];
+              return (
+                <div key={source} className={styles.sourceRow}>
+                  <div className={styles.sourceMeta}>
+                    <strong>{sourceLabels[source]}</strong>
+                    <span>{summary.visitors} {market === "us" ? "visits" : "Besuche"}</span>
+                  </div>
+                  <span className={styles.sourceMetrics}>{summary.demos} demo / {summary.trials} trial / {summary.paid} paid</span>
+                </div>
+              );
+            })}
+          </div>
         </article>
 
         <article className={`${styles.panel} ${styles.span4}`}>

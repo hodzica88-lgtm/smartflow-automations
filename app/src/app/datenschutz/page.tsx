@@ -43,7 +43,7 @@ export default async function DatenschutzPage() {
       <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Cookie- und Tracking-Status</h2>
         <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
-          Im aktuellen Code sind keine Marketing- oder Analyse-Tools, keine Drittanbieter-Tracker und kein Einwilligungs-Banner für nicht notwendige Cookies erkennbar. Es werden nur technisch erforderliche Session- und Authentifizierungsmechanismen verwendet.
+          Varnito verwendet nur minimale serverseitige Betriebs-Analytik, um Seitenaufrufe, Demo-Öffnungen, Trial-/Abonnement-Conversionen, Stornierungen und die Herkunftsquelle zu messen. Es werden keine Analyse- oder Marketing-Cookies, kein Fingerprinting, keine Drittanbieter-Analytics-Provider und keine personenbezogenen Daten wie Namen, E-Mails, Telefonnummern oder Inhaltsdaten in diese Kennzahlen aufgenommen.
         </p>
       </section>
 
