@@ -14,11 +14,13 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     next?: string;
+    source?: string;
+    utm_source?: string;
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, next } = await searchParams;
+  const { error, next, source, utm_source } = await searchParams;
   const { market } = await getRequestMarket();
   const copy = getMarketCopy(market).shared.auth;
   const nextPath = getSafePostLoginPath(next);
@@ -50,6 +52,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <form action={loginAction} className={styles.form}>
           {nextPath ? <input name="next" type="hidden" value={nextPath} /> : null}
+          {source ?? utm_source ? <input name="source" type="hidden" value={source ?? utm_source} /> : null}
 
           <label className={styles.field}>
             <span className={styles.label}>{market === "us" ? "Email" : "E-Mail"}</span>

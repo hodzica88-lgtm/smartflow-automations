@@ -54,6 +54,8 @@ export const loginAction = async (formData: FormData) => {
     );
   }
 
+  const source = getStringValue(formData, "source") || getStringValue(formData, "utm_source");
+
   const loginRateLimit = await enforceActionRateLimit({
     scope: "auth_login",
     maxSubmissions: 12,
@@ -132,7 +134,7 @@ export const loginAction = async (formData: FormData) => {
       );
     }
 
-    redirect("/onboarding");
+    redirect(source ? `/onboarding?source=${encodeURIComponent(source)}` : "/onboarding");
   }
 
   const billing = await getCompanyBillingSnapshot(companyState.companyId);
