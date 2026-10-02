@@ -188,7 +188,256 @@ describe("support inbound processing", () => {
     });
   });
 
-  it("deduplicates inbound events by provider message id", async () => {
+  const buildSupportTables = (existingThreads: Array<Record<string, unknown>> = []) => {
+    const threadRows = [...existingThreads];
+    const messageTable = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockResolvedValue({ data: [{ id: "message-1" }], error: null }),
+      update: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      order: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    const notificationTable = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockResolvedValue({ data: [{ id: "notification-1" }], error: null }),
+      update: vi.fn().mockResolvedValue({ data: [{ id: "notification-1" }], error: null }),
+      order: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    let customerEmail: string | null = null;
+    let threadId: string | null = null;
+    let rowsForQuery: Array<Record<string, unknown>> = [];
+
+    const threadTable = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockImplementation((field: string, value: unknown) => {
+        if (field === "customer_email") {
+          customerEmail = String(value);
+          threadId = null;
+          rowsForQuery = threadRows.filter((row) => row.customer_email === customerEmail);
+        }
+        if (field === "id") {
+          threadId = String(value);
+          customerEmail = null;
+          rowsForQuery = threadRows.filter((row) => row.id === threadId);
+        }
+        return threadTable;
+      }),
+      order: vi.fn().mockImplementation(() => {
+        if (threadId) {
+          rowsForQuery = threadRows.filter((row) => row.id === threadId);
+        } else if (customerEmail) {
+          rowsForQuery = threadRows.filter((row) => row.customer_email === customerEmail).sort((a, b) => new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime());
+        }
+        return threadTable;
+      }),
+      limit: vi.fn().mockImplementation((count: number) => ({
+        data: rowsForQuery.slice(0, count),
+        error: null,
+      })),
+      single: vi.fn().mockImplementation(() => ({
+        data: threadRows.find((row) => row.id === threadId) ?? null,
+        error: null,
+      })),
+      insert: vi.fn().mockImplementation((payload: Record<string, unknown>) => {
+        const nextId = `thread-${threadRows.length + 1}`;
+        threadRows.push({
+          id: nextId,
+          customer_email: payload.customer_email,
+          subject: payload.subject,
+          status: payload.status,
+          category: payload.category,
+          priority: payload.priority,
+          ai_confidence: payload.ai_confidence,
+          triage_bucket: payload.triage_bucket,
+          triage_category: payload.triage_category,
+          triage_summary: payload.triage_summary,
+          triage_action: payload.triage_action,
+          triage_confidence: payload.triage_confidence,
+          triage_reason: payload.triage_reason,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          last_message_at: new Date().toISOString(),
+        });
+        return {
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: nextId }, error: null }),
+        };
+      }),
+      update: vi.fn().mockImplementation((payload: Record<string, unknown>) => ({
+        eq: vi.fn().mockImplementation((field: string, value: unknown) => {
+          const row = threadRows.find((entry) => entry.id === value);
+          if (row) {
+            Object.assign(row, payload, { updated_at: new Date().toISOString(), last_message_at: new Date().toISOString() });
+          }
+          return { data: [{ id: value }], error: null };
+        }),
+      })),
+    };
+
+    supabaseMock.from.mockImplementation((tableName: string) => {
+      if (tableName === "support_messages") {
+        return messageTable;
+      }
+      if (tableName === "app_notifications") {
+        return notificationTable;
+      }
+      return threadTable;
+    });
+
+    return { threadRows, messageTable, threadTable, notificationTable, resetQuery: () => {
+      customerEmail = null;
+      threadId = null;
+      rowsForQuery = [];
+    } };
+  };
+
+  it("creates separate threads for the same sender when they send different new subjects", async () => {
+    const { threadRows } = buildSupportTables();
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Question about pricing",
+      body: "Can you share custom pricing for the product?",
+      providerMessageId: "price-1",
+      market: "us",
+    });
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Business opportunity",
+      body: "We want to talk about partnership and growth.",
+      providerMessageId: "biz-1",
+      market: "us",
+    });
+
+    expect(threadRows).toHaveLength(2);
+    expect(threadRows[0].subject).toBe("Question about pricing");
+    expect(threadRows[1].subject).toBe("Business opportunity");
+  });
+
+  it("appends a reply email to the matching previous thread instead of creating a new thread", async () => {
+    const { threadRows } = buildSupportTables([
+      {
+        id: "thread-1",
+        customer_email: "customer@example.com",
+        subject: "Question about pricing",
+        status: "open",
+        category: "general_usage",
+        priority: "medium",
+        ai_confidence: 0.8,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+      },
+    ]);
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Re: Question about pricing",
+      body: "Thanks. We would also like a trial demo.",
+      providerMessageId: "reply-1",
+      market: "us",
+    });
+
+    expect(threadRows).toHaveLength(1);
+    expect(threadRows[0].subject).toBe("Question about pricing");
+  });
+
+  it("treats forwarded mail as a new thread, not an automatic reply thread", async () => {
+    const { threadRows } = buildSupportTables([
+      {
+        id: "thread-1",
+        customer_email: "customer@example.com",
+        subject: "Question about pricing",
+        status: "open",
+        category: "general_usage",
+        priority: "medium",
+        ai_confidence: 0.8,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+      },
+    ]);
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Fwd: Question about pricing",
+      body: "Forwarded original question from another inbox.",
+      providerMessageId: "forward-1",
+      market: "us",
+    });
+
+    expect(threadRows).toHaveLength(2);
+    expect(threadRows[1].subject).toBe("Fwd: Question about pricing");
+  });
+
+  it("keeps a reply to a different subject in its own thread and does not merge by sender", async () => {
+    const { threadRows } = buildSupportTables([
+      {
+        id: "thread-1",
+        customer_email: "customer@example.com",
+        subject: "Question about pricing",
+        status: "open",
+        category: "general_usage",
+        priority: "medium",
+        ai_confidence: 0.8,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+      },
+    ]);
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Re: Completely different subject",
+      body: "We are looking at another completely unrelated issue.",
+      providerMessageId: "reply-different-1",
+      market: "us",
+    });
+
+    expect(threadRows).toHaveLength(2);
+    expect(threadRows[1].subject).toBe("Re: Completely different subject");
+  });
+
+  it("keeps different senders on separate threads even when subjects match", async () => {
+    const { threadRows } = buildSupportTables();
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "first@example.com",
+      senderName: "First",
+      subject: "Question about pricing",
+      body: "We want pricing information.",
+      providerMessageId: "first-price",
+      market: "us",
+    });
+
+    await supportModule.processInboundSupportMessage({
+      senderEmail: "second@example.com",
+      senderName: "Second",
+      subject: "Question about pricing",
+      body: "We also need pricing information.",
+      providerMessageId: "second-price",
+      market: "us",
+    });
+
+    expect(threadRows).toHaveLength(2);
+    expect(threadRows[0].customer_email).toBe("first@example.com");
+    expect(threadRows[1].customer_email).toBe("second@example.com");
+  });
+
+  it("deduplicates inbound events by provider message id before thread creation", async () => {
     const existingMessages = [{ provider_message_id: "brevo-dup-123" }];
     const selectMock = vi.fn()
       .mockReturnThis();

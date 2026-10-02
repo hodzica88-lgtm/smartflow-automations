@@ -17,6 +17,44 @@ const normalizeEmail = (value?: string | null) => {
   return email && EMAIL_REGEX.test(email) ? email : null;
 };
 
+const isForwardedEmailSubject = (value?: string | null) => {
+  const subject = safeText(value);
+  return /^(?:fwd|fw|wg)\s*:/i.test(subject);
+};
+
+const isReplyEmailSubject = (value?: string | null) => {
+  const subject = safeText(value);
+  return /^(?:re|aw|antwort)\s*:/i.test(subject);
+};
+
+const normalizeThreadSubjectKey = (value?: string | null) => {
+  let subject = safeText(value);
+  const prefixes = /^(?:re|aw|antwort|fwd|fw|wg)\s*:\s*/i;
+
+  while (prefixes.test(subject)) {
+    subject = subject.replace(prefixes, "").trim();
+  }
+
+  return subject.replace(/\s+/g, " ").toLowerCase();
+};
+
+const findMatchingThreadForInboundEmail = (threads: Array<Record<string, unknown>>, email: string, subject?: string | null) => {
+  if (!email || !subject || isForwardedEmailSubject(subject) || !isReplyEmailSubject(subject)) {
+    return null;
+  }
+
+  const targetKey = normalizeThreadSubjectKey(subject);
+  if (!targetKey) {
+    return null;
+  }
+
+  return threads.find((thread) => {
+    const threadEmail = normalizeEmail(String(thread.customer_email ?? ""));
+    const threadSubjectKey = normalizeThreadSubjectKey(String(thread.subject ?? ""));
+    return threadEmail === email && threadSubjectKey === targetKey;
+  }) ?? null;
+};
+
 const buildTriagePayload = (classification: SupportClassification) => ({
   triage_bucket: classification.triageBucket ?? null,
   triage_category: classification.triageCategory ?? null,
@@ -77,11 +115,14 @@ export const isSupportLoopCandidate = ({
     "undeliverable",
   ];
 
-  const loop = (subjectText.match(/re:/gi)?.length ?? 0) >= 3 ||
+  const forwardedMail = isForwardedEmailSubject(subjectText);
+  const loop = !forwardedMail && (
+    (subjectText.match(/re:/gi)?.length ?? 0) >= 3 ||
     (subjectText.match(/fwd:/gi)?.length ?? 0) >= 1 ||
     autoReplySignals.some((signal) => bodyText.includes(signal) || subjectText.includes(signal)) ||
     sender.includes("mailer-daemon") || sender.includes("noreply") || sender.includes("auto") ||
-    /(?:^|\s)(out of office|vacation|auto-reply|auto reply)/i.test(subjectText + " " + bodyText);
+    /(?:^|\s)(out of office|vacation|auto-reply|auto reply)/i.test(subjectText + " " + bodyText)
+  );
 
   return loop;
 };
@@ -205,17 +246,17 @@ export const processInboundSupportMessage = async ({
 
   const existingThread = await supabase
     .from("support_threads")
-    .select("id, status")
+    .select("id, customer_email, subject, status")
     .eq("customer_email", email)
-    .order("created_at", { ascending: false })
-    .limit(1);
+    .order("last_message_at", { ascending: false, nullsFirst: false })
+    .limit(50);
 
   if (existingThread.error) {
     logSupportPersistenceError("support_threads lookup failed", existingThread.error);
     return { duplicate: false, threadId: null, created: false, persistError: "thread_lookup_failed", classification };
   }
 
-  const threadId = existingThread.data && existingThread.data[0]?.id ? existingThread.data[0].id : null;
+  const threadId = findMatchingThreadForInboundEmail(existingThread.data ?? [], email, subjectText)?.id as string | null ?? null;
   const threadStatus: SupportThreadStatus = "open";
   const triagePayload = buildTriagePayload(classification);
 
