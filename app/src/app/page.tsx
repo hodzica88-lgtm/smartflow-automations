@@ -49,6 +49,7 @@ export default async function Home({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const headerStore = await headers();
   const referrer = headerStore.get("referer");
+  const userAgent = headerStore.get("user-agent");
   const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams, referrer });
   const registrationHref = appendGrowthSourceToHref("/registrierung", source);
   const demoHref = appendGrowthSourceToHref("/demo", source);
@@ -75,6 +76,7 @@ export default async function Home({
     source,
     searchParams: resolvedSearchParams,
     referrer,
+    userAgent,
   });
 
   return (

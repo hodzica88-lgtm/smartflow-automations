@@ -237,7 +237,7 @@ const readTrafficTypeFromMetadata = (metadata?: Record<string, unknown> | null):
 
 const normalizeOtherBreakdownKey = (value?: string | null): string | null => {
   const host = normalizeReferrerHost(value ?? "");
-  if (!host || host === "direct" || host === "localhost") {
+  if (!host || host === "direct" || host === "localhost" || host === "other") {
     return null;
   }
 

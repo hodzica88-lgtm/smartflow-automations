@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import Home from "@/app/page";
+import { trackAnalyticsEvent } from "@/features/analytics/events";
+
 import {
   appendGrowthSourceToHref,
   buildGrowthSummary,
@@ -25,6 +28,17 @@ vi.mock("@/shared/lib/supabase/server", () => ({
       }),
     }),
   }),
+}));
+
+vi.mock("@/features/analytics/events", () => ({
+  trackAnalyticsEvent: vi.fn(),
+}));
+
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers({
+    referer: "https://example.com/landing",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+  })),
 }));
 
 describe("normalizeGrowthSource", () => {
@@ -135,6 +149,25 @@ describe("classifyRequestTraffic", () => {
   });
 });
 
+describe("homepage visitor tracking", () => {
+  it("passes the browser user-agent into the classifier without persisting raw values", async () => {
+    vi.mocked(trackAnalyticsEvent).mockClear();
+
+    await Home({});
+
+    expect(trackAnalyticsEvent).toHaveBeenCalled();
+    const lastCall = vi.mocked(trackAnalyticsEvent).mock.calls.at(-1)?.[0];
+    expect(lastCall).toMatchObject({
+      eventName: "visitor",
+      market: "de",
+      metadata: expect.objectContaining({
+        traffic_type: "human",
+      }),
+    });
+    expect(lastCall?.metadata?.user_agent).toBeUndefined();
+  });
+});
+
 describe("buildGrowthSummary", () => {
   it("aggregates the V1 growth funnel and source breakdown while preserving legacy unknown traffic", () => {
     const summary = buildGrowthSummary([
@@ -185,5 +218,19 @@ describe("buildGrowthSummary", () => {
     expect(summary.markets.unknown).toBe(1);
     expect(summary.markets.de + summary.markets.us + summary.markets.unknown).toBe(summary.totalVisits);
     expect(summary.sources.google.visitors).toBe(2);
+  });
+
+  it("drops literal other/direct values from the Other breakdown while preserving valid hostnames", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "other", source_detail: "other", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "other", source_detail: "direct", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "other", source_detail: "https://example.com/foo?bar=baz", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "other", source_detail: "https://some-referral-site.com/path?x=1", traffic_type: "human" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.otherBreakdown).toEqual({
+      "example.com": 1,
+      "some-referral-site.com": 1,
+    });
   });
 });
