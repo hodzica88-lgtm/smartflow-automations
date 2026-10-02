@@ -42,14 +42,35 @@ vi.mock("next/headers", () => ({
 }));
 
 describe("normalizeGrowthSource", () => {
-  it("normalizes the supported acquisition sources", () => {
+  it("normalizes supported acquisition sources, search, directories, social, and self-referrers", () => {
     expect(normalizeGrowthSource("ProductHunt")).toBe("producthunt");
     expect(normalizeGrowthSource("g2")).toBe("g2");
     expect(normalizeGrowthSource("saasworthy")).toBe("saasworthy");
     expect(normalizeGrowthSource("sourceforge.net")).toBe("sourceforge");
     expect(normalizeGrowthSource("Google")).toBe("google");
+    expect(normalizeGrowthSource("google.com")).toBe("google");
+    expect(normalizeGrowthSource("google.de")).toBe("google");
+    expect(normalizeGrowthSource("https://www.bing.com/search?q=varnito")).toBe("bing");
+    expect(normalizeGrowthSource("https://duckduckgo.com/?q=varnito")).toBe("duckduckgo");
+    expect(normalizeGrowthSource("https://search.yahoo.com/search?p=varnito")).toBe("yahoo");
+    expect(normalizeGrowthSource("https://www.capterra.com")).toBe("capterra");
+    expect(normalizeGrowthSource("https://www.getapp.com")).toBe("getapp");
+    expect(normalizeGrowthSource("https://www.softwareadvice.com")).toBe("softwareadvice");
+    expect(normalizeGrowthSource("https://www.linkedin.com/company/varnito")).toBe("linkedin");
+    expect(normalizeGrowthSource("https://lnkd.in/abc")).toBe("linkedin");
+    expect(normalizeGrowthSource("https://www.reddit.com/r/varnito")).toBe("reddit");
+    expect(normalizeGrowthSource("https://twitter.com/varnito")).toBe("x");
+    expect(normalizeGrowthSource("https://x.com/varnito")).toBe("x");
+    expect(normalizeGrowthSource("https://t.co/abc")).toBe("x");
+    expect(normalizeGrowthSource("https://www.facebook.com/varnito")).toBe("facebook");
+    expect(normalizeGrowthSource("https://m.facebook.com/varnito")).toBe("facebook");
+    expect(normalizeGrowthSource("https://www.instagram.com/varnito")).toBe("instagram");
+    expect(normalizeGrowthSource("https://l.instagram.com/varnito")).toBe("instagram");
+    expect(normalizeGrowthSource("https://www.varnito.com")).toBe("direct");
+    expect(normalizeGrowthSource("https://www.varnito.de")).toBe("direct");
+    expect(normalizeGrowthSource("randomunknownsite.example")).toBe("other");
     expect(normalizeGrowthSource("direct")).toBe("direct");
-    expect(normalizeGrowthSource("linkedin")).toBe("other");
+    expect(normalizeGrowthSource("other")).toBe("other");
   });
 });
 
@@ -231,6 +252,22 @@ describe("buildGrowthSummary", () => {
     expect(summary.otherBreakdown).toEqual({
       "example.com": 1,
       "some-referral-site.com": 1,
+    });
+  });
+
+  it("reclassifies safe source_detail values at report time without mutating stored data", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "other", source_detail: "https://www.linkedin.com/company/varnito", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "other", source_detail: "https://www.capterra.com/categories/lead-ops", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "other", source_detail: "https://www.varnito.de", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "other", source_detail: "https://randomunknownsite.example/landing", traffic_type: "human" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.sources.linkedin.visitors).toBe(1);
+    expect(summary.sources.capterra.visitors).toBe(1);
+    expect(summary.sources.direct.visitors).toBe(1);
+    expect(summary.otherBreakdown).toEqual({
+      "randomunknownsite.example": 1,
     });
   });
 });

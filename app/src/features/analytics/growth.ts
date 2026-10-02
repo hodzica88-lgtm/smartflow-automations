@@ -7,6 +7,17 @@ export const GROWTH_SOURCES = [
   "saasworthy",
   "sourceforge",
   "google",
+  "capterra",
+  "getapp",
+  "softwareadvice",
+  "bing",
+  "duckduckgo",
+  "yahoo",
+  "linkedin",
+  "reddit",
+  "x",
+  "facebook",
+  "instagram",
   "direct",
   "other",
 ] as const;
@@ -183,11 +194,22 @@ type ResolveGrowthSourceInput = {
 };
 
 const SOURCE_RULES: Array<[RegExp, GrowthSource]> = [
-  [/producthunt/i, "producthunt"],
-  [/g2/i, "g2"],
-  [/saasworthy/i, "saasworthy"],
-  [/sourceforge/i, "sourceforge"],
-  [/google|search/i, "google"],
+  [/^(?:producthunt|(?:www\.)?producthunt\.com)$/i, "producthunt"],
+  [/^(?:g2|(?:www\.)?g2\.com)$/i, "g2"],
+  [/^(?:saasworthy|(?:www\.)?saasworthy(?:\.[a-z]{2,10})?)$/i, "saasworthy"],
+  [/^(?:sourceforge|(?:www\.)?sourceforge(?:\.net|\.[a-z]{2,10})?)$/i, "sourceforge"],
+  [/^(?:google|google_ads|google_adwords|(?:www\.)?google(?:\.[a-z]{2,10})?)$/i, "google"],
+  [/^(?:capterra|(?:www\.)?capterra(?:\.[a-z]{2,10})?)$/i, "capterra"],
+  [/^(?:getapp|(?:www\.)?getapp(?:\.[a-z]{2,10})?)$/i, "getapp"],
+  [/^(?:softwareadvice|(?:www\.)?softwareadvice(?:\.[a-z]{2,10})?)$/i, "softwareadvice"],
+  [/^(?:bing|(?:www\.)?bing(?:\.[a-z]{2,10})?)$/i, "bing"],
+  [/^(?:duckduckgo|(?:www\.)?duckduckgo(?:\.[a-z]{2,10})?)$/i, "duckduckgo"],
+  [/^(?:yahoo|(?:search\.)?yahoo(?:\.[a-z]{2,10})?)$/i, "yahoo"],
+  [/^(?:linkedin|lnkd\.in|(?:www\.)?linkedin\.com)$/i, "linkedin"],
+  [/^(?:reddit|(?:www\.)?(?:old\.|new\.)?reddit\.com)$/i, "reddit"],
+  [/^(?:x|twitter|(?:www\.)?(?:x|twitter)\.com|t\.co)$/i, "x"],
+  [/^(?:facebook|(?:[a-z0-9-]+\.)?facebook\.com)$/i, "facebook"],
+  [/^(?:instagram|(?:[a-z0-9-]+\.)?instagram\.com)$/i, "instagram"],
 ];
 
 const normalizeReferrerHost = (value: string) => {
@@ -237,7 +259,23 @@ const readTrafficTypeFromMetadata = (metadata?: Record<string, unknown> | null):
 
 const normalizeOtherBreakdownKey = (value?: string | null): string | null => {
   const host = normalizeReferrerHost(value ?? "");
+
   if (!host || host === "direct" || host === "localhost" || host === "other") {
+    return null;
+  }
+
+  const selfReferrerHosts = new Set([
+    "varnito.com",
+    "www.varnito.com",
+    "varnito.de",
+    "www.varnito.de",
+  ]);
+
+  if (selfReferrerHosts.has(host)) {
+    return null;
+  }
+
+  if (normalizeGrowthSource(host) !== "other") {
     return null;
   }
 
@@ -340,6 +378,9 @@ export const normalizeGrowthSource = (value?: string | null): GrowthSource => {
   }
 
   const normalized = normalizeReferrerHost(source);
+  if (normalized === "varnito.com" || normalized === "www.varnito.com" || normalized === "varnito.de" || normalized === "www.varnito.de") {
+    return "direct";
+  }
 
   for (const [matcher, grownSource] of SOURCE_RULES) {
     if (matcher.test(normalized) || matcher.test(source)) {
@@ -416,9 +457,31 @@ const createSourceSummary = (): Record<GrowthSource, GrowthSummarySource> => ({
   saasworthy: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
   sourceforge: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
   google: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  capterra: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  getapp: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  softwareadvice: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  bing: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  duckduckgo: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  yahoo: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  linkedin: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  reddit: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  x: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  facebook: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  instagram: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
   direct: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
   other: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
 });
+
+const resolveEventGrowthSource = (source?: string | null, sourceDetail?: string | null): GrowthSource => {
+  const normalizedSource = normalizeGrowthSource(source ?? null);
+
+  if (normalizedSource !== "other") {
+    return normalizedSource;
+  }
+
+  const normalizedDetail = sourceDetail ? normalizeGrowthSource(sourceDetail) : "other";
+  return normalizedDetail === "other" ? "other" : normalizedDetail;
+};
 
 export const buildGrowthSummary = (
   events: GrowthEventRow[],
@@ -452,8 +515,14 @@ export const buildGrowthSummary = (
     }
 
     const eventName = String(event.event_name ?? "").trim();
-    const source = normalizeGrowthSource(
+    const sourceDetail = typeof event.metadata?.source_detail === "string"
+      ? event.metadata.source_detail
+      : typeof event.metadata?.referrer_host === "string"
+        ? event.metadata.referrer_host
+        : undefined;
+    const source = resolveEventGrowthSource(
       typeof event.metadata?.source === "string" ? event.metadata.source : undefined,
+      sourceDetail,
     );
     const sourceSummary = summary.sources[source];
 
@@ -551,17 +620,22 @@ export const resolveCompanyGrowthSource = async (
   for (const row of data) {
     const metadata = row.metadata as Record<string, unknown> | null | undefined;
     const sourceValue = typeof metadata?.source === "string" ? metadata.source : null;
+    const sourceDetailValue = typeof metadata?.source_detail === "string"
+      ? metadata.source_detail
+      : typeof metadata?.referrer_host === "string"
+        ? metadata.referrer_host
+        : null;
 
     if (!sourceValue) {
       continue;
     }
 
     if (row.event_name === "acquisition_attributed") {
-      return normalizeGrowthSource(sourceValue);
+      return resolveEventGrowthSource(sourceValue, sourceDetailValue);
     }
 
     if (!firstTouchSource) {
-      firstTouchSource = normalizeGrowthSource(sourceValue);
+      firstTouchSource = resolveEventGrowthSource(sourceValue, sourceDetailValue);
     }
   }
 
