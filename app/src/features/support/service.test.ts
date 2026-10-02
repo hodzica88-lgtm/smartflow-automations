@@ -123,6 +123,50 @@ describe("support AI classification", () => {
     expect(result.confidence).toBeLessThan(0.7);
   });
 
+  it("keeps pricing and billing triage bucket/action aligned with category", async () => {
+    const pricing = await aiModule.classifySupportRequest({
+      subject: "Question about Varnito pricing",
+      body: "We run a roofing company in Texas and want pricing details for website leads and a demo.",
+      market: "us",
+    });
+
+    expect(pricing.triageCategory).toBe("potential_customer");
+    expect(pricing.triageBucket).toBe("important");
+    expect(pricing.triageAction).toBe("respond");
+
+    const billing = await aiModule.classifySupportRequest({
+      subject: "Invoice issue",
+      body: "We were charged twice and need help with our invoice and billing details.",
+      market: "us",
+    });
+
+    expect(billing.triageCategory).toBe("billing");
+    expect(billing.triageBucket).toBe("important");
+    expect(billing.triageAction).toBe("respond");
+  });
+
+  it("keeps sales and partnership triage bucket/action aligned with category", async () => {
+    const sales = await aiModule.classifySupportRequest({
+      subject: "Grow varnito.com to #1 on Google",
+      body: "We are an SEO agency and can help you grow rankings and leads.",
+      market: "de",
+    });
+
+    expect(sales.triageCategory).toBe("vendor_sales");
+    expect(sales.triageBucket).toBe("sales");
+    expect(sales.triageAction).toBe("ignore");
+
+    const partnership = await aiModule.classifySupportRequest({
+      subject: "Business opportunity",
+      body: "We would like to explore a partnership and collaborate on a joint campaign.",
+      market: "us",
+    });
+
+    expect(partnership.triageCategory).toBe("partnership");
+    expect(partnership.triageBucket).toBe("review");
+    expect(partnership.triageAction).toBe("review");
+  });
+
   it("escalates unknown questions", async () => {
     const result = await aiModule.classifySupportRequest({
       subject: "Random question",

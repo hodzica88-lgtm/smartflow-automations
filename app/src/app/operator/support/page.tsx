@@ -7,11 +7,30 @@ import { getRequestMarket } from "@/shared/i18n/request";
 import styles from "./support.module.css";
 
 const bucketLabels = {
-  important: "Important",
-  review: "Review",
-  sales: "Sales",
-  spam: "Spam",
-};
+  important: { us: "Important", de: "Wichtig" },
+  review: { us: "Review", de: "Prüfen" },
+  sales: { us: "Sales", de: "Verkauf" },
+  spam: { us: "Spam", de: "Spam" },
+  all: { us: "All", de: "Alle" },
+} as const;
+
+const triageCategoryLabels = {
+  customer_support: { us: "Customer support", de: "Kundensupport" },
+  potential_customer: { us: "Potential customer", de: "Potenzieller Kunde" },
+  billing: { us: "Billing", de: "Abrechnung" },
+  security: { us: "Security", de: "Sicherheit" },
+  legal_privacy: { us: "Legal / Privacy", de: "Recht / Datenschutz" },
+  partnership: { us: "Partnership", de: "Partnerschaft" },
+  vendor_sales: { us: "Vendor sales", de: "Verkauf" },
+  spam: { us: "Spam", de: "Spam" },
+  unclear: { us: "Unclear", de: "Unklar" },
+} as const;
+
+const triageActionLabels = {
+  respond: { us: "Respond", de: "Antworten" },
+  review: { us: "Review", de: "Prüfen" },
+  ignore: { us: "Ignore", de: "Ignorieren" },
+} as const;
 
 const formatDate = (value: string | null, market: "de" | "us") => {
   if (!value) return "—";
@@ -25,9 +44,22 @@ const formatDate = (value: string | null, market: "de" | "us") => {
   }
 };
 
-const formatTriageBucket = (value: unknown) => {
+const formatTriageBucket = (value: unknown, market: "de" | "us") => {
   const bucket = typeof value === "string" ? value.toLowerCase() : "review";
-  return bucketLabels[bucket as keyof typeof bucketLabels] ?? "Review";
+  const label = bucketLabels[bucket as keyof typeof bucketLabels];
+  return label ? label[market] : bucketLabels.review[market];
+};
+
+const formatTriageCategory = (value: unknown, market: "de" | "us") => {
+  const category = typeof value === "string" ? value.toLowerCase() : "unclear";
+  const label = triageCategoryLabels[category as keyof typeof triageCategoryLabels];
+  return label ? label[market] : triageCategoryLabels.unclear[market];
+};
+
+const formatTriageAction = (value: unknown, market: "de" | "us") => {
+  const action = typeof value === "string" ? value.toLowerCase() : "review";
+  const label = triageActionLabels[action as keyof typeof triageActionLabels];
+  return label ? label[market] : triageActionLabels.review[market];
 };
 
 export default async function SupportOverviewPage({
@@ -78,7 +110,7 @@ export default async function SupportOverviewPage({
                 href={`/operator/support?filter=${filter}`}
                 className={normalizedFilter === filter ? styles.filterButtonActive : styles.filterButton}
               >
-                {filter === "all" ? (market === "us" ? "All" : "Alle") : bucketLabels[filter]}
+                {filter === "all" ? bucketLabels.all[market] : bucketLabels[filter][market]}
               </Link>
             ))}
           </div>
@@ -87,13 +119,13 @@ export default async function SupportOverviewPage({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Sender</th>
-                <th>Subject</th>
-                <th>Bucket</th>
-                <th>Category</th>
-                <th>Action</th>
-                <th>Summary</th>
+                <th>{market === "us" ? "Date" : "Datum"}</th>
+                <th>{market === "us" ? "Sender" : "Absender"}</th>
+                <th>{market === "us" ? "Subject" : "Betreff"}</th>
+                <th>{market === "us" ? "Bucket" : "Einstufung"}</th>
+                <th>{market === "us" ? "Category" : "Kategorie"}</th>
+                <th>{market === "us" ? "Action" : "Aktion"}</th>
+                <th>{market === "us" ? "Summary" : "Zusammenfassung"}</th>
               </tr>
             </thead>
             <tbody>
@@ -112,10 +144,10 @@ export default async function SupportOverviewPage({
                     </td>
                     <td>{String(thread.subject ?? "Support request")}</td>
                     <td>
-                      <span className={styles.badge}>{formatTriageBucket(thread.triage_bucket ?? "review")}</span>
+                      <span className={styles.badge}>{formatTriageBucket(thread.triage_bucket ?? "review", market)}</span>
                     </td>
-                    <td>{String(thread.triage_category ?? thread.category ?? "unclear")}</td>
-                    <td>{String(thread.triage_action ?? "review")}</td>
+                    <td>{formatTriageCategory(thread.triage_category ?? thread.category ?? "unclear", market)}</td>
+                    <td>{formatTriageAction(thread.triage_action ?? "review", market)}</td>
                     <td className={styles.summaryCell}>{String(thread.triage_summary ?? thread.subject ?? "No summary")}</td>
                   </tr>
                 ))

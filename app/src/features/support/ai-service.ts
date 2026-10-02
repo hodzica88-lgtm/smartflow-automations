@@ -239,6 +239,64 @@ const normalizeTriageAction = (value: unknown, fallback: SupportClassification["
   return aliases[normalized] ?? fallback;
 };
 
+const getCanonicalTriageDecision = (triageCategory: SupportClassification["triageCategory"] | undefined, priority?: SupportClassification["priority"]) => {
+  const finalCategory = normalizeTriageCategory(triageCategory, "unclear");
+
+  switch (finalCategory) {
+    case "potential_customer":
+      return { triageBucket: "important" as const, triageAction: "respond" as const, triageCategory: finalCategory };
+    case "vendor_sales":
+      return { triageBucket: "sales" as const, triageAction: "ignore" as const, triageCategory: finalCategory };
+    case "billing":
+      return { triageBucket: "important" as const, triageAction: "respond" as const, triageCategory: finalCategory };
+    case "security":
+      return { triageBucket: "important" as const, triageAction: "respond" as const, triageCategory: finalCategory };
+    case "legal_privacy":
+      return { triageBucket: "important" as const, triageAction: "respond" as const, triageCategory: finalCategory };
+    case "partnership":
+      return { triageBucket: "review" as const, triageAction: "review" as const, triageCategory: finalCategory };
+    case "spam":
+      return { triageBucket: "spam" as const, triageAction: "ignore" as const, triageCategory: finalCategory };
+    case "unclear":
+      return { triageBucket: "review" as const, triageAction: "review" as const, triageCategory: finalCategory };
+    case "customer_support":
+      return priority === "urgent" || priority === "high"
+        ? { triageBucket: "important" as const, triageAction: "respond" as const, triageCategory: finalCategory }
+        : { triageBucket: "review" as const, triageAction: "review" as const, triageCategory: finalCategory };
+    default:
+      return { triageBucket: "review" as const, triageAction: "review" as const, triageCategory: finalCategory };
+  }
+};
+
+const reconcileTriageDecision = ({
+  triageCategory,
+  triageBucket,
+  triageAction,
+  priority,
+}: {
+  triageCategory?: SupportClassification["triageCategory"];
+  triageBucket?: SupportClassification["triageBucket"];
+  triageAction?: SupportClassification["triageAction"];
+  priority?: SupportClassification["priority"];
+}) => {
+  const finalCategory = normalizeTriageCategory(triageCategory, "unclear");
+  const canonical = getCanonicalTriageDecision(finalCategory, priority);
+
+  if (triageBucket && triageAction) {
+    return {
+      triageBucket: canonical.triageBucket,
+      triageAction: canonical.triageAction,
+      triageCategory: canonical.triageCategory,
+    };
+  }
+
+  return {
+    triageBucket: canonical.triageBucket,
+    triageAction: canonical.triageAction,
+    triageCategory: canonical.triageCategory,
+  };
+};
+
 const buildDeterministicTriage = (text: string, category: SupportThreadCategory): {
   triageBucket: SupportClassification["triageBucket"];
   triageCategory: SupportClassification["triageCategory"];
@@ -249,7 +307,7 @@ const buildDeterministicTriage = (text: string, category: SupportThreadCategory)
 } => {
   const lower = text.toLowerCase();
 
-  if (/(pricing|price|quote|trial|demo|interested|buy|budget|lead intake|website leads|how much|cost)/i.test(lower)) {
+  if (/(pricing|price|quote|trial|demo|buy|purchase|subscribe|subscription|budget|lead intake|website leads|how much|cost|interested in (using|buying|trying|purchasing|trial)|book a demo|request a demo)/i.test(lower)) {
     return {
       triageBucket: "important",
       triageCategory: "potential_customer",
@@ -304,7 +362,7 @@ const buildDeterministicTriage = (text: string, category: SupportThreadCategory)
     };
   }
 
-  if (/(partnership|collaboration|partner|integration|affiliate|cooperation|strategic alliance)/i.test(lower)) {
+  if (/(partnership|collaboration|partner|integration|affiliate|cooperation|strategic alliance|business opportunity|possible business opportunity|opportunity to work together)/i.test(lower)) {
     return {
       triageBucket: "review",
       triageCategory: "partnership",
@@ -465,6 +523,13 @@ export const classifySupportRequest = async ({
             ? normalizeConfidence(parsed.triageConfidence, fallbackTriage.triageConfidence)
             : normalizeConfidence(parsed.confidence, fallbackTriage.triageConfidence);
 
+          const reconciledTriage = reconcileTriageDecision({
+            triageCategory: aiTriageCategory,
+            triageBucket: aiTriageBucket,
+            triageAction: aiRecommendedAction,
+            priority: safePriority,
+          });
+
           return {
             detectedLanguage,
             category: safeCategory,
@@ -473,10 +538,10 @@ export const classifySupportRequest = async ({
             confidence: safeConfidence,
             escalationReason: finalEscalationReason,
             suggestedReply: finalSuggestedReply,
-            triageBucket: aiTriageBucket,
-            triageCategory: aiTriageCategory,
+            triageBucket: reconciledTriage.triageBucket,
+            triageCategory: reconciledTriage.triageCategory,
             triageSummary: aiSummary,
-            triageAction: aiRecommendedAction,
+            triageAction: reconciledTriage.triageAction,
             triageReason: aiReason,
             triageConfidence: aiTriageConfidence,
           };
@@ -487,6 +552,14 @@ export const classifySupportRequest = async ({
     }
   }
 
+  const finalFallbackTriageCategory = normalizeTriageCategory(fallbackTriage.triageCategory, fallbackTriage.triageCategory);
+  const reconciledFallbackTriage = reconcileTriageDecision({
+    triageCategory: finalFallbackTriageCategory,
+    triageBucket: fallbackTriage.triageBucket,
+    triageAction: fallbackTriage.triageAction,
+    priority,
+  });
+
   return {
     detectedLanguage: language,
     category,
@@ -495,10 +568,10 @@ export const classifySupportRequest = async ({
     confidence,
     escalationReason,
     suggestedReply,
-    triageBucket: fallbackTriage.triageBucket,
-    triageCategory: fallbackTriage.triageCategory,
+    triageBucket: reconciledFallbackTriage.triageBucket,
+    triageCategory: reconciledFallbackTriage.triageCategory,
     triageSummary: fallbackTriage.triageSummary,
-    triageAction: fallbackTriage.triageAction,
+    triageAction: reconciledFallbackTriage.triageAction,
     triageReason: fallbackTriage.triageReason,
     triageConfidence: fallbackTriage.triageConfidence,
   };
