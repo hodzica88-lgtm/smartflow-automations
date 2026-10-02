@@ -40,6 +40,17 @@ const formatTimestamp = (value: string | null, locale: "de-DE" | "en-US") => {
   }
 };
 
+const EMPTY_SOURCE_METRICS = {
+  visitors: 0,
+  botVisitors: 0,
+  unknownVisitors: 0,
+  demos: 0,
+  trials: 0,
+  paid: 0,
+  trialCancellations: 0,
+  subscriptionCancellations: 0,
+};
+
 export default async function OwnerControlCenterPage({
   searchParams,
 }: {
@@ -65,17 +76,19 @@ export default async function OwnerControlCenterPage({
     saasworthy: "SaaSworthy",
     sourceforge: "SourceForge",
     google: "Google",
+    capterra: "Capterra",
+    getapp: "GetApp",
+    softwareadvice: "Software Advice",
+    bing: "Bing",
+    duckduckgo: "DuckDuckGo",
+    yahoo: "Yahoo",
+    linkedin: "LinkedIn",
+    reddit: "Reddit",
+    x: "X / Twitter",
+    facebook: "Facebook",
+    instagram: "Instagram",
     direct: "Direct",
     other: "Other",
-  };
-  const sourceSummary = growthReport.summary?.sources ?? {
-    producthunt: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    g2: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    saasworthy: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    sourceforge: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    google: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    direct: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-    other: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
   };
   const marketBreakdown = growthReport.summary?.markets ?? { de: 0, us: 0, unknown: 0 };
   const browserVisits = growthReport.summary?.visitors ?? 0;
@@ -215,8 +228,15 @@ export default async function OwnerControlCenterPage({
         <article className={`${styles.panel} ${styles.span6}`}>
           <h2 className={styles.sectionTitle}>{market === "us" ? "Source mix" : "Quellenmix"}</h2>
           <div className={styles.sourceList}>
-            {GROWTH_SOURCES.map((source) => {
-              const summary = sourceSummary[source] ?? { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 };
+            {GROWTH_SOURCES.filter((source) => {
+              if (["producthunt", "g2", "saasworthy", "sourceforge", "google", "direct", "other"].includes(source)) {
+                return true;
+              }
+
+              const summary = growthReport.summary?.sources?.[source] ?? EMPTY_SOURCE_METRICS;
+              return [summary.visitors, summary.botVisitors, summary.unknownVisitors, summary.demos, summary.trials, summary.paid, summary.trialCancellations, summary.subscriptionCancellations].some((value) => value > 0);
+            }).map((source) => {
+              const summary = growthReport.summary?.sources?.[source] ?? EMPTY_SOURCE_METRICS;
               return (
                 <div key={source} className={styles.sourceRow}>
                   <div className={styles.sourceMeta}>
