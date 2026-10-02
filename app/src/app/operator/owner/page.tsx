@@ -68,6 +68,25 @@ export default async function OwnerControlCenterPage({
     direct: "Direct",
     other: "Other",
   };
+  const sourceSummary = growthReport.summary?.sources ?? {
+    producthunt: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    g2: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    saasworthy: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    sourceforge: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    google: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    direct: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+    other: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  };
+  const marketBreakdown = growthReport.summary?.markets ?? { de: 0, us: 0, unknown: 0 };
+  const browserVisits = growthReport.summary?.visitors ?? 0;
+  const botVisits = growthReport.summary?.botVisitors ?? 0;
+  const unknownVisits = growthReport.summary?.unknownVisitors ?? 0;
+  const demoCount = growthReport.summary?.demoOpened ?? 0;
+  const trialCount = growthReport.summary?.trialsStarted ?? 0;
+  const payingCount = growthReport.summary?.payingCustomers ?? 0;
+  const otherBreakdownEntries = Object.entries(growthReport.summary?.otherBreakdown ?? {})
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
 
   return (
     <main className={styles.shell}>
@@ -137,12 +156,12 @@ export default async function OwnerControlCenterPage({
         </article>
         <article className={`${styles.panel} ${styles.span4}`}>
           <p className={styles.metricLabel}>{market === "us" ? "Visits DE" : "Besuche DE"}</p>
-          <p className={styles.metricValue}>{growthReport.summary.sources.g2.visitors + growthReport.summary.sources.direct.visitors + growthReport.summary.sources.producthunt.visitors + growthReport.summary.sources.other.visitors + growthReport.summary.sources.google.visitors + growthReport.summary.sources.saasworthy.visitors + growthReport.summary.sources.sourceforge.visitors}</p>
+          <p className={styles.metricValue}>{marketBreakdown.de}</p>
           <p className={styles.statusMeta}>{monthRange.monthKey} · {market === "us" ? "selected month" : "gewählter Monat"}</p>
         </article>
         <article className={`${styles.panel} ${styles.span4}`}>
           <p className={styles.metricLabel}>{market === "us" ? "Visits US" : "Besuche US"}</p>
-          <p className={styles.metricValue}>{growthReport.summary.visitors}</p>
+          <p className={styles.metricValue}>{marketBreakdown.us}</p>
           <p className={styles.statusMeta}>{monthRange.monthKey} · {market === "us" ? "selected month" : "gewählter Monat"}</p>
         </article>
 
@@ -161,32 +180,34 @@ export default async function OwnerControlCenterPage({
           <h2 className={styles.sectionTitle}>{market === "us" ? "Growth overview" : "Wachstumsübersicht"}</h2>
           <div className={styles.summaryGrid}>
             <div>
-              <p className={styles.metricLabel}>{market === "us" ? "Visits" : "Besuche"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.visitors}</p>
-              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.visitors - growthReport.previousSummary.visitors} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
+              <p className={styles.metricLabel}>{market === "us" ? "Browser visits" : "Browser-Besuche"}</p>
+              <p className={styles.metricValueSmall}>{browserVisits}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${browserVisits - (growthReport.previousSummary.visitors ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Bot visits" : "Bot-Besuche"}</p>
+              <p className={styles.metricValueSmall}>{botVisits}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${botVisits - (growthReport.previousSummary.botVisitors ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
+            </div>
+            <div>
+              <p className={styles.metricLabel}>{market === "us" ? "Unknown traffic" : "Unbekannt"}</p>
+              <p className={styles.metricValueSmall}>{unknownVisits}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${unknownVisits - (growthReport.previousSummary.unknownVisitors ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Demos" : "Demos"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.demoOpened}</p>
-              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.demoOpened - growthReport.previousSummary.demoOpened} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
+              <p className={styles.metricValueSmall}>{demoCount}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${demoCount - (growthReport.previousSummary.demoOpened ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Trials" : "Tests"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.trialsStarted}</p>
-              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.trialsStarted - growthReport.previousSummary.trialsStarted} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
+              <p className={styles.metricValueSmall}>{trialCount}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${trialCount - (growthReport.previousSummary.trialsStarted ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
             <div>
               <p className={styles.metricLabel}>{market === "us" ? "Paying" : "Bezahlend"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.payingCustomers}</p>
-              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${growthReport.summary.payingCustomers - growthReport.previousSummary.payingCustomers} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
-            </div>
-            <div>
-              <p className={styles.metricLabel}>{market === "us" ? "Trial cancels" : "Testabbrüche"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.trialCancellations}</p>
-            </div>
-            <div>
-              <p className={styles.metricLabel}>{market === "us" ? "Subs cancels" : "Abo-Abbrüche"}</p>
-              <p className={styles.metricValueSmall}>{growthReport.summary.subscriptionCancellations}</p>
+              <p className={styles.metricValueSmall}>{payingCount}</p>
+              <p className={styles.statusMeta}>{growthReport.previousSummary ? `${payingCount - (growthReport.previousSummary.payingCustomers ?? 0)} vs previous month` : market === "us" ? "No previous baseline" : "Keine vorherige Basis"}</p>
             </div>
           </div>
         </article>
@@ -195,7 +216,7 @@ export default async function OwnerControlCenterPage({
           <h2 className={styles.sectionTitle}>{market === "us" ? "Source mix" : "Quellenmix"}</h2>
           <div className={styles.sourceList}>
             {GROWTH_SOURCES.map((source) => {
-              const summary = growthReport.summary.sources[source];
+              const summary = sourceSummary[source] ?? { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 };
               return (
                 <div key={source} className={styles.sourceRow}>
                   <div className={styles.sourceMeta}>
@@ -207,6 +228,19 @@ export default async function OwnerControlCenterPage({
               );
             })}
           </div>
+          {otherBreakdownEntries.length > 0 ? (
+            <div className={styles.sourceList}>
+              <h3 className={styles.sectionTitle}>{market === "us" ? "Other sources" : "Andere Quellen"}</h3>
+              {otherBreakdownEntries.map(([host, count]) => (
+                <div key={host} className={styles.sourceRow}>
+                  <div className={styles.sourceMeta}>
+                    <strong>{host}</strong>
+                    <span>{count} {market === "us" ? "visits" : "Besuche"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </article>
 
         <article className={`${styles.panel} ${styles.span4}`}>

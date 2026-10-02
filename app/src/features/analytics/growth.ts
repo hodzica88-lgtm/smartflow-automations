@@ -21,8 +21,21 @@ export type GrowthEventName =
   | "paid_customer"
   | "subscription_cancelled";
 
+export type GrowthTrafficType = "human" | "bot" | "unknown";
+export type GrowthBotFamily =
+  | "googlebot"
+  | "bingbot"
+  | "openai"
+  | "anthropic"
+  | "perplexity"
+  | "seo_crawler"
+  | "social_preview"
+  | "generic_bot";
+
 export type GrowthSummarySource = {
   visitors: number;
+  botVisitors: number;
+  unknownVisitors: number;
   demos: number;
   trials: number;
   paid: number;
@@ -32,6 +45,15 @@ export type GrowthSummarySource = {
 
 export type GrowthSummary = {
   visitors: number;
+  botVisitors: number;
+  unknownVisitors: number;
+  totalVisits: number;
+  markets: {
+    de: number;
+    us: number;
+    unknown: number;
+  };
+  otherBreakdown: Record<string, number>;
   demoOpened: number;
   trialsStarted: number;
   payingCustomers: number;
@@ -46,6 +68,13 @@ type GrowthEventRow = {
   occurred_at?: string | null;
   company_id?: string | null;
   market?: "de" | "us" | "unknown" | null;
+};
+
+export type RequestTrafficClassification = {
+  trafficType: GrowthTrafficType;
+  botFamily: GrowthBotFamily | null;
+  rawUserAgent?: undefined;
+  rawIpAddress?: undefined;
 };
 
 export const GROWTH_ANALYTICS_V1_START_AT = "2026-09-30T00:26:30.000Z";
@@ -180,6 +209,129 @@ const normalizeReferrerHost = (value: string) => {
   }
 };
 
+const normalizeMarket = (value?: string | null): "de" | "us" | "unknown" => {
+  if (value === "de" || value === "us") {
+    return value;
+  }
+
+  return "unknown";
+};
+
+const readTrafficTypeFromMetadata = (metadata?: Record<string, unknown> | null): GrowthTrafficType => {
+  const value = typeof metadata?.traffic_type === "string" ? metadata.traffic_type.toLowerCase() : "";
+
+  if (value === "human" || value === "browser") {
+    return "human";
+  }
+
+  if (value === "bot" || value === "crawler") {
+    return "bot";
+  }
+
+  if (value === "unknown" || value === "unclassified") {
+    return "unknown";
+  }
+
+  return "unknown";
+};
+
+const normalizeOtherBreakdownKey = (value?: string | null): string | null => {
+  const host = normalizeReferrerHost(value ?? "");
+  if (!host || host === "direct" || host === "localhost") {
+    return null;
+  }
+
+  return host;
+};
+
+const BOT_PATTERNS: Array<[RegExp, GrowthBotFamily]> = [
+  [/googlebot/i, "googlebot"],
+  [/bingbot/i, "bingbot"],
+  [/gptbot/i, "openai"],
+  [/chatgpt-user/i, "openai"],
+  [/claudebot/i, "anthropic"],
+  [/claude-web/i, "anthropic"],
+  [/perplexitybot/i, "perplexity"],
+  [/bytespider/i, "generic_bot"],
+  [/ahrefsbot/i, "seo_crawler"],
+  [/semrushbot/i, "seo_crawler"],
+  [/mj12bot/i, "seo_crawler"],
+  [/dotbot/i, "seo_crawler"],
+  [/petalbot/i, "seo_crawler"],
+  [/facebookexternalhit/i, "social_preview"],
+  [/twitterbot/i, "social_preview"],
+  [/linkedinbot/i, "social_preview"],
+  [/slackbot/i, "social_preview"],
+  [/discordbot/i, "social_preview"],
+  [/whatsapp/i, "social_preview"],
+  [/duckduckbot/i, "seo_crawler"],
+  [/yandexbot/i, "seo_crawler"],
+  [/baiduspider/i, "seo_crawler"],
+  [/oai-searchbot/i, "openai"],
+  [/curl\//i, "generic_bot"],
+  [/wget\//i, "generic_bot"],
+  [/headlesschrome/i, "generic_bot"],
+  [/headlessbrowser/i, "generic_bot"],
+  [/bot\b|crawler\b|spider\b|preview\b/i, "generic_bot"],
+];
+
+export const classifyRequestTraffic = ({
+  userAgent,
+  ipAddress,
+}: {
+  userAgent?: string | null;
+  ipAddress?: string | null;
+} = {}): RequestTrafficClassification => {
+  const normalizedUserAgent = (userAgent ?? "").trim();
+
+  if (!normalizedUserAgent) {
+    return {
+      trafficType: "unknown",
+      botFamily: null,
+      rawUserAgent: undefined,
+      rawIpAddress: undefined,
+    };
+  }
+
+  const loweredUserAgent = normalizedUserAgent.toLowerCase();
+
+  for (const [pattern, botFamily] of BOT_PATTERNS) {
+    if (pattern.test(loweredUserAgent)) {
+      return {
+        trafficType: "bot",
+        botFamily,
+        rawUserAgent: undefined,
+        rawIpAddress: undefined,
+      };
+    }
+  }
+
+  if (/mozilla\//i.test(loweredUserAgent) || /applewebkit\//i.test(loweredUserAgent) || /chrome\//i.test(loweredUserAgent) || /safari\//i.test(loweredUserAgent) || /firefox\//i.test(loweredUserAgent)) {
+    return {
+      trafficType: "human",
+      botFamily: null,
+      rawUserAgent: undefined,
+      rawIpAddress: undefined,
+    };
+  }
+
+  if (typeof ipAddress === "string" && ipAddress.trim().length > 0 && /\d+\.\d+\.\d+\.\d+/.test(ipAddress)) {
+    return {
+      trafficType: "unknown",
+      botFamily: null,
+      rawUserAgent: undefined,
+      rawIpAddress: undefined,
+    };
+  }
+
+  return {
+    trafficType: "unknown",
+    botFamily: null,
+    rawUserAgent: undefined,
+    rawIpAddress: undefined,
+  };
+};
+
 export const normalizeGrowthSource = (value?: string | null): GrowthSource => {
   const source = String(value ?? "").trim().toLowerCase();
 
@@ -259,13 +411,13 @@ export const appendGrowthSourceToHref = (href: string, source?: string | null): 
 };
 
 const createSourceSummary = (): Record<GrowthSource, GrowthSummarySource> => ({
-  producthunt: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  g2: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  saasworthy: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  sourceforge: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  google: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  direct: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
-  other: { visitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  producthunt: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  g2: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  saasworthy: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  sourceforge: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  google: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  direct: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
+  other: { visitors: 0, botVisitors: 0, unknownVisitors: 0, demos: 0, trials: 0, paid: 0, trialCancellations: 0, subscriptionCancellations: 0 },
 });
 
 export const buildGrowthSummary = (
@@ -274,6 +426,15 @@ export const buildGrowthSummary = (
 ): GrowthSummary => {
   const summary: GrowthSummary = {
     visitors: 0,
+    botVisitors: 0,
+    unknownVisitors: 0,
+    totalVisits: 0,
+    markets: {
+      de: 0,
+      us: 0,
+      unknown: 0,
+    },
+    otherBreakdown: {},
     demoOpened: 0,
     trialsStarted: 0,
     payingCustomers: 0,
@@ -297,8 +458,38 @@ export const buildGrowthSummary = (
     const sourceSummary = summary.sources[source];
 
     if (eventName === "visitor" || eventName === "landing_view") {
-      summary.visitors += 1;
-      sourceSummary.visitors += 1;
+      const trafficType = readTrafficTypeFromMetadata(event.metadata);
+      const market = normalizeMarket(event.market ?? "unknown");
+      summary.markets[market] += 1;
+      summary.totalVisits += 1;
+
+      if (trafficType === "human") {
+        summary.visitors += 1;
+        sourceSummary.visitors += 1;
+      } else if (trafficType === "bot") {
+        summary.botVisitors += 1;
+        sourceSummary.botVisitors += 1;
+      } else {
+        summary.unknownVisitors += 1;
+        sourceSummary.unknownVisitors += 1;
+      }
+
+      if (source === "other") {
+        const otherKey = normalizeOtherBreakdownKey(
+          typeof event.metadata?.source_detail === "string"
+            ? event.metadata.source_detail
+            : typeof event.metadata?.referrer_host === "string"
+              ? event.metadata.referrer_host
+              : typeof event.metadata?.source === "string"
+                ? event.metadata.source
+                : undefined,
+        );
+
+        if (otherKey) {
+          summary.otherBreakdown[otherKey] = (summary.otherBreakdown[otherKey] ?? 0) + 1;
+        }
+      }
+
       continue;
     }
 
@@ -385,6 +576,8 @@ type TrackGrowthEventInput = {
   source?: string | null;
   searchParams?: Record<string, string | string[] | undefined>;
   referrer?: string | null;
+  userAgent?: string | null;
+  ipAddress?: string | null;
   metadata?: Record<string, string | number | boolean | null | undefined>;
 };
 
@@ -396,6 +589,8 @@ export const trackGrowthEvent = async ({
   source,
   searchParams,
   referrer,
+  userAgent,
+  ipAddress,
   metadata,
 }: TrackGrowthEventInput) => {
   const resolvedSource = await resolveGrowthSourceFromRequest({
@@ -404,10 +599,34 @@ export const trackGrowthEvent = async ({
     source,
   });
 
-  const payload = {
-    ...(metadata ?? {}),
-    source: resolvedSource,
-  };
+  const trafficClassification = classifyRequestTraffic({
+    userAgent,
+    ipAddress,
+  });
+
+  const sourceDetail = resolvedSource === "other"
+    ? normalizeOtherBreakdownKey(referrer ?? (typeof metadata?.source_detail === "string" ? metadata.source_detail : null))
+    : null;
+
+  const payload: Record<string, string | number | boolean | null> = {};
+
+  for (const [key, value] of Object.entries(metadata ?? {})) {
+    if (value !== undefined) {
+      payload[key] = value as string | number | boolean | null;
+    }
+  }
+
+  payload.source = resolvedSource;
+
+  if (sourceDetail) {
+    payload.source_detail = sourceDetail;
+  }
+
+  payload.traffic_type = trafficClassification.trafficType;
+
+  if (trafficClassification.botFamily) {
+    payload.bot_family = trafficClassification.botFamily;
+  }
 
   trackAnalyticsEvent({
     eventName: eventName as AnalyticsEventName,

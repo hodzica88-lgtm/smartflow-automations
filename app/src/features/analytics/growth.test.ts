@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   appendGrowthSourceToHref,
   buildGrowthSummary,
+  classifyRequestTraffic,
   normalizeGrowthSource,
   resolveCompanyGrowthSource,
   resolveGrowthSourceFromRequest,
@@ -95,32 +96,68 @@ describe("resolveCompanyGrowthSource", () => {
     await expect(resolveCompanyGrowthSource("company_123")).resolves.toBe("producthunt");
 
     const summary = buildGrowthSummary(mockCompanyRows.rows);
-    expect(summary.visitors).toBe(1);
+    expect(summary.visitors).toBe(0);
+    expect(summary.unknownVisitors).toBe(1);
+    expect(summary.totalVisits).toBe(1);
     expect(summary.demoOpened).toBe(1);
     expect(summary.trialsStarted).toBe(1);
     expect(summary.payingCustomers).toBe(1);
-    expect(summary.sources.producthunt.visitors).toBe(1);
+    expect(summary.sources.producthunt.unknownVisitors).toBe(1);
     expect(summary.sources.producthunt.trials).toBe(1);
     expect(summary.sources.producthunt.paid).toBe(1);
   });
 });
 
-describe("buildGrowthSummary", () => {
-  it("aggregates the V1 growth funnel and source breakdown", () => {
-    const summary = buildGrowthSummary([
-      { event_name: "visitor", metadata: { source: "producthunt" } },
-      { event_name: "visitor", metadata: { source: "producthunt" } },
-      { event_name: "visitor", metadata: { source: "g2" } },
-      { event_name: "demo_opened", metadata: { source: "producthunt" } },
-      { event_name: "trial_started", metadata: { source: "producthunt" } },
-      { event_name: "paid_customer", metadata: { source: "producthunt" } },
-      { event_name: "trial_started", metadata: { source: "g2" } },
-      { event_name: "paid_customer", metadata: { source: "g2" } },
-      { event_name: "trial_cancelled", metadata: { source: "g2" } },
-      { event_name: "subscription_cancelled", metadata: { source: "producthunt" } },
-    ] as Array<{ event_name: string; metadata?: Record<string, unknown> }>);
+describe("classifyRequestTraffic", () => {
+  it("classifies common browsers and bots without storing raw user agents", () => {
+    expect(classifyRequestTraffic({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36" })).toMatchObject({ trafficType: "human" });
+    expect(classifyRequestTraffic({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15" })).toMatchObject({ trafficType: "human" });
+    expect(classifyRequestTraffic({ userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" })).toMatchObject({ trafficType: "bot", botFamily: "googlebot" });
+    expect(classifyRequestTraffic({ userAgent: "GPTBot/1.1 (+https://openai.com/gptbot)" })).toMatchObject({ trafficType: "bot", botFamily: "openai" });
+    expect(classifyRequestTraffic({ userAgent: "ChatGPT-User" })).toMatchObject({ trafficType: "bot", botFamily: "openai" });
+    expect(classifyRequestTraffic({ userAgent: "ClaudeBot/1.0" })).toMatchObject({ trafficType: "bot", botFamily: "anthropic" });
+    expect(classifyRequestTraffic({ userAgent: "PerplexityBot/1.0" })).toMatchObject({ trafficType: "bot", botFamily: "perplexity" });
+    expect(classifyRequestTraffic({ userAgent: "curl/8.0.1" })).toMatchObject({ trafficType: "bot", botFamily: "generic_bot" });
+    expect(classifyRequestTraffic({ userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/124.0 Safari/537.36" })).toMatchObject({ trafficType: "bot", botFamily: "generic_bot" });
+    expect(classifyRequestTraffic({ userAgent: "" })).toMatchObject({ trafficType: "unknown" });
+    expect(classifyRequestTraffic({ userAgent: undefined })).toMatchObject({ trafficType: "unknown" });
+  });
 
-    expect(summary.visitors).toBe(3);
+  it("never stores the raw User-Agent or IP in analytics metadata", () => {
+    const result = classifyRequestTraffic({
+      userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +https://www.google.com/bot.html)",
+      ipAddress: "203.0.113.10",
+    });
+
+    expect(result.rawUserAgent).toBeUndefined();
+    expect(result.rawIpAddress).toBeUndefined();
+    expect(result.botFamily).toBe("googlebot");
+  });
+});
+
+describe("buildGrowthSummary", () => {
+  it("aggregates the V1 growth funnel and source breakdown while preserving legacy unknown traffic", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "g2", traffic_type: "bot", bot_family: "seo_crawler" } },
+      { event_name: "visitor", market: "unknown", metadata: { source: "direct" } },
+      { event_name: "demo_opened", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "trial_started", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "paid_customer", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "trial_started", metadata: { source: "g2", traffic_type: "human" } },
+      { event_name: "paid_customer", metadata: { source: "g2", traffic_type: "human" } },
+      { event_name: "trial_cancelled", metadata: { source: "g2", traffic_type: "human" } },
+      { event_name: "subscription_cancelled", metadata: { source: "producthunt", traffic_type: "human" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.visitors).toBe(2);
+    expect(summary.botVisitors).toBe(1);
+    expect(summary.unknownVisitors).toBe(1);
+    expect(summary.totalVisits).toBe(4);
+    expect(summary.markets.de).toBe(2);
+    expect(summary.markets.us).toBe(1);
+    expect(summary.markets.unknown).toBe(1);
     expect(summary.demoOpened).toBe(1);
     expect(summary.trialsStarted).toBe(2);
     expect(summary.payingCustomers).toBe(2);
@@ -129,8 +166,24 @@ describe("buildGrowthSummary", () => {
     expect(summary.sources.producthunt.visitors).toBe(2);
     expect(summary.sources.producthunt.trials).toBe(1);
     expect(summary.sources.producthunt.paid).toBe(1);
-    expect(summary.sources.g2.visitors).toBe(1);
+    expect(summary.sources.g2.visitors).toBe(0);
     expect(summary.sources.g2.trials).toBe(1);
     expect(summary.sources.g2.paid).toBe(1);
+    expect(summary.sources.g2.botVisitors).toBe(1);
+  });
+
+  it("uses market counts from event.market rather than the source mix", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "google", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "google", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "direct", traffic_type: "human" } },
+      { event_name: "visitor", market: "unknown", metadata: { source: "producthunt", traffic_type: "human" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.markets.de).toBe(2);
+    expect(summary.markets.us).toBe(1);
+    expect(summary.markets.unknown).toBe(1);
+    expect(summary.markets.de + summary.markets.us + summary.markets.unknown).toBe(summary.totalVisits);
+    expect(summary.sources.google.visitors).toBe(2);
   });
 });

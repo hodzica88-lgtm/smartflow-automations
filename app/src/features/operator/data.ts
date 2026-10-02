@@ -920,7 +920,7 @@ export const getOwnerGrowthMonthData = async (monthKey?: string) => {
 
   const { data: growthEventsResult, error: growthEventsError } = await supabase
     .from("analytics_events")
-    .select("event_name, metadata, occurred_at, company_id")
+    .select("event_name, metadata, occurred_at, company_id, market, market")
     .in("event_name", [
       "visitor",
       "landing_view",
@@ -938,7 +938,7 @@ export const getOwnerGrowthMonthData = async (monthKey?: string) => {
     throw growthEventsError;
   }
 
-  const events = ((growthEventsResult ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null; occurred_at?: string | null; company_id?: string | null }>).filter(
+  const events = ((growthEventsResult ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null; occurred_at?: string | null; company_id?: string | null; market?: "de" | "us" | "unknown" | null }>).filter(
     (event) => !isInternalOwnerCompany(event.company_id ?? null),
   );
 
@@ -1022,6 +1022,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
       metadata?: Record<string, unknown> | null;
       occurred_at?: string | null;
       company_id?: string | null;
+      market?: "de" | "us" | "unknown" | null;
     }>) ?? []).filter((event) => !isInternalOwnerCompany(event.company_id ?? null)),
     { startAt: GROWTH_ANALYTICS_V1_START_AT },
   );
