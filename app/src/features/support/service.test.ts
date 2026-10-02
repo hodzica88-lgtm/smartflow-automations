@@ -17,6 +17,15 @@ vi.mock("@/shared/lib/supabase/server", () => ({
 const supportModule = await import("@/features/support/service");
 const aiModule = await import("@/features/support/ai-service");
 
+const setNodeEnv = (value?: string) => {
+  const env = process.env as Record<string, string | undefined>;
+  if (value === undefined) {
+    delete env.NODE_ENV;
+    return;
+  }
+
+  env.NODE_ENV = value;
+};
 
 describe("support AI classification", () => {
   it("classifies a common German product question as auto-reply eligible", async () => {
@@ -519,6 +528,287 @@ describe("support inbound processing", () => {
       subject: "Re: Re: Re: Test",
       body: "This is an automated message. Out of office.\n\nThanks for your email.",
       senderEmail: "mailer-daemon@example.com",
+    });
+
+    expect(result).toBe(true);
+  });
+
+  it("does not send an owner alert for a low-priority email", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "newsletter@example.com",
+      senderName: "Newsletter Team",
+      subject: "Spring newsletter",
+      body: "Hello, here is our monthly newsletter and product updates.",
+      providerMessageId: "low-owner-alert-1",
+      market: "de",
+    });
+
+    expect(result.created).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("does not send an owner alert for a normal-priority email", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "How do I set up the dashboard?",
+      body: "I need help finding the right settings in the dashboard for my team.",
+      providerMessageId: "normal-owner-alert-1",
+      market: "us",
+    });
+
+    expect(result.created).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("sends exactly one owner alert for a high-priority email and includes the key message details", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "owner-alert-123" }),
+    } as Response);
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Alex Customer",
+      subject: "Incoming leads are not being received",
+      body: "We cannot receive incoming leads since this morning and customers are blocked.",
+      providerMessageId: "high-owner-alert-1",
+      market: "us",
+    });
+
+    expect(result.created).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    const payload = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body ?? "{}"));
+    expect(payload.to[0].email).toBe("hodzica88@gmail.com");
+    expect(payload.subject).toContain("[Varnito HIGH]");
+    expect(payload.subject).toContain("Incoming leads are not being received");
+    expect(payload.textContent).toContain("PRIORITY: HIGH");
+    expect(payload.textContent).toContain("FROM: Alex Customer");
+    expect(payload.textContent).toContain("ORIGINAL SUBJECT: Incoming leads are not being received");
+    expect(payload.textContent).toContain("WHY THIS IS IMPORTANT");
+    expect(payload.textContent).toContain("SUMMARY");
+    expect(payload.textContent).toContain("ORIGINAL MESSAGE");
+    expect(payload.textContent).toContain("We cannot receive incoming leads since this morning and customers are blocked.");
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("sends an owner alert for a critical email and includes the required information", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "owner-alert-critical-321" }),
+    } as Response);
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "security@example.com",
+      senderName: "Security Team",
+      subject: "Potential data breach in Varnito workspace",
+      body: "We detected a possible security incident and unauthorized access to customer data.",
+      providerMessageId: "critical-owner-alert-1",
+      market: "de",
+    });
+
+    expect(result.created).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    const payload = JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body ?? "{}"));
+    expect(payload.to[0].email).toBe("hodzica88@gmail.com");
+    expect(payload.subject).toContain("[Varnito CRITICAL]");
+    expect(payload.textContent).toContain("PRIORITY: CRITICAL");
+    expect(payload.textContent).toContain("Potential data breach in Varnito workspace");
+    expect(payload.textContent).toContain("WHY THIS IS IMPORTANT");
+    expect(payload.textContent).toContain("SUMMARY");
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("keeps inbound processing successful if owner alert delivery fails", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ message: "Brevo failure" }),
+    } as Response);
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Urgent billing problem",
+      body: "We are being billed incorrectly and need immediate help before the next payment runs.",
+      providerMessageId: "owner-alert-failure-1",
+      market: "us",
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.threadId).toBe("thread-1");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("does not send duplicate owner alerts for the same inbound message", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const previousNodeEnv = process.env.NODE_ENV;
+    setNodeEnv("development");
+    process.env.SUPPORT_OWNER_ALERT_EMAIL = "hodzica88@gmail.com";
+
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [{ id: "dup" }], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "customer@example.com",
+      senderName: "Customer",
+      subject: "Urgent billing problem",
+      body: "We are being billed incorrectly and need immediate help before the next payment runs.",
+      providerMessageId: "owner-alert-duplicate-1",
+      market: "us",
+    });
+
+    expect(result.duplicate).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    setNodeEnv(previousNodeEnv);
+    delete process.env.SUPPORT_OWNER_ALERT_EMAIL;
+    fetchSpy.mockRestore();
+  });
+
+  it("treats Varnito-generated owner notifications as a loop candidate", async () => {
+    const result = await supportModule.isSupportLoopCandidate({
+      subject: "[Varnito HIGH] Important email from support@varnito.com",
+      body: "X-Varnito-Generated: owner-alert\nThis message was generated by Varnito.",
+      senderEmail: "support@varnito.com",
     });
 
     expect(result).toBe(true);

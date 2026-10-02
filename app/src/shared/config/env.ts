@@ -13,6 +13,7 @@ type ServerEnv = PublicEnv & {
   openAiApiKey?: string;
   openAiModel?: string;
   supportEmail?: string;
+  supportOwnerAlertEmail?: string;
   supportFromName?: string;
   supportWebhookSecret?: string;
   analyticsEventsEnabled: boolean;
@@ -137,6 +138,7 @@ export const loadServerEnv = (): ServerEnv => {
     openAiApiKey: getOptionalEnv("OPENAI_API_KEY"),
     openAiModel: getOptionalEnv("OPENAI_MODEL"),
     supportEmail: getOptionalEnv("SUPPORT_EMAIL"),
+    supportOwnerAlertEmail: getOptionalEnv("SUPPORT_OWNER_ALERT_EMAIL"),
     supportFromName: getOptionalEnv("SUPPORT_FROM_NAME"),
     supportWebhookSecret: getOptionalEnv("SUPPORT_WEBHOOK_SECRET"),
     analyticsEventsEnabled: getBooleanEnv("ANALYTICS_EVENTS_ENABLED", true),
