@@ -11,6 +11,7 @@ import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { requireOperatorUser } from "@/features/operator/access";
 import { listOwnerBusinessNotifications } from "@/features/notifications/service";
 import { getOwnerControlCenterData, getOwnerGrowthMonthData } from "@/features/operator/data";
+import { getInboxPreview, getSupportInboxCounts } from "@/features/support/service";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
@@ -68,6 +69,10 @@ export default async function OwnerControlCenterPage({
   const growthReport = await getOwnerGrowthMonthData(selectedMonth);
   const data = await getOwnerControlCenterData();
   const recentNotifications = await listOwnerBusinessNotifications(5);
+  const [mailCounts, inboxPreview] = await Promise.all([
+    getSupportInboxCounts(),
+    getInboxPreview(5),
+  ]);
 
   const warnings = data.warnings.length > 0 ? data.warnings : [market === "us" ? "No current warnings." : "Aktuell keine Warnungen."];
   const sourceLabels: Record<(typeof GROWTH_SOURCES)[number], string> = {
@@ -305,6 +310,39 @@ export default async function OwnerControlCenterPage({
               {data.lastBackup.checkedAt ? formatTimestamp(data.lastBackup.checkedAt, locale) : (market === "us" ? "Unavailable" : "Unbekannt")}
             </span>
           </div>
+        </article>
+
+        <article className={`${styles.panel} ${styles.span12}`} id="mail-inbox">
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>{market === "us" ? "Mail Inbox" : "Mail Posteingang"}</h2>
+            <Link className={styles.linkButton} href="/operator/support">{market === "us" ? "All mails" : "Alle Mails"}</Link>
+          </div>
+          <div className={styles.mailCounts}>
+            <div className={styles.mailCountCard}><span>{market === "us" ? "Important" : "Wichtig"}</span><strong>{mailCounts.important}</strong></div>
+            <div className={styles.mailCountCard}><span>{market === "us" ? "Review" : "Prüfen"}</span><strong>{mailCounts.review}</strong></div>
+            <div className={styles.mailCountCard}><span>{market === "us" ? "Sales" : "Verkauf"}</span><strong>{mailCounts.sales}</strong></div>
+            <div className={styles.mailCountCard}><span>Spam</span><strong>{mailCounts.spam}</strong></div>
+          </div>
+          {inboxPreview.length === 0 ? (
+            <p className={styles.muted}>{market === "us" ? "No inbound mail yet." : "Noch keine eingehenden Mails."}</p>
+          ) : (
+            <div className={styles.notificationList}>
+              {inboxPreview.map((thread) => (
+                <div key={String(thread.id)} className={styles.notificationItem}>
+                  <div className={styles.notificationHeader}>
+                    <strong>{String(thread.customer_email ?? "Unknown sender")}</strong>
+                    <span className={styles.mailBadge}>{String(thread.triage_bucket ?? "review")}</span>
+                  </div>
+                  <p className={styles.notificationBody}>{String(thread.subject ?? "Support request")}</p>
+                  <p className={styles.notificationBody}>{String(thread.triage_summary ?? "No summary")}</p>
+                  <div className={styles.notificationMeta}>
+                    <span>{String(thread.triage_action ?? "review")} · {String(thread.triage_category ?? thread.category ?? "unclear")}</span>
+                    <span>{formatTimestamp(String(thread.last_message_at ?? thread.created_at), locale)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </article>
 
         <article className={`${styles.panel} ${styles.span12}`} id="recent-notifications">

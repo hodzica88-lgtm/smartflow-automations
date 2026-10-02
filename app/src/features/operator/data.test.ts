@@ -33,6 +33,16 @@ vi.mock("@/features/notifications/service", () => ({
   listOwnerBusinessNotifications: vi.fn(async () => []),
 }));
 
+vi.mock("@/features/support/service", () => ({
+  getInboxPreview: vi.fn(async () => []),
+  getSupportInboxCounts: vi.fn(async () => ({
+    important: 0,
+    review: 0,
+    sales: 0,
+    spam: 0,
+  })),
+}));
+
 vi.mock("@/features/operator/data", async () => {
   const actual = await vi.importActual<typeof import("@/features/operator/data")>("@/features/operator/data");
   const { GROWTH_SOURCES } = await import("@/features/analytics/growth");

@@ -176,9 +176,14 @@ describe("support inbound processing", () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      insert: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
-      update: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: [], error: null }),
     });
   });
@@ -226,12 +231,89 @@ describe("support inbound processing", () => {
     expect(result).toBe(true);
   });
 
+  it("stores mail triage metadata without auto-sending outbound AI replies for potential customers", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "pricing@roofing-company.com",
+      senderName: "Roofing Lead",
+      subject: "Question about Varnito pricing",
+      body: "We run a roofing company in Texas. Does Varnito work with website leads and how much is it?",
+      providerMessageId: "triage-potential-1",
+      market: "us",
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.classification?.triageBucket).toBe("important");
+    expect(result.classification?.triageCategory).toBe("potential_customer");
+    expect(result.classification?.triageAction).toBe("respond");
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
+  it("stores vendor sales triage metadata and never auto sends outbound marketing replies", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const table = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "sales@agency.com" }, error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "thread-1" }, error: null }),
+      })),
+      update: vi.fn().mockImplementation(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
+      })),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+
+    supabaseMock.from.mockReturnValue(table);
+
+    const result = await supportModule.processInboundSupportMessage({
+      senderEmail: "sales@agency.com",
+      senderName: "SEO Agency",
+      subject: "Grow varnito.com to #1 on Google",
+      body: "We are an SEO agency and can improve your rankings and get more leads.",
+      providerMessageId: "triage-sales-1",
+      market: "de",
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.classification?.triageBucket).toBe("sales");
+    expect(result.classification?.triageCategory).toBe("vendor_sales");
+    expect(result.classification?.triageAction).toBe("ignore");
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+
   it("sends a manual owner reply and stores it in the thread", async () => {
     const table = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { id: "thread-1", customer_email: "customer@example.com" }, error: null }),
-      insert: vi.fn().mockResolvedValue({ data: [{ id: "message-2" }], error: null }),
+      insert: vi.fn().mockImplementation(() => ({
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: "message-2" }, error: null }),
+      })),
       update: vi.fn(() => ({
         eq: vi.fn().mockResolvedValue({ data: [{ id: "thread-1" }], error: null }),
       })),

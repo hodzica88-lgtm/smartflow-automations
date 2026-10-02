@@ -1,7 +1,9 @@
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { loadServerEnv } from "@/shared/config/env";
 import { classifySupportRequest } from "@/features/support/ai-service";
-import type { SupportLocale, SupportThreadStatus } from "@/features/support/types";
+import { createAppNotification } from "@/features/notifications/service";
+import { INTERNAL_OWNER_COMPANY_ID } from "@/features/operator/internal-company";
+import type { SupportClassification, SupportLocale, SupportThreadStatus } from "@/features/support/types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,6 +16,19 @@ const normalizeEmail = (value?: string | null) => {
   const email = safeText(value).toLowerCase();
   return email && EMAIL_REGEX.test(email) ? email : null;
 };
+
+const buildTriagePayload = (classification: SupportClassification) => ({
+  triage_bucket: classification.triageBucket ?? null,
+  triage_category: classification.triageCategory ?? null,
+  triage_summary: classification.triageSummary ?? null,
+  triage_action: classification.triageAction ?? null,
+  triage_confidence: typeof classification.triageConfidence === "number"
+    ? Number(classification.triageConfidence.toFixed(2))
+    : typeof classification.confidence === "number"
+      ? Number(classification.confidence.toFixed(2))
+      : null,
+  triage_reason: classification.triageReason ?? null,
+});
 
 const logSupportPersistenceError = (context: string, error: { code?: string; message?: string; details?: string } | null | undefined) => {
   console.error("[support-persistence]", context, {
@@ -201,7 +216,8 @@ export const processInboundSupportMessage = async ({
   }
 
   const threadId = existingThread.data && existingThread.data[0]?.id ? existingThread.data[0].id : null;
-  const threadStatus: SupportThreadStatus = classification.canAutoReply ? "ai_answered" : "open";
+  const threadStatus: SupportThreadStatus = "open";
+  const triagePayload = buildTriagePayload(classification);
 
   let finalThreadId = threadId;
   if (!finalThreadId) {
@@ -212,10 +228,11 @@ export const processInboundSupportMessage = async ({
         customer_name: safeText(senderName) || email.split("@")[0],
         locale: market,
         subject: subjectText || "Support request",
-        status: classification.canAutoReply ? "ai_answered" : "escalated",
+        status: "open",
         priority: classification.priority,
         category: classification.category,
         ai_confidence: classification.confidence,
+        ...triagePayload,
       })
       .select("id")
       .single();
@@ -245,58 +262,46 @@ export const processInboundSupportMessage = async ({
     return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "message_insert_failed" };
   }
 
-  if (classification.canAutoReply && classification.suggestedReply) {
-    const reply = await sendBrevoSupportEmail({
-      toEmail: email,
-      subject: subjectText || "Varnito support",
-      textBody: classification.suggestedReply,
-      htmlBody: `<p>${classification.suggestedReply}</p>`,
-      market,
+  const threadUpdate = {
+    status: "open",
+    updated_at: new Date().toISOString(),
+    last_message_at: new Date().toISOString(),
+    ai_confidence: classification.confidence,
+    category: classification.category,
+    priority: classification.priority,
+    ...triagePayload,
+  };
+
+  const updateResult = await supabase
+    .from("support_threads")
+    .update(threadUpdate)
+    .eq("id", finalThreadId);
+
+  if (updateResult.error) {
+    logSupportPersistenceError("support_threads triage update failed", updateResult.error);
+    return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "thread_status_update_failed" };
+  }
+
+  if (classification.triageBucket === "important") {
+    const notificationTitle = classification.triageCategory === "potential_customer"
+      ? "Neues wichtiges Lead-Interesse"
+      : "Neue wichtige Support-Mail";
+    const notificationMessage = classification.triageSummary || `Wichtige Support-Mail von ${email} — ${subjectText || "Support-Anfrage"}`;
+
+    await createAppNotification({
+      companyId: INTERNAL_OWNER_COMPANY_ID,
+      type: "new_inquiry",
+      title: notificationTitle,
+      message: notificationMessage,
+      metadata: {
+        threadId: finalThreadId,
+        senderEmail: email,
+        triageBucket: classification.triageBucket,
+        triageCategory: classification.triageCategory,
+        subject: subjectText || "Support request",
+      },
+      dedupeKey: `support-important-${finalThreadId}-${providerMessageId ?? duplicateKey}`,
     });
-
-    if (reply.sent) {
-      const outboundInsert = await supabase.from("support_messages").insert({
-        thread_id: finalThreadId,
-        direction: "outbound",
-        sender_type: "ai",
-        sender_email: "support@varnito.com",
-        body_text: classification.suggestedReply,
-        body_html: `<p>${classification.suggestedReply}</p>`,
-        provider_message_id: reply.providerMessageId,
-      });
-
-      if (outboundInsert.error) {
-        logSupportPersistenceError("support_messages ai reply insert failed", outboundInsert.error);
-        return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "ai_reply_insert_failed" };
-      }
-
-      const updateResult = await supabase
-        .from("support_threads")
-        .update({
-          status: "ai_answered",
-          updated_at: new Date().toISOString(),
-          last_message_at: new Date().toISOString(),
-          ai_confidence: classification.confidence,
-        })
-        .eq("id", finalThreadId);
-
-      if (updateResult.error) {
-        logSupportPersistenceError("support_threads ai reply status update failed", updateResult.error);
-        return { duplicate: false, threadId: finalThreadId, created: false, classification, persistError: "thread_status_update_failed" };
-      }
-    }
-  } else {
-    await supabase
-      .from("support_threads")
-      .update({
-        status: classification.canAutoReply ? "ai_answered" : "escalated",
-        updated_at: new Date().toISOString(),
-        last_message_at: new Date().toISOString(),
-        ai_confidence: classification.confidence,
-        category: classification.category,
-        priority: classification.priority,
-      })
-      .eq("id", finalThreadId);
   }
 
   return {
@@ -310,15 +315,48 @@ export const processInboundSupportMessage = async ({
   };
 };
 
-export const listSupportThreads = async () => {
+export const listSupportThreads = async (filter: "all" | "important" | "review" | "sales" | "spam" = "all") => {
   const supabase = createSupabaseServiceRoleClient();
-  const { data, error } = await supabase
-    .from("support_threads")
-    .select("*")
-    .order("last_message_at", { ascending: false, nullsFirst: false });
+  let query = supabase.from("support_threads").select("*");
+
+  if (filter !== "all") {
+    query = query.eq("triage_bucket", filter);
+  }
+
+  const { data, error } = await query.order("last_message_at", { ascending: false, nullsFirst: false });
 
   if (error) return [] as Array<Record<string, unknown>>;
   return data ?? [];
+};
+
+export const getSupportInboxCounts = async () => {
+  const rows = await listSupportThreads();
+  const result = {
+    important: 0,
+    review: 0,
+    sales: 0,
+    spam: 0,
+  };
+
+  for (const row of rows) {
+    const bucket = String(row.triage_bucket ?? "review").trim().toLowerCase();
+    if (bucket === "important") {
+      result.important += 1;
+    } else if (bucket === "review") {
+      result.review += 1;
+    } else if (bucket === "sales") {
+      result.sales += 1;
+    } else if (bucket === "spam") {
+      result.spam += 1;
+    }
+  }
+
+  return result;
+};
+
+export const getInboxPreview = async (limit = 5) => {
+  const rows = await listSupportThreads();
+  return rows.slice(0, limit) as Array<Record<string, unknown>>;
 };
 
 export const getSupportThreadDetail = async (threadId: string) => {

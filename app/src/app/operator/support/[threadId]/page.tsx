@@ -38,6 +38,11 @@ export default async function SupportThreadDetailPage({ params }: { params: Prom
   }
 
   const thread = result.thread as Record<string, unknown>;
+  const triageBucket = String(thread.triage_bucket ?? "review");
+  const triageCategory = String(thread.triage_category ?? thread.category ?? "unclear");
+  const triageSummary = String(thread.triage_summary ?? "No triage summary available.");
+  const triageAction = String(thread.triage_action ?? "review");
+  const triageConfidence = typeof thread.triage_confidence === "number" ? Number(thread.triage_confidence).toFixed(2) : (typeof thread.ai_confidence === "number" ? Number(thread.ai_confidence).toFixed(2) : "—");
 
   return (
     <main className={styles.shell}>
@@ -60,10 +65,11 @@ export default async function SupportThreadDetailPage({ params }: { params: Prom
 
       <section className={styles.summary}
         aria-label="Support thread summary">
-        <div className={styles.meta}><span>Language</span><strong>{String(thread.locale ?? "de").toUpperCase()}</strong></div>
-        <div className={styles.meta}><span>Category</span><strong>{String(thread.category ?? "unknown")}</strong></div>
-        <div className={styles.meta}><span>Priority</span><strong>{String(thread.priority ?? "medium")}</strong></div>
-        <div className={styles.meta}><span>AI confidence</span><strong>{thread.ai_confidence ? Number(thread.ai_confidence).toFixed(2) : "—"}</strong></div>
+        <div className={styles.meta}><span>Bucket</span><strong>{triageBucket}</strong></div>
+        <div className={styles.meta}><span>Classification</span><strong>{triageCategory}</strong></div>
+        <div className={styles.meta}><span>Action</span><strong>{triageAction}</strong></div>
+        <div className={styles.meta}><span>Confidence</span><strong>{triageConfidence}</strong></div>
+        <div className={styles.meta}><span>Summary</span><strong>{triageSummary}</strong></div>
       </section>
 
       <section className={styles.panel}>
@@ -83,6 +89,7 @@ export default async function SupportThreadDetailPage({ params }: { params: Prom
 
       <section className={styles.panel}>
         <h2>Manual reply</h2>
+        <p className={styles.note}>Reply actions are manual and are never sent automatically by the AI.</p>
         <form action={sendSupportReplyAction}>
           <input type="hidden" name="thread_id" value={String(thread.id)} />
           <textarea name="body" className={styles.textarea} rows={6} placeholder="Write a manual reply to the customer..." required />

@@ -10,6 +10,18 @@ export type SupportThreadCategory =
   | "account_deletion"
   | "security"
   | "unknown";
+export type SupportTriageBucket = "important" | "review" | "sales" | "spam";
+export type SupportTriageCategory =
+  | "customer_support"
+  | "potential_customer"
+  | "billing"
+  | "security"
+  | "legal_privacy"
+  | "partnership"
+  | "vendor_sales"
+  | "spam"
+  | "unclear";
+export type SupportTriageAction = "respond" | "review" | "ignore";
 
 export type SupportClassification = {
   detectedLanguage: "de" | "en";
@@ -19,6 +31,12 @@ export type SupportClassification = {
   confidence: number;
   escalationReason?: string;
   suggestedReply?: string;
+  triageBucket?: SupportTriageBucket;
+  triageCategory?: SupportTriageCategory;
+  triageSummary?: string;
+  triageAction?: SupportTriageAction;
+  triageReason?: string;
+  triageConfidence?: number;
 };
 
 export type SupportThreadRecord = {
@@ -32,6 +50,12 @@ export type SupportThreadRecord = {
   priority: SupportThreadPriority;
   category: SupportThreadCategory;
   ai_confidence?: number | null;
+  triage_bucket?: SupportTriageBucket | null;
+  triage_category?: SupportTriageCategory | null;
+  triage_summary?: string | null;
+  triage_action?: SupportTriageAction | null;
+  triage_confidence?: number | null;
+  triage_reason?: string | null;
   created_at: string;
   updated_at: string;
   last_message_at: string | null;
