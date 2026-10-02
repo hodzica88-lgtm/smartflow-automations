@@ -80,6 +80,7 @@ export default async function OwnerControlCenterPage({
     g2: "G2",
     saasworthy: "SaaSworthy",
     sourceforge: "SourceForge",
+    slashdot: "Slashdot",
     google: "Google",
     capterra: "Capterra",
     getapp: "GetApp",
@@ -234,7 +235,7 @@ export default async function OwnerControlCenterPage({
           <h2 className={styles.sectionTitle}>{market === "us" ? "Source mix" : "Quellenmix"}</h2>
           <div className={styles.sourceList}>
             {GROWTH_SOURCES.filter((source) => {
-              if (["producthunt", "g2", "saasworthy", "sourceforge", "google", "direct", "other"].includes(source)) {
+              if (["producthunt", "g2", "capterra", "getapp", "softwareadvice", "saasworthy", "sourceforge", "slashdot", "google", "direct", "other"].includes(source)) {
                 return true;
               }
 

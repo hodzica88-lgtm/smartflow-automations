@@ -47,6 +47,10 @@ describe("normalizeGrowthSource", () => {
     expect(normalizeGrowthSource("g2")).toBe("g2");
     expect(normalizeGrowthSource("saasworthy")).toBe("saasworthy");
     expect(normalizeGrowthSource("sourceforge.net")).toBe("sourceforge");
+    expect(normalizeGrowthSource("slashdot")).toBe("slashdot");
+    expect(normalizeGrowthSource("slashdot.org")).toBe("slashdot");
+    expect(normalizeGrowthSource("https://slashdot.org/software/p/Varnito/")).toBe("slashdot");
+    expect(normalizeGrowthSource("https://www.slashdot.org/software/p/Varnito/")).toBe("slashdot");
     expect(normalizeGrowthSource("Google")).toBe("google");
     expect(normalizeGrowthSource("google.com")).toBe("google");
     expect(normalizeGrowthSource("google.de")).toBe("google");
@@ -92,10 +96,30 @@ describe("resolveGrowthSourceFromRequest", () => {
 
     await expect(
       resolveGrowthSourceFromRequest({
+        searchParams: { utm_source: "slashdot" },
+        referrer: "https://www.google.com/search?q=varnito",
+      }),
+    ).resolves.toBe("slashdot");
+
+    await expect(
+      resolveGrowthSourceFromRequest({
+        searchParams: {},
+        referrer: "https://slashdot.org/software/p/Varnito/",
+      }),
+    ).resolves.toBe("slashdot");
+
+    await expect(
+      resolveGrowthSourceFromRequest({
         searchParams: {},
         referrer: undefined,
       }),
     ).resolves.toBe("direct");
+
+    expect(normalizeGrowthSource("sourceforge")).toBe("sourceforge");
+    expect(normalizeGrowthSource("https://www.capterra.com")).toBe("capterra");
+    expect(normalizeGrowthSource("https://www.getapp.com")).toBe("getapp");
+    expect(normalizeGrowthSource("https://www.softwareadvice.com")).toBe("softwareadvice");
+    expect(normalizeGrowthSource("randomunknownsite.example")).toBe("other");
   });
 });
 
@@ -224,6 +248,23 @@ describe("buildGrowthSummary", () => {
     expect(summary.sources.g2.trials).toBe(1);
     expect(summary.sources.g2.paid).toBe(1);
     expect(summary.sources.g2.botVisitors).toBe(1);
+  });
+
+  it("keeps SourceForge and Slashdot as separate source buckets in the growth summary", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "sourceforge", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "slashdot", traffic_type: "human" } },
+      { event_name: "trial_started", metadata: { source: "slashdot", traffic_type: "human" } },
+      { event_name: "paid_customer", metadata: { source: "slashdot", traffic_type: "human" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.sources.sourceforge.visitors).toBe(1);
+    expect(summary.sources.sourceforge.trials).toBe(0);
+    expect(summary.sources.sourceforge.paid).toBe(0);
+    expect(summary.sources.slashdot.visitors).toBe(1);
+    expect(summary.sources.slashdot.trials).toBe(1);
+    expect(summary.sources.slashdot.paid).toBe(1);
+    expect(summary.sources.sourceforge.visitors + summary.sources.slashdot.visitors).toBe(2);
   });
 
   it("uses market counts from event.market rather than the source mix", () => {
