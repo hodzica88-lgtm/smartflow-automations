@@ -123,6 +123,7 @@ export default async function OwnerControlCenterPage({
           </div>
           <nav className={styles.actions} aria-label={market === "us" ? "Owner navigation" : "Owner-Navigation"}>
             <Link className={styles.linkButton} href="/operator/owner">Dashboard</Link>
+            <Link className={styles.linkButton} href="/dashboard">{market === "us" ? "Customer dashboard" : "Kundendashboard"}</Link>
             <Link className={styles.linkButton} href="/operator/notifications">{market === "us" ? "Notifications" : "Benachrichtigungen"}</Link>
             <form action={logoutAction}>
               <button className="premium-button" type="submit">
