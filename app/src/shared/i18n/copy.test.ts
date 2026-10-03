@@ -3,15 +3,17 @@ import { describe, expect, it } from "vitest";
 import { getMarketCopy } from "@/shared/i18n/copy";
 
 describe("market copy", () => {
-  it("contains natural US landing pricing and CTA copy", () => {
+  it("contains the updated US positioning and trial CTA copy", () => {
     const us = getMarketCopy("us").landing;
 
-    expect(us.heroTitle).toBe("Never lose another lead.");
+    expect(us.heroTitle).toBe("Don’t let your next customer become your next missed lead.");
+    expect(us.heroLead).toContain("You worked to get the inquiry.");
+    expect(us.supporting).toContain("Keep your website");
     expect(us.pricingTitle).toBe("Varnito Pro monthly subscription.");
     expect(us.pricingValue).toBe("$399");
     expect(us.pricingTaxNote).toBe("Applicable taxes calculated at checkout.");
     expect(us.faq.some((entry) => entry.question === "Do prices include taxes?" && entry.answer.includes("Applicable taxes are calculated during checkout"))).toBe(true);
-    expect(us.primaryCta).toBe("Start your 30-day free trial");
+    expect(us.primaryCta).toBe("Try Varnito free for 30 days");
   });
 
   it("contains english US auth and contact copy", () => {
@@ -31,14 +33,17 @@ describe("market copy", () => {
     expect(us.inquiryShare.embedTitle).toBe("Inquiry form");
   });
 
-  it("keeps germany landing pricing and CTA copy", () => {
+  it("keeps the german landing positioning and trial CTA copy", () => {
     const de = getMarketCopy("de").landing;
 
+    expect(de.heroTitle).toBe("Lassen Sie Ihre nächste Anfrage nicht zum verlorenen Auftrag werden.");
+    expect(de.heroLead).toContain("Sie haben dafür gearbeitet, dass die Anfrage kommt.");
+    expect(de.supporting).toContain("Website behalten");
     expect(de.pricingTitle).toBe("Varnito Pro Monatsabo.");
     expect(de.pricingValue).toBe("299 €");
     expect(de.pricingTaxNote).toBe("zzgl. gesetzlicher USt.");
     expect(de.faq.some((entry) => entry.question === "Sind die Preise netto oder brutto?" && entry.answer.includes("zzgl. der gesetzlichen Umsatzsteuer"))).toBe(true);
-    expect(de.primaryCta).toBe("30 Tage kostenlos testen");
+    expect(de.primaryCta).toBe("Varnito 30 Tage kostenlos testen");
   });
 
   it("keeps german auth and contact copy", () => {

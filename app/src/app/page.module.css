@@ -108,15 +108,116 @@
 .pricingCopy,
 .faqCard p,
 .viewCard p,
-.ctaBand p {
+.ctaBand p,
+.proseBlock p,
+.sectionLead {
   margin: 0;
   color: var(--muted);
   line-height: 1.7;
 }
 
-.supportingText {
+.supportingText,
+.sectionLead,
+.trustLine,
+.pricingFrame,
+.trialSupport {
   max-width: 42rem;
   margin: 0 auto;
+  text-align: center;
+}
+
+.trustLine {
+  font-size: 0.96rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.proseBlock {
+  display: grid;
+  gap: 14px;
+  max-width: 52rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.emphasis {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sectionEyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.featureGrid,
+.realityGrid,
+.stepsGrid {
+  display: grid;
+  gap: 20px;
+  margin-top: 22px;
+}
+
+.featureGrid,
+.stepsGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.realityGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.featureCard,
+.stepCard,
+.realityCard {
+  display: grid;
+  gap: 10px;
+  padding: 22px 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(10, 12, 18, 0.78);
+}
+
+.featureCard h3,
+.stepCard h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.realityCard {
+  align-items: center;
+  text-align: center;
+  min-height: 110px;
+  font-weight: 700;
+}
+
+.stepNumber {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.trialSupport {
+  margin-top: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pricingFrame {
+  margin-bottom: 22px;
+  font-size: 1.06rem;
+  color: var(--muted);
+}
+
+.ctaContent {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
   text-align: center;
 }
 
