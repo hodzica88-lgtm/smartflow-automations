@@ -137,6 +137,7 @@ export default async function OwnerControlCenterPage({
     unknownVisitors: 0,
     totalVisits: 0,
     markets: { de: 0, us: 0, unknown: 0 },
+    humanMarkets: { de: 0, us: 0, unknown: 0 },
     otherBreakdown: {},
     demoOpened: 0,
     trialsStarted: 0,
@@ -146,6 +147,8 @@ export default async function OwnerControlCenterPage({
     sources: Object.fromEntries(GROWTH_SOURCES.map((source) => [source, { ...EMPTY_SOURCE_METRICS }])) as Record<(typeof GROWTH_SOURCES)[number], typeof EMPTY_SOURCE_METRICS>,
   };
   const marketBreakdown = growthSummary.markets ?? { de: 0, us: 0, unknown: 0 };
+  const humanMarketBreakdown = growthSummary.humanMarkets ?? { de: 0, us: 0, unknown: 0 };
+  const recentHumanVisits = data.recentHumanVisits ?? [];
 
   const sourceRows = GROWTH_SOURCES.map((source) => {
     const entry = growthSummary.sources?.[source] ?? EMPTY_SOURCE_METRICS;
@@ -160,24 +163,28 @@ export default async function OwnerControlCenterPage({
 
   const trafficCards = [
     {
-      label: market === "us" ? "Visits DE" : "Besuche DE",
-      value: marketBreakdown.de,
+      label: "DE-Seite",
+      value: humanMarketBreakdown.de,
       tone: "neutral",
+      hint: "Menschliche Seitenaufrufe nach Varnito-Version",
     },
     {
-      label: market === "us" ? "Visits US" : "Besuche US",
-      value: marketBreakdown.us,
+      label: "US-Seite",
+      value: humanMarketBreakdown.us,
       tone: "neutral",
+      hint: "Menschliche Seitenaufrufe nach Varnito-Version",
     },
     {
-      label: market === "us" ? "Unknown traffic" : "Unbekannt",
+      label: "Unklassifiziert",
       value: growthSummary.unknownVisitors,
       tone: "neutral",
+      hint: "Zugriff konnte nicht sicher als Browser oder Bot erkannt werden.",
     },
     {
-      label: market === "us" ? "Bot traffic" : "Bot-Besuche",
+      label: "Bot-Besuche",
       value: growthSummary.botVisitors,
       tone: "warning",
+      hint: "Automatisierte Crawler und bekannte Bots.",
     },
   ];
 
@@ -385,7 +392,7 @@ export default async function OwnerControlCenterPage({
 
               <div className={styles.ownerMetricBreakdown}>
                 <div className={styles.ownerMetricTile}>
-                  <span>{market === "us" ? "Browser visits" : "Browser-Besuche"}</span>
+                  <span>{market === "us" ? "Human visits" : "Menschliche Besuche"}</span>
                   <strong>{growthSummary.visitors}</strong>
                 </div>
                 <div className={styles.ownerMetricTile}>
@@ -402,11 +409,14 @@ export default async function OwnerControlCenterPage({
                 </div>
               </div>
 
+              <p className={styles.ownerTrafficSummaryNote}>{market === "us" ? "Human page views by Varnito version" : "Menschliche Seitenaufrufe nach Varnito-Version"}</p>
+
               <div className={styles.ownerTrafficGrid}>
                 {trafficCards.map((card) => (
                   <div key={card.label} className={`${styles.ownerTrafficCard} ${card.tone === "warning" ? styles.ownerTrafficWarning : ""}`}>
                     <span>{card.label}</span>
                     <strong>{card.value}</strong>
+                    <small title={card.hint}>{card.hint}</small>
                   </div>
                 ))}
               </div>
@@ -538,6 +548,34 @@ export default async function OwnerControlCenterPage({
                         <time>{new Date(notification.created_at).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" })}</time>
                       </div>
                     ))}
+                  </div>
+                )}
+              </article>
+
+              <article className={styles.ownerPanel}>
+                <div className={styles.ownerPanelHeader}>
+                  <div>
+                    <p className={styles.ownerSectionEyebrow}>{market === "us" ? "Visits" : "Besuche"}</p>
+                    <h2 className={styles.ownerSectionTitle}>{market === "us" ? "Recent real visits" : "Letzte echte Besuche"}</h2>
+                  </div>
+                </div>
+
+                {recentHumanVisits.length === 0 ? (
+                  <p className={styles.ownerMuted}>{market === "us" ? "No genuine browser visits yet." : "Noch keine echten Browser-Besuche."}</p>
+                ) : (
+                  <div className={styles.ownerRecentVisitList}>
+                    {recentHumanVisits.slice(0, 8).map((visit, index) => {
+                      const visitMarket = visit.market === "de" ? "DE-Seite" : visit.market === "us" ? "US-Seite" : "Unbekannte Site";
+                      const visitSource = sourceLabels[visit.source] ?? visit.source;
+                      return (
+                        <div key={`${visit.occurredAt}-${index}`} className={styles.ownerRecentVisitItem}>
+                          <span>{new Date(visit.occurredAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}</span>
+                          <span>{visitMarket}</span>
+                          <span>{visitSource}</span>
+                          <span className={styles.ownerRecentVisitStatus}>{market === "us" ? "Human" : "Mensch"}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </article>

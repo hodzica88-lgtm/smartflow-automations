@@ -65,6 +65,11 @@ export type GrowthSummary = {
     us: number;
     unknown: number;
   };
+  humanMarkets: {
+    de: number;
+    us: number;
+    unknown: number;
+  };
   otherBreakdown: Record<string, number>;
   demoOpened: number;
   trialsStarted: number;
@@ -500,6 +505,11 @@ export const buildGrowthSummary = (
       us: 0,
       unknown: 0,
     },
+    humanMarkets: {
+      de: 0,
+      us: 0,
+      unknown: 0,
+    },
     otherBreakdown: {},
     demoOpened: 0,
     trialsStarted: 0,
@@ -537,6 +547,7 @@ export const buildGrowthSummary = (
 
       if (trafficType === "human") {
         summary.visitors += 1;
+        summary.humanMarkets[market] += 1;
         sourceSummary.visitors += 1;
       } else if (trafficType === "bot") {
         summary.botVisitors += 1;

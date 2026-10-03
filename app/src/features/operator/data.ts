@@ -5,6 +5,8 @@ import {
   GROWTH_ANALYTICS_V1_START_AT,
   getGrowthMonthRange,
   getMonthKeyInBerlin,
+  normalizeGrowthSource,
+  type GrowthSource,
   type GrowthSummary,
 } from "@/features/analytics/growth";
 import {
@@ -255,6 +257,13 @@ export type OperatorCompanyDetailData = {
   recentNotifications: OperatorCompanyNotification[];
 };
 
+export type RecentHumanVisit = {
+  occurredAt: string;
+  market: "de" | "us" | "unknown";
+  source: GrowthSource;
+  sourceDetail?: string | null;
+};
+
 export type OwnerControlCenterData = {
   mrr: {
     de: number;
@@ -266,6 +275,7 @@ export type OwnerControlCenterData = {
   scheduledCancellations: number;
   newCompaniesLast7d: number;
   growth: GrowthSummary;
+  recentHumanVisits: RecentHumanVisit[];
   analytics: {
     de7d: number;
     us7d: number;
@@ -912,6 +922,53 @@ export const getOperatorCompanyDetailData = async (
   };
 };
 
+export const getRecentHumanVisits = async (limit = 10): Promise<RecentHumanVisit[]> => {
+  const supabase = createSupabaseServiceRoleClient();
+
+  const { data, error } = await supabase
+    .from("analytics_events")
+    .select("event_name, metadata, occurred_at, market")
+    .in("event_name", ["visitor", "landing_view"])
+    .order("occurred_at", { ascending: false })
+    .limit(Math.max(10, limit));
+
+  if (error) {
+    throw error;
+  }
+
+  const recentVisits = (data ?? []) as Array<{
+    event_name?: string | null;
+    metadata?: Record<string, unknown> | null;
+    occurred_at?: string | null;
+    market?: "de" | "us" | "unknown" | null;
+  }>;
+
+  return recentVisits
+    .filter((entry) => {
+      const trafficType = typeof entry.metadata?.traffic_type === "string"
+        ? entry.metadata.traffic_type.toLowerCase()
+        : "";
+      return trafficType === "human" || trafficType === "browser";
+    })
+    .map((entry) => {
+      const market = entry.market === "de" || entry.market === "us" ? entry.market : "unknown";
+      const sourceValue = typeof entry.metadata?.source === "string" ? entry.metadata.source : null;
+      const sourceDetailValue = typeof entry.metadata?.source_detail === "string"
+        ? entry.metadata.source_detail
+        : typeof entry.metadata?.referrer_host === "string"
+          ? entry.metadata.referrer_host
+          : null;
+
+      return {
+        occurredAt: entry.occurred_at ?? new Date().toISOString(),
+        market,
+        source: normalizeGrowthSource(sourceValue),
+        sourceDetail: sourceDetailValue,
+      } satisfies RecentHumanVisit;
+    })
+    .slice(0, limit);
+};
+
 export const getOwnerGrowthMonthData = async (monthKey?: string) => {
   const supabase = createSupabaseServiceRoleClient();
   const selectedMonthKey = monthKey ?? getMonthKeyInBerlin(new Date());
@@ -959,7 +1016,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [dashboard, newCompaniesLast7d, recentErrorsResult, growthEventsResult] = await Promise.all([
+  const [dashboard, newCompaniesLast7d, recentErrorsResult, growthEventsResult, recentHumanVisits] = await Promise.all([
     getOperatorDashboardData(),
     readCount(
       supabase
@@ -991,6 +1048,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
         "subscription_cancelled",
       ])
       .gte("occurred_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    getRecentHumanVisits(10),
   ]);
 
   if (recentErrorsResult.error) {
@@ -1038,6 +1096,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
     scheduledCancellations: dashboard.metrics.owner.scheduledCancellationSubscriptions,
     newCompaniesLast7d,
     growth,
+    recentHumanVisits,
     analytics: {
       de7d: dashboard.metrics.analytics.eventsLast7d.de,
       us7d: dashboard.metrics.analytics.eventsLast7d.us,

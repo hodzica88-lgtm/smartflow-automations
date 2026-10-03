@@ -214,6 +214,30 @@ describe("homepage visitor tracking", () => {
 });
 
 describe("buildGrowthSummary", () => {
+  it("tracks human-only market counts separately from raw traffic and excludes bots and unknowns", () => {
+    const summary = buildGrowthSummary([
+      { event_name: "visitor", market: "de", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "producthunt", traffic_type: "human" } },
+      { event_name: "visitor", market: "us", metadata: { source: "g2", traffic_type: "bot", bot_family: "seo_crawler" } },
+      { event_name: "visitor", market: "us", metadata: { source: "direct", traffic_type: "unknown" } },
+      { event_name: "visitor", market: "unknown", metadata: { source: "direct", traffic_type: "human" } },
+      { event_name: "visitor", market: "de", metadata: { source: "google", traffic_type: "bot" } },
+    ] as Array<{ event_name: string; market?: "de" | "us" | "unknown"; metadata?: Record<string, unknown> }>);
+
+    expect(summary.visitors).toBe(3);
+    expect(summary.botVisitors).toBe(2);
+    expect(summary.unknownVisitors).toBe(1);
+    expect(summary.totalVisits).toBe(6);
+    expect(summary.markets.de).toBe(3);
+    expect(summary.markets.us).toBe(2);
+    expect(summary.markets.unknown).toBe(1);
+    expect(summary.humanMarkets.de).toBe(2);
+    expect(summary.humanMarkets.us).toBe(0);
+    expect(summary.humanMarkets.unknown).toBe(1);
+    expect(summary.sources.producthunt.visitors).toBe(2);
+    expect(summary.sources.google.botVisitors).toBe(1);
+  });
+
   it("aggregates the V1 growth funnel and source breakdown while preserving legacy unknown traffic", () => {
     const summary = buildGrowthSummary([
       { event_name: "visitor", market: "de", metadata: { source: "producthunt", traffic_type: "human" } },
@@ -236,6 +260,9 @@ describe("buildGrowthSummary", () => {
     expect(summary.markets.de).toBe(2);
     expect(summary.markets.us).toBe(1);
     expect(summary.markets.unknown).toBe(1);
+    expect(summary.humanMarkets.de).toBe(2);
+    expect(summary.humanMarkets.us).toBe(0);
+    expect(summary.humanMarkets.unknown).toBe(0);
     expect(summary.demoOpened).toBe(1);
     expect(summary.trialsStarted).toBe(2);
     expect(summary.payingCustomers).toBe(2);

@@ -186,12 +186,16 @@ describe("owner backup state", () => {
     }
   });
 
-  it("renders the redesigned owner dashboard overview and operator navigation", async () => {
+  it("uses human-only visitor labels and shows the recent human visits panel", async () => {
     const html = renderToStaticMarkup(await OwnerControlCenterPage({}));
     expect(html).toContain("Owner Dashboard");
     expect(html).toContain("Wachstumsübersicht");
-    expect(html).toContain("Quellenmix");
-    expect(html).toContain("Mail Posteingang");
+    expect(html).toContain("Menschliche Besuche");
+    expect(html).toContain("DE-Seite");
+    expect(html).toContain("US-Seite");
+    expect(html).toContain("Bot-Besuche");
+    expect(html).toContain("Unklassifiziert");
+    expect(html).toContain("Letzte echte Besuche");
     expect(html).toContain("/operator/customer-preview");
     expect(html).toContain("/operator/notifications");
   });
