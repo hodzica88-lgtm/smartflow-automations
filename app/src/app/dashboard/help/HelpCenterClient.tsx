@@ -13,49 +13,49 @@ const HELP_ARTICLES: HelpArticle[] = [
     id: "erste-schritte",
     title: "Erste Schritte",
     content:
-      "Legen Sie zuerst Ihre Firmendaten an, teilen Sie den Anfrage-Link und pruefen Sie taeglich neue Leads im Dashboard.",
+      "Legen Sie zuerst Ihre Firmendaten an, teilen Sie den Anfrage-Link und prüfen Sie täglich neue Leads im Dashboard.",
   },
   {
     id: "anfrage-beantworten",
     title: "Anfrage beantworten",
     content:
-      "Oeffnen Sie den Lead, setzen Sie den Status auf kontaktiert und dokumentieren Sie das Ergebnis direkt im Lead.",
+      "Öffnen Sie den Lead, setzen Sie den Status auf kontaktiert und dokumentieren Sie das Ergebnis direkt im Lead.",
   },
   {
     id: "mitarbeiter-einladen",
     title: "Mitarbeiter einladen",
     content:
-      "Unter Team koennen Owner Mitarbeiter per E-Mail einladen. Der Zugang wird nach Annahme automatisch aktiv.",
+      "Unter Team können Owner Mitarbeiter per E-Mail einladen. Der Zugang wird nach Annahme automatisch aktiv.",
   },
   {
     id: "branding-aendern",
-    title: "Branding aendern",
+    title: "Branding ändern",
     content:
-      "In Einstellungen koennen Sie Firmenlogo, Farben und Signatur anpassen. Diese Daten werden fuer automatische E-Mails genutzt.",
+      "In Einstellungen können Sie Firmenlogo, Farben und Signatur anpassen. Diese Daten werden für automatische E-Mails genutzt.",
   },
   {
     id: "exportieren",
     title: "Exportieren",
     content:
-      "Im Lead-Bereich steht CSV- und Excel-Export fuer Heute, diese Woche, diesen Monat oder einen eigenen Zeitraum bereit.",
+      "Im Lead-Bereich steht CSV- und Excel-Export für Heute, diese Woche, diesen Monat oder einen eigenen Zeitraum bereit.",
   },
   {
     id: "passwort-aendern",
-    title: "Passwort aendern",
+    title: "Passwort ändern",
     content:
-      "Wenn Sie Ihr Passwort vergessen haben, nutzen Sie die Funktion Passwort vergessen auf der Login-Seite.",
+      "Wenn Sie Ihr Passwort vergessen haben, nutzen Sie die Funktion „Passwort vergessen“ auf der Login-Seite.",
   },
   {
     id: "abo-kuendigen",
-    title: "Abo kuendigen",
+    title: "Abo kündigen",
     content:
-      "Im Billing-Bereich koennen Sie Ihr Abo kuendigen oder wieder aktivieren. Laufende Perioden bleiben bis zum Ende aktiv.",
+      "Im Billing-Bereich können Sie Ihr Abo kündigen oder wieder aktivieren. Laufende Perioden bleiben bis zum Ende aktiv.",
   },
   {
     id: "support-kontaktieren",
     title: "Support kontaktieren",
     content:
-      "Bei Problemen senden Sie Details, betroffene Firma und Zeitpunkt an den Support, damit wir schneller helfen koennen.",
+      "Bei Problemen senden Sie Details, betroffene Firma und Zeitpunkt an den Support, damit wir schneller helfen können.",
   },
 ];
 

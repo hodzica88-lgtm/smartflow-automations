@@ -1,4 +1,5 @@
 import CustomerDashboardView from "@/app/dashboard/CustomerDashboardView";
+import styles from "@/app/dashboard/dashboardLayout.module.css";
 import CustomerDashboardHeader from "@/features/dashboard/CustomerDashboardHeader";
 import { getCompanyUnreadNotificationCount } from "@/features/notifications/service";
 import { requirePrimaryOwnerCustomerPreview } from "@/features/operator/access";
@@ -13,14 +14,17 @@ export default async function CustomerDashboardPreviewPage() {
   const unreadCount = await getCompanyUnreadNotificationCount(INTERNAL_OWNER_COMPANY_ID);
 
   return (
-    <>
+    <div className={styles.appShell}>
       <CustomerDashboardHeader
         market={market}
         unreadCount={unreadCount}
         previewMode
         backToOwner="/operator/owner"
+        isOwner
       />
-      <CustomerDashboardView companyId={INTERNAL_OWNER_COMPANY_ID} showBillingAction={false} />
-    </>
+      <div className={styles.workspace}>
+        <CustomerDashboardView companyId={INTERNAL_OWNER_COMPANY_ID} showBillingAction={false} isOwner />
+      </div>
+    </div>
   );
 }

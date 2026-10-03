@@ -90,90 +90,97 @@ export default function InquiryShareSection({ companyId }: InquiryShareSectionPr
   };
 
   return (
-    <section className={styles.empty} aria-label={copy.title}>
-      <h2>{copy.title}</h2>
+    <section id="anfrageformular-teilen" className={styles.shareSection} aria-label={copy.title}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <p className={styles.sectionEyebrow}>{copy.title}</p>
+          <h2>{copy.title}</h2>
+        </div>
+      </div>
 
-      <article className={styles.shareBlock}>
-        <h3>{copy.linkLabel}</h3>
-        <p>{copy.linkDescription}</p>
-        <p className={styles.shareValue}>{inquiryUrl || inquiryPath}</p>
-        <div className={styles.copyRow}>
-          <button
-            type="button"
-            className={styles.button}
-            onClick={() => {
-              void copyText(inquiryUrl, "link");
-            }}
-            disabled={!inquiryUrl}
-          >
-            {copy.copyLink}
-          </button>
-          {linkStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
-          {linkStatus === "error" ? (
-            <span className={styles.copyError}>{copy.copyFailed}</span>
-          ) : null}
-        </div>
-      </article>
+      <div className={styles.shareLayout}>
+        <article className={styles.shareBlock}>
+          <h3>{copy.linkLabel}</h3>
+          <p>{copy.linkDescription}</p>
+          <p className={styles.shareValue}>{inquiryUrl || inquiryPath}</p>
+          <div className={styles.copyRow}>
+            <button
+              type="button"
+              className={styles.button}
+              onClick={() => {
+                void copyText(inquiryUrl, "link");
+              }}
+              disabled={!inquiryUrl}
+            >
+              {copy.copyLink}
+            </button>
+            {linkStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
+            {linkStatus === "error" ? (
+              <span className={styles.copyError}>{copy.copyFailed}</span>
+            ) : null}
+          </div>
+        </article>
 
-      <article className={styles.shareBlock}>
-        <h3>{copy.embedLabel}</h3>
-        <p>{copy.embedDescription}</p>
-        <pre className={styles.embedCode}>
-          <code>{embedCode}</code>
-        </pre>
-        <div className={styles.copyRow}>
-          <button
-            type="button"
-            className={styles.button}
-            onClick={() => {
-              void copyText(embedCode, "embed");
-            }}
-            disabled={!inquiryUrl}
-          >
-            {copy.copyEmbedCode}
-          </button>
-          {embedStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
-          {embedStatus === "error" ? (
-            <span className={styles.copyError}>{copy.copyFailed}</span>
-          ) : null}
-        </div>
-      </article>
+        <article className={styles.shareBlock}>
+          <h3>{copy.embedLabel}</h3>
+          <p>{copy.embedDescription}</p>
+          <pre className={styles.embedCode}>
+            <code>{embedCode}</code>
+          </pre>
+          <div className={styles.copyRow}>
+            <button
+              type="button"
+              className={styles.button}
+              onClick={() => {
+                void copyText(embedCode, "embed");
+              }}
+              disabled={!inquiryUrl}
+            >
+              {copy.copyEmbedCode}
+            </button>
+            {embedStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
+            {embedStatus === "error" ? (
+              <span className={styles.copyError}>{copy.copyFailed}</span>
+            ) : null}
+          </div>
+        </article>
 
-      <article className={styles.shareBlock}>
-        <h3>{copy.qrLabel}</h3>
-        <p>{copy.qrDescription}</p>
-        <div className={styles.qrPreview}>
-          {inquiryUrl ? (
-            <QRCodeCanvas
-              ref={qrCanvasRef}
-              className={styles.qrImage}
-              value={inquiryUrl}
-              size={256}
-              includeMargin
-              aria-label={copy.qrAriaLabel}
-              title={copy.qrAriaLabel}
-            />
-          ) : (
-            <div className={styles.qrPlaceholder}>{copy.qrLoading}</div>
-          )}
-        </div>
-        <div className={styles.copyRow}>
-          <button
-            type="button"
-            className={styles.button}
-            onClick={() => {
-              void downloadQrCode();
-            }}
-            disabled={!inquiryUrl}
-          >
-            {copy.downloadQrCode}
-          </button>
-          {qrStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
-          {qrStatus === "error" ? (
-            <span className={styles.copyError}>{copy.downloadFailed}</span>
-          ) : null}
-        </div>
-      </article>
+        <article className={styles.shareBlock}>
+          <h3>{copy.qrLabel}</h3>
+          <p>{copy.qrDescription}</p>
+          <div className={styles.qrPreview}>
+            {inquiryUrl ? (
+              <QRCodeCanvas
+                ref={qrCanvasRef}
+                className={styles.qrImage}
+                value={inquiryUrl}
+                size={256}
+                includeMargin
+                aria-label={copy.qrAriaLabel}
+                title={copy.qrAriaLabel}
+              />
+            ) : (
+              <div className={styles.qrPlaceholder}>{copy.qrLoading}</div>
+            )}
+          </div>
+          <div className={styles.copyRow}>
+            <button
+              type="button"
+              className={styles.button}
+              onClick={() => {
+                void downloadQrCode();
+              }}
+              disabled={!inquiryUrl}
+            >
+              {copy.downloadQrCode}
+            </button>
+            {qrStatus === "success" ? <span className={styles.copySuccess}>{copy.copied}</span> : null}
+            {qrStatus === "error" ? (
+              <span className={styles.copyError}>{copy.downloadFailed}</span>
+            ) : null}
+          </div>
+        </article>
+      </div>
     </section>
   );
 }

@@ -186,10 +186,13 @@ describe("owner backup state", () => {
     }
   });
 
-  it("renders the backup card on the owner dashboard", async () => {
+  it("renders the redesigned owner dashboard overview and operator navigation", async () => {
     const html = renderToStaticMarkup(await OwnerControlCenterPage({}));
-    expect(html).toContain("Sicherung");
-    expect(html).toContain("Unbekannt");
+    expect(html).toContain("Owner Dashboard");
+    expect(html).toContain("Wachstumsübersicht");
+    expect(html).toContain("Quellenmix");
+    expect(html).toContain("Mail Posteingang");
     expect(html).toContain("/operator/customer-preview");
+    expect(html).toContain("/operator/notifications");
   });
 });

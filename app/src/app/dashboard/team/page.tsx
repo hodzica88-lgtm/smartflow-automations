@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import styles from "@/app/dashboard/dashboard.module.css";
 import { requireUserCompanyAccess } from "@/features/billing/service";
 import AuditLogSection from "@/features/audit-log/AuditLogSection";
 import { getCompanyAuditLog } from "@/features/audit-log/service";
@@ -15,32 +16,6 @@ import {
 } from "@/features/team/service";
 import { TEAM_COPY } from "@/shared/i18n/dashboard";
 import { getRequestMarket } from "@/shared/i18n/request";
-
-const actionStyle = {
-  display: "inline-flex",
-  minHeight: 42,
-  alignItems: "center",
-  justifyContent: "center",
-  border: 0,
-  borderRadius: 8,
-  padding: "0 16px",
-  background: "var(--gold)",
-  color: "var(--card)",
-  cursor: "pointer",
-  fontWeight: 700,
-} as const;
-
-const secondaryActionStyle = {
-  ...actionStyle,
-  border: "1px solid var(--border)",
-  background: "var(--card)",
-  color: "var(--text)",
-} as const;
-
-const dangerActionStyle = {
-  ...secondaryActionStyle,
-  color: "#9b2c2c",
-} as const;
 
 type TeamPageProps = {
   searchParams?: Promise<{ success?: string; error?: string }>;
@@ -64,41 +39,61 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
   ]);
 
   return (
-    <main style={{ display: "grid", gap: 24, maxWidth: 900, margin: "0 auto", padding: 24 }}>
-      <header style={{ display: "grid", gap: 8 }}>
-        <Link href="/dashboard/leads" style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none" }}>
-          ← {copy.backToLeads}
-        </Link>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, textTransform: "uppercase" }}>
-          {copy.sectionLabel}
-        </p>
-        <h1 style={{ margin: 0 }}>{copy.title}</h1>
-        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.6 }}>
-          {copy.description}
-        </p>
+    <main className={styles.shell}>
+      <header className={styles.topbar}>
+        <div className={styles.headerMain}>
+          <p className={styles.eyebrow}>{copy.sectionLabel}</p>
+          <h1 className={styles.title}>{copy.title}</h1>
+          <p className={styles.subtitle}>{copy.description}</p>
+        </div>
+        <div className={styles.topbarMeta}>
+          <Link className={styles.buttonSecondary} href="/dashboard/leads">
+            {copy.backToLeads}
+          </Link>
+        </div>
       </header>
 
       {resolvedSearchParams?.success ? (
-        <section style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--success) 45%, var(--border))", borderRadius: 10, background: "rgba(46,204,113,0.12)" }}>
+        <section
+          style={{
+            padding: "0.8rem 1rem",
+            borderRadius: 12,
+            border: "1px solid rgba(34, 197, 94, 0.28)",
+            background: "rgba(34, 197, 94, 0.08)",
+            color: "#166534",
+            fontWeight: 700,
+          }}
+        >
           {resolvedSearchParams.success}
         </section>
       ) : null}
 
       {resolvedSearchParams?.error ? (
-        <section role="alert" style={{ padding: 16, border: "1px solid color-mix(in srgb, var(--danger) 45%, var(--border))", borderRadius: 10, background: "rgba(231,76,60,0.12)" }}>
+        <section
+          role="alert"
+          style={{
+            padding: "0.8rem 1rem",
+            borderRadius: 12,
+            border: "1px solid rgba(239, 68, 68, 0.28)",
+            background: "rgba(239, 68, 68, 0.08)",
+            color: "#991b1b",
+            fontWeight: 700,
+          }}
+        >
           {resolvedSearchParams.error}
         </section>
       ) : null}
 
-      <section style={{ display: "grid", gap: 16, padding: 20, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}>
-        <div>
-          <h2 style={{ margin: 0 }}>{copy.inviteTitle}</h2>
-          <p style={{ margin: "6px 0 0", color: "var(--muted)" }}>
-            {copy.inviteDescription}
-          </p>
+      <section className={styles.primaryPanel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>{copy.sectionLabel}</p>
+            <h2>{copy.inviteTitle}</h2>
+          </div>
         </div>
+        <p className={styles.subtitle} style={{ margin: 0 }}>{copy.inviteDescription}</p>
         <form action={inviteTeamMemberAction} style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "end" }}>
-          <label style={{ display: "grid", flex: "1 1 280px", gap: 6 }}>
+          <label style={{ display: "grid", gap: 6, flex: "1 1 280px" }}>
             {copy.emailLabel}
             <input
               autoComplete="email"
@@ -106,64 +101,95 @@ export default async function TeamPage({ searchParams }: TeamPageProps) {
               type="email"
               required
               placeholder={copy.emailPlaceholder}
-              style={{ minHeight: 44, padding: "0 12px", border: "1px solid var(--border)", borderRadius: 8 }}
+              style={{ minHeight: 44, padding: "0 12px", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 12, background: "#fff" }}
             />
           </label>
-          <button type="submit" style={actionStyle}>
+          <button type="submit" className={styles.button}>
             {copy.sendInvite}
           </button>
         </form>
       </section>
 
-      <section style={{ display: "grid", gap: 14 }}>
-        <h2 style={{ margin: 0 }}>{copy.accessTitle}</h2>
-        {members.map((member) => {
-          const isOwner = member.role === "owner";
-          const isPending = member.status === "pending";
+      <section className={styles.tablePanel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionEyebrow}>{copy.accessTitle}</p>
+            <h2>{copy.accessTitle}</h2>
+          </div>
+        </div>
 
-          return (
-            <article
-              key={member.id}
-              style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", padding: 18, border: "1px solid var(--border)", borderRadius: 12, background: "var(--card)" }}
-            >
-              <div style={{ display: "grid", gap: 4 }}>
-                <strong>{getTeamMemberLabel(member)}</strong>
-                <span style={{ color: "var(--muted)", overflowWrap: "anywhere" }}>{member.email}</span>
-                <span style={{ fontSize: 13, color: "var(--muted)" }}>
-                  {isOwner ? copy.ownerLabel : isPending ? copy.pendingLabel : copy.activeLabel}
-                </span>
-              </div>
+        <div style={{ display: "grid", gap: 12 }}>
+          {members.map((member) => {
+            const isOwner = member.role === "owner";
+            const isPending = member.status === "pending";
 
-              {!isOwner ? (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  {isPending ? (
-                    <form action={resendTeamInvitationAction}>
+            return (
+              <article
+                key={member.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  flexWrap: "wrap",
+                  padding: 18,
+                  border: "1px solid rgba(148, 163, 184, 0.2)",
+                  borderRadius: 12,
+                  background: "#f8fafc",
+                }}
+              >
+                <div style={{ display: "grid", gap: 4 }}>
+                  <strong>{getTeamMemberLabel(member)}</strong>
+                  <span style={{ color: "#475569", overflowWrap: "anywhere" }}>{member.email}</span>
+                  <span style={{ fontSize: 13, color: "#64748b" }}>
+                    {isOwner ? copy.ownerLabel : isPending ? copy.pendingLabel : copy.activeLabel}
+                  </span>
+                </div>
+
+                {!isOwner ? (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    {isPending ? (
+                      <form action={resendTeamInvitationAction}>
+                        <input type="hidden" name="member_id" value={member.id} />
+                        <button type="submit" className={styles.buttonSecondary}>
+                          {copy.resend}
+                        </button>
+                      </form>
+                    ) : null}
+                    <form action={removeTeamMemberAction}>
                       <input type="hidden" name="member_id" value={member.id} />
-                      <button type="submit" style={secondaryActionStyle}>
-                        {copy.resend}
+                      <button type="submit" style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        minHeight: 40,
+                        borderRadius: 999,
+                        padding: "0 1rem",
+                        border: "1px solid rgba(239, 68, 68, 0.24)",
+                        background: "#fff",
+                        color: "#b91c1c",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}>
+                        {copy.removeAccess}
                       </button>
                     </form>
-                  ) : null}
-                  <form action={removeTeamMemberAction}>
-                    <input type="hidden" name="member_id" value={member.id} />
-                    <button type="submit" style={dangerActionStyle}>
-                      {copy.removeAccess}
-                    </button>
-                  </form>
-                </div>
-              ) : null}
-            </article>
-          );
-        })}
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
       </section>
 
-      <AuditLogSection
-        title="Audit Log"
-        description={copy.auditDescription}
-        entries={auditLog}
-        emptyTitle={copy.auditEmptyTitle}
-        emptyMessage={copy.auditEmptyMessage}
-      />
+      <section className={styles.emptyStateCard}>
+        <AuditLogSection
+          title="Audit Log"
+          description={copy.auditDescription}
+          entries={auditLog}
+          emptyTitle={copy.auditEmptyTitle}
+          emptyMessage={copy.auditEmptyMessage}
+        />
+      </section>
     </main>
   );
 }

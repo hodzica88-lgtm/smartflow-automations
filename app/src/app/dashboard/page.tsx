@@ -6,5 +6,5 @@ export default async function DashboardPage() {
     nextPath: "/dashboard",
   });
 
-  return <CustomerDashboardView companyId={access.companyId} />;
+  return <CustomerDashboardView companyId={access.companyId} isOwner={access.isOwner} />;
 }

@@ -62,7 +62,7 @@ describe("customer dashboard header", () => {
     const html = renderToStaticMarkup(await DashboardLayout({ children: <div>content</div> }));
 
     expect(html).toContain("Dashboard");
-    expect(html).toContain("Leads");
+    expect(html).toContain("Anfragen");
     expect(html).toContain("Einstellungen");
     expect(html).toContain("Hilfe");
     expect(html).toContain("/dashboard/notifications");
@@ -73,6 +73,19 @@ describe("customer dashboard header", () => {
         nextPath: "/dashboard",
       }),
     );
+  });
+
+  it("renders the team management link in the sidebar for owners and hides it for members", () => {
+    const ownerHtml = renderToStaticMarkup(
+      <CustomerDashboardHeader market="de" unreadCount={3} isOwner />,
+    );
+    const memberHtml = renderToStaticMarkup(
+      <CustomerDashboardHeader market="de" unreadCount={3} isOwner={false} />,
+    );
+
+    expect(ownerHtml).toContain("/dashboard/team");
+    expect(ownerHtml).toContain("Team");
+    expect(memberHtml).not.toContain("/dashboard/team");
   });
 
   it("renders the preview header with the owner return link in both languages", () => {
@@ -93,8 +106,21 @@ describe("customer dashboard header", () => {
     const html = renderToStaticMarkup(await CustomerDashboardPreviewPage());
 
     expect(html).toContain("Dashboard");
-    expect(html).toContain("Leads");
+    expect(html).toContain("Anfragen");
     expect(html).toContain("Zurück zum Owner-Dashboard");
     expect(html).toContain("/operator/owner");
+    expect(html).toContain("/dashboard/team");
+    expect(html).toContain("Team");
+    expect(requirePrimaryOwnerCustomerPreview).toHaveBeenCalledWith(
+      expect.objectContaining({ nextPath: "/operator/customer-preview" }),
+    );
+  });
+
+  it("renders the preview route inside the same appShell and workspace shell as the real dashboard", async () => {
+    const html = renderToStaticMarkup(await CustomerDashboardPreviewPage());
+
+    expect(html).toContain("appShell");
+    expect(html).toContain("workspace");
+    expect(html).toContain("dashboard-view");
   });
 });

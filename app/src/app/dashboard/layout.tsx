@@ -3,6 +3,8 @@ import CustomerDashboardHeader from "@/features/dashboard/CustomerDashboardHeade
 import { getCompanyUnreadNotificationCount } from "@/features/notifications/service";
 import { getRequestMarket } from "@/shared/i18n/request";
 
+import styles from "@/app/dashboard/dashboardLayout.module.css";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -17,9 +19,9 @@ export default async function DashboardLayout({
   const unreadCount = await getCompanyUnreadNotificationCount(access.companyId);
 
   return (
-    <>
-      <CustomerDashboardHeader market={market} unreadCount={unreadCount} />
-      {children}
-    </>
+    <div className={styles.appShell}>
+      <CustomerDashboardHeader market={market} unreadCount={unreadCount} isOwner={access.isOwner} />
+      <div className={styles.workspace}>{children}</div>
+    </div>
   );
 }

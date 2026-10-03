@@ -9,7 +9,7 @@ export default function HelpPage() {
         </p>
         <h1 style={{ margin: "6px 0" }}>Dokumentation</h1>
         <p style={{ margin: 0, color: "var(--muted)" }}>
-          Kurze Anleitungen fuer den taeglichen Betrieb.
+          Kurze Anleitungen für den täglichen Betrieb.
         </p>
       </section>
 
