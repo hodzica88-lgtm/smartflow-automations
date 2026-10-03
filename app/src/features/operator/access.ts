@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { isPrimaryOwnerOperatorAccount } from "@/features/auth/primary-account";
 import { isOperatorUser } from "@/features/auth/redirects";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
@@ -14,6 +15,16 @@ export const requireOperatorUser = async ({ nextPath = "/operator/owner" }: { ne
   }
 
   if (!isOperatorUser(user)) {
+    notFound();
+  }
+
+  return user;
+};
+
+export const requirePrimaryOwnerCustomerPreview = async ({ nextPath = "/operator/customer-preview" }: { nextPath?: string } = {}) => {
+  const user = await requireOperatorUser({ nextPath });
+
+  if (!isPrimaryOwnerOperatorAccount(user.email)) {
     notFound();
   }
 

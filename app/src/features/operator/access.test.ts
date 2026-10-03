@@ -37,7 +37,7 @@ vi.mock("@/shared/lib/supabase/server", () => ({
 }));
 
 const { getDefaultPostLoginPath, isOperatorUser } = await import("@/features/auth/redirects");
-const { requireOperatorUser } = await import("@/features/operator/access");
+const { requireOperatorUser, requirePrimaryOwnerCustomerPreview } = await import("@/features/operator/access");
 
 describe("requireOperatorUser", () => {
   it("redirects guests to login", async () => {
@@ -87,5 +87,23 @@ describe("requireOperatorUser", () => {
 
     expect(isOperatorUser(state.user)).toBe(true);
     expect(getDefaultPostLoginPath(state.user)).toBe("/operator/owner");
+  });
+});
+
+describe("requirePrimaryOwnerCustomerPreview", () => {
+  it("allows the primary owner account to access the customer dashboard preview", async () => {
+    state.user = { id: "user-3", email: "hodzica88@gmail.com" };
+    state.operatorUserIds = [];
+    state.operatorUserEmails = [];
+
+    await expect(requirePrimaryOwnerCustomerPreview()).resolves.toEqual(state.user);
+  });
+
+  it("blocks non-primary owner operator users from the customer preview", async () => {
+    state.user = { id: "operator-id", email: "ops@example.com" };
+    state.operatorUserIds = ["operator-id"];
+    state.operatorUserEmails = [];
+
+    await expect(requirePrimaryOwnerCustomerPreview()).rejects.toThrow("NOT_FOUND");
   });
 });

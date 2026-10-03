@@ -190,5 +190,6 @@ describe("owner backup state", () => {
     const html = renderToStaticMarkup(await OwnerControlCenterPage({}));
     expect(html).toContain("Sicherung");
     expect(html).toContain("Unbekannt");
+    expect(html).toContain("/operator/customer-preview");
   });
 });
