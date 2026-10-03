@@ -29,6 +29,13 @@ const linkStyle = {
   fontSize: 14,
 } as const;
 
+const exitLinkStyle = {
+  ...linkStyle,
+  color: "var(--gold)",
+  background: "rgba(212, 175, 55, 0.08)",
+  borderColor: "color-mix(in srgb, var(--gold) 60%, var(--border))",
+} as const;
+
 export default async function DemoLayout({
   children,
   searchParams,
@@ -36,13 +43,16 @@ export default async function DemoLayout({
   children: React.ReactNode;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { market } = await getRequestMarket();
+  const { market, config } = await getRequestMarket();
   const copy = getDemoCopy(market);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const headerStore = await headers();
   const referrer = headerStore.get("referer");
   const source = await resolveGrowthSourceFromRequest({ searchParams: resolvedSearchParams, referrer });
   const registerHref = appendGrowthSourceToHref("/registrierung", source);
+  const siteUrl = config.siteUrl;
+  const backToWebsiteLabel = market === "us" ? "← Back to website" : "← Zur Website";
+  const exitDemoLabel = market === "us" ? "Exit demo" : "Demo verlassen";
 
   return (
     <DemoProvider key={market} market={market}>
@@ -62,14 +72,19 @@ export default async function DemoLayout({
             maxWidth: 1200,
             margin: "0 auto",
             padding: "14px 20px",
-            display: "flex",
-            justifyContent: "space-between",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
             alignItems: "center",
             gap: 12,
-            flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 12, flexWrap: "wrap" }}>
+            <Link href={siteUrl} style={exitLinkStyle} aria-label={backToWebsiteLabel}>
+              {backToWebsiteLabel}
+            </Link>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
             <VarnitoLogo href="/demo/dashboard" subtitle="Demo" />
             <div style={navStyle}>
               <Link href="/demo/dashboard" style={linkStyle}>{copy.nav.dashboard}</Link>
@@ -80,9 +95,14 @@ export default async function DemoLayout({
             </div>
           </div>
 
-          <Link href={registerHref} style={linkStyle}>
-            {copy.startFreeButton}
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+            <Link href={registerHref} style={linkStyle}>
+              {copy.startFreeButton}
+            </Link>
+            <Link href={siteUrl} style={exitLinkStyle} aria-label={exitDemoLabel}>
+              {exitDemoLabel}
+            </Link>
+          </div>
         </div>
       </header>
 
