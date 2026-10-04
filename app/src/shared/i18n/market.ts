@@ -77,6 +77,10 @@ export const normalizeHostForMarket = (input: string | null | undefined) => {
 export const resolveMarketFromHost = (host: string | null | undefined): MarketCode => {
   const normalized = normalizeHostForMarket(host);
 
+  if (normalized === "us.localhost") {
+    return "us";
+  }
+
   if (!normalized || LOCAL_HOSTS.has(normalized)) {
     return "de";
   }
