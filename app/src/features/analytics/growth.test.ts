@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import DemoIndexPage from "@/app/demo/page";
+import { GET as disableInternalAnalytics } from "@/app/internal-analytics/off/route";
+import { GET as enableInternalAnalytics } from "@/app/internal-analytics/on/route";
 import Home from "@/app/page";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { INTERNAL_ANALYTICS_COOKIE_NAME, isInternalAnalyticsExcluded } from "@/features/analytics/internal-traffic";
@@ -266,6 +268,32 @@ describe("homepage visitor tracking", () => {
   it("excludes production traffic when the internal cookie is set to 1", () => {
     expect(isInternalAnalyticsExcluded({ host: "varnito.com", cookieValue: "1" })).toBe(true);
     expect(isInternalAnalyticsExcluded({ host: "varnito.com", cookieValue: undefined })).toBe(false);
+  });
+});
+
+describe("internal analytics redirect targets", () => {
+  it("redirects the DE production toggle to varnito.de", async () => {
+    const response = await disableInternalAnalytics(new Request("https://varnito.de/internal-analytics/off"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://varnito.de/");
+  });
+
+  it("redirects the US production toggle to varnito.com", async () => {
+    const response = await disableInternalAnalytics(new Request("https://varnito.com/internal-analytics/off"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://varnito.com/");
+  });
+
+  it("redirects localhost to the local app origin", async () => {
+    const response = await enableInternalAnalytics(new Request("http://localhost:3000/internal-analytics/on"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://localhost:3000/");
+  });
+
+  it("redirects us.localhost to the local us app origin", async () => {
+    const response = await enableInternalAnalytics(new Request("http://us.localhost:3000/internal-analytics/on"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("http://us.localhost:3000/");
   });
 });
 
