@@ -6,6 +6,7 @@ import {
   resolveGrowthSourceFromRequest,
   trackGrowthEvent,
 } from "@/features/analytics/growth";
+import { isCurrentRequestInternalAnalyticsExcluded } from "@/features/analytics/internal-traffic";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 
@@ -30,14 +31,18 @@ export default async function DemoIndexPage({
     redirect("/?error=demo_rate_limited");
   }
 
-  await trackGrowthEvent({
-    eventName: "demo_opened",
-    market,
-    isAuthenticated: false,
-    source,
-    searchParams: resolvedSearchParams,
-    referrer,
-  });
+  const isExcluded = await isCurrentRequestInternalAnalyticsExcluded();
+
+  if (!isExcluded) {
+    await trackGrowthEvent({
+      eventName: "demo_opened",
+      market,
+      isAuthenticated: false,
+      source,
+      searchParams: resolvedSearchParams,
+      referrer,
+    });
+  }
 
   redirect(appendGrowthSourceToHref("/demo/dashboard", source));
 }

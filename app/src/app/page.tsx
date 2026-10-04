@@ -9,6 +9,7 @@ import {
   resolveGrowthSourceFromRequest,
   trackGrowthEvent,
 } from "@/features/analytics/growth";
+import { isCurrentRequestInternalAnalyticsExcluded } from "@/features/analytics/internal-traffic";
 import { getMarketCopy } from "@/shared/i18n/copy";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
@@ -69,15 +70,19 @@ export default async function Home({
     url: config.siteUrl,
   };
 
-  await trackGrowthEvent({
-    eventName: "visitor",
-    market,
-    isAuthenticated: false,
-    source,
-    searchParams: resolvedSearchParams,
-    referrer,
-    userAgent,
-  });
+  const isExcluded = await isCurrentRequestInternalAnalyticsExcluded();
+
+  if (!isExcluded) {
+    await trackGrowthEvent({
+      eventName: "visitor",
+      market,
+      isAuthenticated: false,
+      source,
+      searchParams: resolvedSearchParams,
+      referrer,
+      userAgent,
+    });
+  }
 
   return (
     <main className={styles.page} id="top">

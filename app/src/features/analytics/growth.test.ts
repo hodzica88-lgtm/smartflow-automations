@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+import DemoIndexPage from "@/app/demo/page";
 import Home from "@/app/page";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
+import { INTERNAL_ANALYTICS_COOKIE_NAME, isInternalAnalyticsExcluded } from "@/features/analytics/internal-traffic";
 
 import {
   appendGrowthSourceToHref,
@@ -34,11 +36,37 @@ vi.mock("@/features/analytics/events", () => ({
   trackAnalyticsEvent: vi.fn(),
 }));
 
+const mockHeadersState = vi.hoisted(() => ({
+  referer: "https://example.com/landing",
+  userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+  host: "varnito.com",
+}));
+
+const mockCookiesState = vi.hoisted(() => ({
+  cookieValue: undefined as string | undefined,
+}));
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers({
-    referer: "https://example.com/landing",
-    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+    referer: mockHeadersState.referer,
+    "user-agent": mockHeadersState.userAgent,
+    host: mockHeadersState.host,
   })),
+  cookies: vi.fn(async () => ({
+    get: (name: string) => name === INTERNAL_ANALYTICS_COOKIE_NAME && mockCookiesState.cookieValue
+      ? { name, value: mockCookiesState.cookieValue }
+      : undefined,
+  })),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`redirect:${url}`);
+  }),
+}));
+
+vi.mock("@/shared/lib/rate-limit/service", () => ({
+  enforceActionRateLimit: vi.fn(async () => ({ allowed: true })),
 }));
 
 describe("normalizeGrowthSource", () => {
@@ -197,19 +225,77 @@ describe("classifyRequestTraffic", () => {
 describe("homepage visitor tracking", () => {
   it("passes the browser user-agent into the classifier without persisting raw values", async () => {
     vi.mocked(trackAnalyticsEvent).mockClear();
+    mockHeadersState.host = "localhost";
+    mockCookiesState.cookieValue = undefined;
 
     await Home({});
 
-    expect(trackAnalyticsEvent).toHaveBeenCalled();
-    const lastCall = vi.mocked(trackAnalyticsEvent).mock.calls.at(-1)?.[0];
-    expect(lastCall).toMatchObject({
+    expect(trackAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("suppresses production visitor tracking when the internal opt-out cookie is present", async () => {
+    vi.mocked(trackAnalyticsEvent).mockClear();
+    mockHeadersState.host = "varnito.com";
+    mockCookiesState.cookieValue = "1";
+
+    await Home({});
+
+    expect(trackAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("still counts production visitor traffic without the internal opt-out cookie", async () => {
+    vi.mocked(trackAnalyticsEvent).mockClear();
+    mockHeadersState.host = "varnito.com";
+    mockCookiesState.cookieValue = undefined;
+
+    await Home({});
+
+    expect(trackAnalyticsEvent).toHaveBeenCalledWith(expect.objectContaining({
       eventName: "visitor",
-      market: "de",
-      metadata: expect.objectContaining({
-        traffic_type: "human",
-      }),
-    });
-    expect(lastCall?.metadata?.user_agent).toBeUndefined();
+      market: "us",
+    }));
+  });
+
+  it("excludes localhost, 127.0.0.1, and us.localhost as internal traffic", () => {
+    expect(isInternalAnalyticsExcluded({ host: "localhost" })).toBe(true);
+    expect(isInternalAnalyticsExcluded({ host: "127.0.0.1" })).toBe(true);
+    expect(isInternalAnalyticsExcluded({ host: "us.localhost" })).toBe(true);
+    expect(isInternalAnalyticsExcluded({ host: "varnito.com" })).toBe(false);
+  });
+
+  it("excludes production traffic when the internal cookie is set to 1", () => {
+    expect(isInternalAnalyticsExcluded({ host: "varnito.com", cookieValue: "1" })).toBe(true);
+    expect(isInternalAnalyticsExcluded({ host: "varnito.com", cookieValue: undefined })).toBe(false);
+  });
+});
+
+describe("demo tracking suppression", () => {
+  it("suppresses demo_opened when the internal opt-out cookie is present", async () => {
+    vi.mocked(trackAnalyticsEvent).mockClear();
+    mockHeadersState.host = "varnito.com";
+    mockCookiesState.cookieValue = "1";
+
+    await expect(DemoIndexPage({})).rejects.toThrow("redirect:/demo/dashboard");
+    expect(trackAnalyticsEvent).not.toHaveBeenCalled();
+  });
+
+  it("still counts demo_opened for external traffic without the internal opt-out cookie", async () => {
+    vi.mocked(trackAnalyticsEvent).mockClear();
+    mockHeadersState.host = "varnito.com";
+    mockCookiesState.cookieValue = undefined;
+
+    await expect(DemoIndexPage({})).rejects.toThrow("redirect:/demo/dashboard");
+    expect(trackAnalyticsEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: "demo_opened",
+      market: "us",
+    }));
+  });
+
+  it("still redirects the demo normally when internal exclusion is active", async () => {
+    mockHeadersState.host = "localhost";
+    mockCookiesState.cookieValue = undefined;
+
+    await expect(DemoIndexPage({})).rejects.toThrow("redirect:/demo/dashboard");
   });
 });
 
