@@ -21,12 +21,18 @@ export const requireOperatorUser = async ({ nextPath = "/operator/owner" }: { ne
   return user;
 };
 
-export const requirePrimaryOwnerCustomerPreview = async ({ nextPath = "/operator/customer-preview" }: { nextPath?: string } = {}) => {
+export const requirePrimaryOwnerOperator = async ({ nextPath = "/operator/owner" }: { nextPath?: string } = {}) => {
   const user = await requireOperatorUser({ nextPath });
 
   if (!isPrimaryOwnerOperatorAccount(user.email)) {
     notFound();
   }
+
+  return user;
+};
+
+export const requirePrimaryOwnerCustomerPreview = async ({ nextPath = "/operator/customer-preview" }: { nextPath?: string } = {}) => {
+  const user = await requirePrimaryOwnerOperator({ nextPath });
 
   return user;
 };

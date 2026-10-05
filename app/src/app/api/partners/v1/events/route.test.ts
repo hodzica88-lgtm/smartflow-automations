@@ -27,11 +27,26 @@ const route = await import("@/app/api/partners/v1/events/route");
 describe("partner event API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    envMock.mockReturnValue({ partnerMeteringEnabled: true } as never);
+    envMock.mockReturnValue({ partnerMeteringEnabled: true, partnerApiEnabled: true } as never);
   });
 
-  it("returns 404 when the feature flag is off", async () => {
-    envMock.mockReturnValue({ partnerMeteringEnabled: false } as never);
+  it("returns 404 when either feature flag is off", async () => {
+    envMock.mockReturnValue({ partnerMeteringEnabled: false, partnerApiEnabled: true } as never);
+
+    const response = await route.POST(
+      new Request("http://localhost/api/partners/v1/events", {
+        method: "POST",
+        body: JSON.stringify({ event_id: "evt-1", external_customer_id: "cust-1", event_type: "activated" }),
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    expect(response.status).toBe(404);
+    expect(credentialAuthMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the API feature flag is off", async () => {
+    envMock.mockReturnValue({ partnerMeteringEnabled: true, partnerApiEnabled: false } as never);
 
     const response = await route.POST(
       new Request("http://localhost/api/partners/v1/events", {

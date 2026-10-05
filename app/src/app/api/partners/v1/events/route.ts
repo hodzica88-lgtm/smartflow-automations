@@ -77,7 +77,7 @@ const normalizeIsoDate = (value: unknown) => {
 export async function POST(request: Request) {
   const env = loadServerEnv();
 
-  if (!env.partnerMeteringEnabled) {
+  if (!env.partnerMeteringEnabled || !env.partnerApiEnabled) {
     return jsonResponse({ error: "not_found" }, 404);
   }
 
