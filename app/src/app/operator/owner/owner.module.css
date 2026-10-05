@@ -259,6 +259,149 @@
   color: var(--danger);
 }
 
+.partnerMeteringSection {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.partnerHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.partnerEyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.partnerTitle {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.partnerSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.partnerSummaryCard {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.partnerSummaryLabel {
+  color: var(--muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.partnerSummaryValue {
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.partnerMrrList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.partnerMrrItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.partnerEmptyState,
+.partnerUnavailableState {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.partnerTableWrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.partnerTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.partnerTable th,
+.partnerTable td {
+  padding: 0.75rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.partnerTable th {
+  color: var(--muted);
+  font-size: 0.73rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.partnerTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.partnerNameCell {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.partnerNameCell strong {
+  font-size: 0.97rem;
+}
+
+.partnerNameCell span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.partnerStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+
 .list,
 .instructionList {
   margin: 0;

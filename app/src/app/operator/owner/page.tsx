@@ -11,7 +11,10 @@ import { requireOperatorUser } from "@/features/operator/access";
 import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { listOwnerBusinessNotifications } from "@/features/notifications/service";
 import { getOwnerControlCenterData, getOwnerGrowthMonthData } from "@/features/operator/data";
+import { getOwnerPartnerMeteringOverview } from "@/features/partners/operator-data";
+import { PartnerMeteringPanel } from "@/features/partners/PartnerMeteringPanel";
 import { getInboxPreview, getSupportInboxCounts } from "@/features/support/service";
+import { loadServerEnv } from "@/shared/config/env";
 import { getRequestMarket } from "@/shared/i18n/request";
 import VarnitoLogo from "@/shared/ui/VarnitoLogo";
 
@@ -102,6 +105,22 @@ export default async function OwnerControlCenterPage({
   const monthOptions = getGrowthMonthOptions();
   const growthReport = await getOwnerGrowthMonthData(selectedMonth);
   const data = await getOwnerControlCenterData();
+  const partnerMeteringEnabled = loadServerEnv().partnerMeteringEnabled;
+  const partnerMeteringData = partnerMeteringEnabled
+    ? await getOwnerPartnerMeteringOverview()
+    : {
+        enabled: false,
+        partners: [],
+        summary: {
+          activePartners: 0,
+          activeCustomers: 0,
+          newThisMonth: 0,
+          deactivatedThisMonth: 0,
+          netChangeThisMonth: 0,
+          billableCustomers: 0,
+          mrrByCurrency: {},
+        },
+      };
   const recentNotifications = await listOwnerBusinessNotifications(3);
   const [mailCounts, inboxPreview] = await Promise.all([
     getSupportInboxCounts(),
@@ -146,7 +165,6 @@ export default async function OwnerControlCenterPage({
     subscriptionCancellations: 0,
     sources: Object.fromEntries(GROWTH_SOURCES.map((source) => [source, { ...EMPTY_SOURCE_METRICS }])) as Record<(typeof GROWTH_SOURCES)[number], typeof EMPTY_SOURCE_METRICS>,
   };
-  const marketBreakdown = growthSummary.markets ?? { de: 0, us: 0, unknown: 0 };
   const humanMarketBreakdown = growthSummary.humanMarkets ?? { de: 0, us: 0, unknown: 0 };
   const recentHumanVisits = data.recentHumanVisits ?? [];
 
@@ -459,6 +477,8 @@ export default async function OwnerControlCenterPage({
               </article>
             ))}
           </section>
+
+          <PartnerMeteringPanel market={market === "us" ? "us" : "de"} data={partnerMeteringData} />
 
           <section className={styles.ownerLowerGrid}>
             <article className={styles.ownerPanel}>
