@@ -18,6 +18,7 @@ type ServerEnv = PublicEnv & {
   supportWebhookSecret?: string;
   analyticsEventsEnabled: boolean;
   partnerMeteringEnabled: boolean;
+  partnerProvisioningEnabled: boolean;
   partnerApiEnabled: boolean;
   vapidPrivateKey?: string;
   vapidSubject?: string;
@@ -145,6 +146,7 @@ export const loadServerEnv = (): ServerEnv => {
     supportWebhookSecret: getOptionalEnv("SUPPORT_WEBHOOK_SECRET"),
     analyticsEventsEnabled: getBooleanEnv("ANALYTICS_EVENTS_ENABLED", true),
     partnerMeteringEnabled: getBooleanEnv("PARTNER_METERING_ENABLED", false),
+    partnerProvisioningEnabled: getBooleanEnv("PARTNER_PROVISIONING_ENABLED", false),
     partnerApiEnabled: getBooleanEnv("PARTNER_API_ENABLED", false),
     vapidPrivateKey: getOptionalEnv("VAPID_PRIVATE_KEY"),
     vapidSubject: getOptionalEnv("VAPID_SUBJECT"),
