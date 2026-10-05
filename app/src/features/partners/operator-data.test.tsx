@@ -1,7 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PartnerMeteringPanel } from "@/features/partners/PartnerMeteringPanel";
+import {
+  clearRecentPartnerSecret,
+  closePartnerManagementContext,
+  getPartnerDetailTransition,
+  PartnerMeteringPanel,
+} from "@/features/partners/PartnerMeteringPanel";
 import {
   EMPTY_PARTNER_METERING_SUMMARY,
   computePartnerOwnerOverview,
@@ -441,5 +446,122 @@ describe("partner metering owner dashboard data", () => {
 
     expect(overview.mrrMinor).toBeNull();
     expect(overview.arrMinor).toBeNull();
+  });
+
+  it("renders owner-management controls for the primary owner and shows API status when disabled", () => {
+    const html = renderToStaticMarkup(
+      <PartnerMeteringPanel
+        market="de"
+        data={{
+          enabled: true,
+          partners: [{
+            partnerId: "partner-1",
+            partnerKey: "demo-partner",
+            name: "Demo Partner",
+            status: "pending",
+            billingModel: "per_customer",
+            currency: "EUR",
+            pricePerCustomerMinor: 300,
+            activeCustomers: 1,
+            billableCustomers: 1,
+            newThisMonth: 0,
+            reactivatedThisMonth: 0,
+            deactivatedThisMonth: 0,
+            netChangeThisMonth: 0,
+            mrrMinor: 300,
+            arrMinor: 3600,
+          }],
+          summary: {
+            activePartners: 0,
+            activeCustomers: 1,
+            newThisMonth: 0,
+            deactivatedThisMonth: 0,
+            netChangeThisMonth: 0,
+            billableCustomers: 1,
+            mrrByCurrency: { EUR: 300 },
+          },
+        }}
+        primaryOwner={true}
+        partnerApiEnabled={false}
+      />,
+    );
+
+    expect(html).toContain("External Partner API");
+    expect(html).toContain("Deaktiviert");
+    expect(html).toContain("Partner hinzufügen");
+    expect(html).toContain("Verwalten");
+  });
+
+  it("hides management actions for non-primary owners while keeping the API status visible", () => {
+    const html = renderToStaticMarkup(
+      <PartnerMeteringPanel
+        market="us"
+        data={{
+          enabled: true,
+          partners: [{
+            partnerId: "partner-2",
+            partnerKey: "ready-partner",
+            name: "Ready Partner",
+            status: "active",
+            billingModel: "per_customer",
+            currency: "USD",
+            pricePerCustomerMinor: 400,
+            activeCustomers: 2,
+            billableCustomers: 2,
+            newThisMonth: 1,
+            reactivatedThisMonth: 0,
+            deactivatedThisMonth: 0,
+            netChangeThisMonth: 1,
+            mrrMinor: 800,
+            arrMinor: 9600,
+          }],
+          summary: {
+            activePartners: 1,
+            activeCustomers: 2,
+            newThisMonth: 1,
+            deactivatedThisMonth: 0,
+            netChangeThisMonth: 1,
+            billableCustomers: 2,
+            mrrByCurrency: { USD: 800 },
+          },
+        }}
+        primaryOwner={false}
+        partnerApiEnabled={true}
+      />,
+    );
+
+    expect(html).toContain("External Partner API");
+    expect(html).toContain("Aktiv");
+    expect(html).not.toContain("Partner hinzufügen");
+    expect(html).not.toContain("Verwalten");
+  });
+
+  it("clears plaintext partner secrets when the detail context closes or switches away", () => {
+    const issueSecret = { partnerId: "partner-1", credential: "issue-secret-abc", kind: "issue" as const };
+    const rotateSecret = { partnerId: "partner-1", credential: "rotated-secret-xyz", kind: "rotate" as const };
+
+    expect(clearRecentPartnerSecret(issueSecret)).toBeNull();
+    expect(closePartnerManagementContext()).toEqual({
+      selectedPartnerId: null,
+      recentSecret: null,
+    });
+
+    expect(getPartnerDetailTransition({
+      nextPartnerId: "partner-2",
+      currentSecret: issueSecret,
+      preserveSecret: false,
+    })).toEqual({
+      selectedPartnerId: "partner-2",
+      recentSecret: null,
+    });
+
+    expect(getPartnerDetailTransition({
+      nextPartnerId: "partner-2",
+      currentSecret: rotateSecret,
+      preserveSecret: true,
+    })).toEqual({
+      selectedPartnerId: "partner-2",
+      recentSecret: rotateSecret,
+    });
   });
 });

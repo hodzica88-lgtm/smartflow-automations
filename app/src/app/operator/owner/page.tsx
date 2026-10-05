@@ -7,6 +7,7 @@ import {
   getMonthKeyInBerlin,
 } from "@/features/analytics/growth";
 import { logoutAction } from "@/features/auth/actions";
+import { isPrimaryOwnerOperatorAccount } from "@/features/auth/primary-account";
 import { requireOperatorUser } from "@/features/operator/access";
 import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { listOwnerBusinessNotifications } from "@/features/notifications/service";
@@ -105,7 +106,10 @@ export default async function OwnerControlCenterPage({
   const monthOptions = getGrowthMonthOptions();
   const growthReport = await getOwnerGrowthMonthData(selectedMonth);
   const data = await getOwnerControlCenterData();
-  const partnerMeteringEnabled = loadServerEnv().partnerMeteringEnabled;
+  const serverEnv = loadServerEnv();
+  const partnerMeteringEnabled = serverEnv.partnerMeteringEnabled;
+  const partnerApiEnabled = serverEnv.partnerApiEnabled;
+  const primaryOwner = isPrimaryOwnerOperatorAccount(operator.email);
   const partnerMeteringData = partnerMeteringEnabled
     ? await getOwnerPartnerMeteringOverview()
     : {
@@ -478,7 +482,12 @@ export default async function OwnerControlCenterPage({
             ))}
           </section>
 
-          <PartnerMeteringPanel market={market === "us" ? "us" : "de"} data={partnerMeteringData} />
+          <PartnerMeteringPanel
+            market={market === "us" ? "us" : "de"}
+            data={partnerMeteringData}
+            primaryOwner={primaryOwner}
+            partnerApiEnabled={partnerApiEnabled}
+          />
 
           <section className={styles.ownerLowerGrid}>
             <article className={styles.ownerPanel}>

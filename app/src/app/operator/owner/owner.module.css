@@ -401,6 +401,236 @@
   font-weight: 700;
 }
 
+.partnerApiStatusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  font-weight: 700;
+}
+
+.partnerApiBadgeActive,
+.partnerApiBadgeInactive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.partnerApiBadgeActive {
+  background: rgba(46, 204, 113, 0.18);
+  color: var(--success);
+}
+
+.partnerApiBadgeInactive {
+  background: rgba(255, 95, 114, 0.18);
+  color: var(--danger);
+}
+
+.partnerToolbar,
+.partnerActionGroup,
+.partnerDialogActions,
+.partnerSecretActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.partnerPrimaryButton,
+.partnerSecondaryButton {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  transition: transform 0.2s ease;
+}
+
+.partnerPrimaryButton {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.40);
+}
+
+.partnerPrimaryButton:hover,
+.partnerSecondaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.partnerPrimaryButton:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.partnerDialogBackdrop {
+  position: relative;
+  margin-top: 0.5rem;
+}
+
+.partnerDialog {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.partnerDialogHeader,
+.partnerDetailHeader,
+.partnerCredentialHeader,
+.partnerSecretHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.partnerFormGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.partnerField {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.partnerField input,
+.partnerField select {
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+}
+
+.partnerFieldMeta,
+.partnerMutedText,
+.partnerInlineError,
+.partnerCopyFeedback,
+.partnerSecretHint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.partnerInlineError {
+  color: var(--danger);
+}
+
+.partnerDetailPanel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.partnerDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.partnerMetaCard {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.partnerMetaCard span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.partnerCredentialSection {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.partnerCredentialTable {
+  display: grid;
+  gap: 0.6rem;
+  overflow-x: auto;
+}
+
+.partnerCredentialTableHeader,
+.partnerCredentialRow {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 0.9fr 1.2fr;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 720px;
+}
+
+.partnerCredentialTableHeader {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.partnerCredentialRow {
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.partnerCredentialActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.partnerSecretPanel {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border-radius: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.partnerSecretValue {
+  display: block;
+  overflow-wrap: anywhere;
+  padding: 0.8rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid var(--border);
+  font-size: 0.84rem;
+}
+
+.partnerCopyFeedback {
+  color: var(--success);
+  font-weight: 700;
+}
 
 .list,
 .instructionList {
