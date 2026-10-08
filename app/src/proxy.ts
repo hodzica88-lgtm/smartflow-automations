@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getDefaultPostLoginPath, getSafePostLoginPath } from "@/features/auth/redirects";
 import { createSupabaseMiddlewareClient } from "@/shared/lib/supabase/middleware";
 
-const protectedRoutePrefixes = ["/dashboard", "/onboarding", "/operator"];
+const protectedRoutePrefixes = ["/onboarding", "/operator"];
 
 const isProtectedRoute = (pathname: string) =>
   protectedRoutePrefixes.some((prefix) => pathname.startsWith(prefix));
