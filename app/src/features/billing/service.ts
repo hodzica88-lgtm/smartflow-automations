@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type Stripe from "stripe";
 
+import { getCurrentUser } from "@/features/auth/current-user";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
-import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
+import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export const BILLING_ROUTE = "/dashboard/billing";
 export const BILLING_LOOKUP_KEY = "varnito_pro_monthly";
@@ -219,9 +221,9 @@ export const getBillingRouteHref = (reason?: string | null) => {
   return `${BILLING_ROUTE}?billing=${encodeURIComponent(reason)}`;
 };
 
-export const getCompanyBillingSnapshot = async (
+const loadCompanyBillingSnapshot = async (
   companyId: string,
-  now: Date = new Date(),
+  now: Date,
 ) => {
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
@@ -237,6 +239,21 @@ export const getCompanyBillingSnapshot = async (
   }
 
   return toSnapshot(companyId, (data as BillingSubscriptionRow | null) ?? null, now);
+};
+
+const getCachedCompanyBillingSnapshot = cache((companyId: string) =>
+  loadCompanyBillingSnapshot(companyId, new Date()),
+);
+
+export const getCompanyBillingSnapshot = async (
+  companyId: string,
+  now?: Date,
+) => {
+  if (now) {
+    return loadCompanyBillingSnapshot(companyId, now);
+  }
+
+  return getCachedCompanyBillingSnapshot(companyId);
 };
 
 type SyncOwnerCompanyBillingFromStripeInput = {
@@ -393,10 +410,7 @@ type RequireUserCompanyAccessOptions = {
 export const requireUserCompanyAccess = async (
   options: RequireUserCompanyAccessOptions,
 ): Promise<AppCompanyAccess> => {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(options.nextPath)}`);
