@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type Stripe from "stripe";
@@ -241,8 +242,14 @@ const loadCompanyBillingSnapshot = async (
   return toSnapshot(companyId, (data as BillingSubscriptionRow | null) ?? null, now);
 };
 
+const getSharedCompanyBillingSnapshot = unstable_cache(
+  (companyId: string) => loadCompanyBillingSnapshot(companyId, new Date()),
+  ["company-billing-snapshot"],
+  { revalidate: 5 },
+);
+
 const getCachedCompanyBillingSnapshot = cache((companyId: string) =>
-  loadCompanyBillingSnapshot(companyId, new Date()),
+  getSharedCompanyBillingSnapshot(companyId),
 );
 
 export const getCompanyBillingSnapshot = async (
