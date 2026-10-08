@@ -10,3 +10,24 @@ export const getCurrentUser = cache(async () => {
 
   return user;
 });
+
+export const getCurrentUserId = cache(async () => {
+  const supabase = await createSupabaseServerClient();
+
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    const subject = data?.claims?.sub;
+
+    if (!error && typeof subject === "string" && subject) {
+      return subject;
+    }
+  } catch {
+    // Fall back to the authoritative user lookup for legacy JWT setups.
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user?.id ?? null;
+});
