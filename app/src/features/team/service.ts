@@ -88,7 +88,26 @@ const loadCompanyTeamMembers = async (companyId: string) => {
   return rows.map(mapTeamMember);
 };
 
-export const getCompanyTeamMembers = cache(loadCompanyTeamMembers);
+const teamMembersInFlight = new Map<string, Promise<TeamMember[]>>();
+
+const loadCoalescedCompanyTeamMembers = (companyId: string) => {
+  const existing = teamMembersInFlight.get(companyId);
+
+  if (existing) {
+    return existing;
+  }
+
+  const pending = loadCompanyTeamMembers(companyId).finally(() => {
+    if (teamMembersInFlight.get(companyId) === pending) {
+      teamMembersInFlight.delete(companyId);
+    }
+  });
+
+  teamMembersInFlight.set(companyId, pending);
+  return pending;
+};
+
+export const getCompanyTeamMembers = cache(loadCoalescedCompanyTeamMembers);
 
 export const getActiveCompanyTeamMembers = cache(async (companyId: string) => {
   const members = await getCompanyTeamMembers(companyId);
