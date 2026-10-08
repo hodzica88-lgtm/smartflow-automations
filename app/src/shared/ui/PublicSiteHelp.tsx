@@ -50,7 +50,7 @@ export default function PublicSiteHelp({
 }) {
   const pathname = usePathname();
   const currentPath = path ?? pathname ?? "/";
-  const isVisible = !currentPath.startsWith("/api") && !currentPath.startsWith("/operator") && !currentPath.startsWith("/dashboard") && !(currentPath.startsWith("/c/") && currentPath.includes("/inquiry"));
+  const isVisible = !currentPath.startsWith("/api") && !currentPath.startsWith("/operator") && !currentPath.startsWith("/dashboard") && currentPath !== "/demo" && !currentPath.startsWith("/demo/") && !(currentPath.startsWith("/c/") && currentPath.includes("/inquiry"));
   const marketCode = market ?? normalizeMarketFromPath(currentPath);
   const [open, setOpen] = useState(true);
   const [input, setInput] = useState(getDefaultMessage());
@@ -74,7 +74,7 @@ export default function PublicSiteHelp({
     setInput("");
 
     if (href) {
-      window.location.href = href;
+      window.location.assign(href);
     }
 
     if (isMailto) {
