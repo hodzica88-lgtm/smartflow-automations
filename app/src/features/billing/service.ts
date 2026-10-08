@@ -241,9 +241,26 @@ const loadCompanyBillingSnapshot = async (
   return toSnapshot(companyId, (data as BillingSubscriptionRow | null) ?? null, now);
 };
 
-const getCachedCompanyBillingSnapshot = cache((companyId: string) =>
-  loadCompanyBillingSnapshot(companyId, new Date()),
-);
+const billingSnapshotInFlight = new Map<string, Promise<BillingSnapshot>>();
+
+const loadCoalescedCompanyBillingSnapshot = (companyId: string) => {
+  const existing = billingSnapshotInFlight.get(companyId);
+
+  if (existing) {
+    return existing;
+  }
+
+  const pending = loadCompanyBillingSnapshot(companyId, new Date()).finally(() => {
+    if (billingSnapshotInFlight.get(companyId) === pending) {
+      billingSnapshotInFlight.delete(companyId);
+    }
+  });
+
+  billingSnapshotInFlight.set(companyId, pending);
+  return pending;
+};
+
+const getCachedCompanyBillingSnapshot = cache(loadCoalescedCompanyBillingSnapshot);
 
 export const getCompanyBillingSnapshot = async (
   companyId: string,
