@@ -33,6 +33,7 @@ const UNSUCCESSFUL_OUTCOMES = [
 ];
 
 const LEAD_STATUSES = ["new", "contacted", "successful", "unsuccessful"];
+const LEADS_PAGE_SIZE = 50;
 
 const primaryActionStyle = {
   display: "inline-flex",
@@ -109,8 +110,14 @@ const getCompanyAccess = async () => {
   };
 };
 
-const getLeads = async (companyId: string, assignedFilter: string) => {
+const getLeads = async (
+  companyId: string,
+  assignedFilter: string,
+  page: number,
+) => {
   const supabase = createSupabaseServiceRoleClient();
+  const from = (page - 1) * LEADS_PAGE_SIZE;
+  const to = from + LEADS_PAGE_SIZE;
   let query = supabase
     .from("leads")
     .select(
@@ -118,7 +125,8 @@ const getLeads = async (companyId: string, assignedFilter: string) => {
     )
     .eq("company_id", companyId)
     .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (assignedFilter === "unassigned") {
     query = query.is("assigned_user_id", null);
@@ -132,7 +140,12 @@ const getLeads = async (companyId: string, assignedFilter: string) => {
     throw error;
   }
 
-  return (data ?? []) as LeadListItem[];
+  const rows = (data ?? []) as LeadListItem[];
+
+  return {
+    leads: rows.slice(0, LEADS_PAGE_SIZE),
+    hasNext: rows.length > LEADS_PAGE_SIZE,
+  };
 };
 
 const getStatusLabel = (status: string | null | undefined) =>
@@ -261,6 +274,7 @@ type LeadsPageProps = {
     success?: string;
     error?: string;
     assigned?: string;
+    page?: string;
   }>;
 };
 
@@ -276,7 +290,9 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     teamMembers.some((member) => member.id === requestedAssignedFilter)
       ? requestedAssignedFilter
       : "";
-  const leads = await getLeads(companyId, assignedFilter);
+  const requestedPage = Number.parseInt(resolvedSearchParams?.page ?? "1", 10);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const { leads, hasNext } = await getLeads(companyId, assignedFilter, page);
   const historyEntries = await getLeadHistory(companyId, leads.map((lead) => lead.id));
   const memberById = new Map(teamMembers.map((member) => [member.id, member]));
   const historyByLeadId = historyEntries.reduce<Record<string, LeadHistoryEntry[]>>((acc, entry) => {
@@ -286,6 +302,20 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     acc[entry.lead_id].push(entry);
     return acc;
   }, {});
+  const getPageHref = (pageNumber: number) => {
+    const params = new URLSearchParams();
+
+    if (assignedFilter) {
+      params.set("assigned", assignedFilter);
+    }
+
+    if (pageNumber > 1) {
+      params.set("page", String(pageNumber));
+    }
+
+    const query = params.toString();
+    return query ? `/dashboard/leads?${query}` : "/dashboard/leads";
+  };
 
   return (
     <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto", display: "grid", gap: 24 }}>
@@ -542,6 +572,37 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
             })
           )}
         </div>
+
+        {page > 1 || hasNext ? (
+          <nav
+            aria-label="Lead-Seiten"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              marginTop: 20,
+            }}
+          >
+            {page > 1 ? (
+              <Link href={getPageHref(page - 1)} style={secondaryActionStyle}>
+                Zurück
+              </Link>
+            ) : (
+              <span />
+            )}
+
+            <span style={{ color: "var(--muted)", fontSize: 14 }}>Seite {page}</span>
+
+            {hasNext ? (
+              <Link href={getPageHref(page + 1)} style={secondaryActionStyle}>
+                Weiter
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        ) : null}
       </section>
     </main>
   );
