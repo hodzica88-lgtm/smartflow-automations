@@ -279,20 +279,31 @@ type LeadsPageProps = {
 };
 
 export default async function LeadsPage({ searchParams }: LeadsPageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const { companyId, isOwner } = await getCompanyAccess();
+  const [resolvedSearchParams, { companyId, isOwner }] = await Promise.all([
+    searchParams ?? Promise.resolve(undefined),
+    getCompanyAccess(),
+  ]);
   const success = resolvedSearchParams?.success === "1";
   const error = resolvedSearchParams?.error ?? null;
-  const teamMembers = await getActiveCompanyTeamMembers(companyId);
   const requestedAssignedFilter = resolvedSearchParams?.assigned ?? "";
+  const requestedPage = Number.parseInt(resolvedSearchParams?.page ?? "1", 10);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const teamMembersPromise = getActiveCompanyTeamMembers(companyId);
+  const canLoadLeadsBeforeFilterValidation =
+    requestedAssignedFilter === "" || requestedAssignedFilter === "unassigned";
+  const earlyLeadsPromise = canLoadLeadsBeforeFilterValidation
+    ? getLeads(companyId, requestedAssignedFilter, page)
+    : null;
+  const teamMembers = await teamMembersPromise;
   const assignedFilter =
     requestedAssignedFilter === "unassigned" ||
     teamMembers.some((member) => member.id === requestedAssignedFilter)
       ? requestedAssignedFilter
       : "";
-  const requestedPage = Number.parseInt(resolvedSearchParams?.page ?? "1", 10);
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const { leads, hasNext } = await getLeads(companyId, assignedFilter, page);
+  const { leads, hasNext } =
+    earlyLeadsPromise && assignedFilter === requestedAssignedFilter
+      ? await earlyLeadsPromise
+      : await getLeads(companyId, assignedFilter, page);
   const historyEntries = await getLeadHistory(companyId, leads.map((lead) => lead.id));
   const memberById = new Map(teamMembers.map((member) => [member.id, member]));
   const historyByLeadId = historyEntries.reduce<Record<string, LeadHistoryEntry[]>>((acc, entry) => {
