@@ -25,19 +25,19 @@ export const createSupabaseServerClient = async () => {
   });
 };
 
-let serviceRoleClient: ReturnType<typeof createClient> | undefined;
+const buildSupabaseServiceRoleClient = () =>
+  createClient(publicEnv.supabaseUrl, loadServerEnv().supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+let serviceRoleClient:
+  | ReturnType<typeof buildSupabaseServiceRoleClient>
+  | undefined;
 
 export const createSupabaseServiceRoleClient = () => {
-  serviceRoleClient ??= createClient(
-    publicEnv.supabaseUrl,
-    loadServerEnv().supabaseServiceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
-
+  serviceRoleClient ??= buildSupabaseServiceRoleClient();
   return serviceRoleClient;
 };
