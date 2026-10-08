@@ -112,11 +112,11 @@ export async function runFixture(input, request = fetch, environment = process.e
       return String.fromCodePoint(parseInt(entity.slice(entity[2].toLowerCase() === "x" ? 3 : 2, -1),
         entity[2].toLowerCase() === "x" ? 16 : 10));
     });
-    const fields = new URLSearchParams();
+    const fields = new FormData();
     for (const match of form.matchAll(/<input\b[^>]*>/g)) {
       const name = match[0].match(/\bname="([^"]*)"/)?.[1];
       const value = match[0].match(/\bvalue="([^"]*)"/)?.[1] || "";
-      if (name) fields.set(decode(name), decode(value));
+      if (name) fields.append(decode(name), decode(value));
     }
     if (fields.get("leadId") !== probeCompany.leads[0] ||
         ![...fields.keys()].some((name) => name.startsWith("$ACTION_"))) throw new Error("Replica action metadata missing");
@@ -126,8 +126,10 @@ export async function runFixture(input, request = fetch, environment = process.e
     fields.set("unsuccessful_outcome", "");
     for (const replica of input.replicas) {
       const result = await request(replica.url, {
-        method: "POST", headers: { ...headers, "Content-Type": "application/x-www-form-urlencoded" },
-        body: fields.toString(), redirect: "manual", signal: AbortSignal.timeout(30000),
+        // Native fetch generates multipart/form-data and its matching boundary.
+        // URL-encoded MPA actions are ignored by Next.js 16 and return the page.
+        method: "POST", headers,
+        body: fields, redirect: "manual", signal: AbortSignal.timeout(30000),
       });
       if (result.status !== 303 || !result.headers.get("location")?.endsWith("/dashboard/leads?success=1")) {
         throw new Error(`Replica action on ${replica.name}: HTTP ${result.status}`);

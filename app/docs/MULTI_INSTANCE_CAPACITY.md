@@ -88,6 +88,12 @@ Docker network, using the public Host/Origin. Each must return the success
 redirect and the synthetic probe lead must remain unchanged. This checks action
 compatibility across the current identical build; it does not implement or
 validate deployment across different builds.
+The probe submits native `FormData`: fetch generates `multipart/form-data` with
+the correct boundary, matching React's form encoding. The initial live fixture
+run stopped before sustained load because the probe sent a URL-encoded POST,
+which Next.js 16 ignores as a Server Action and renders as HTTP 200. All five
+companies and 50 accounts were then successfully removed. The corrected probe
+retains the strict 303 success-redirect requirement; HTTP 200 is not acceptance.
 
 `load-tests/dashboard-sustained.js` signs in once per account, paced at least
 2.1 seconds apart, and verifies every account can load its populated company.
@@ -115,12 +121,15 @@ Local verification:
 
 ```bash
 node --test scripts/operations/capacity-fixture.check.mjs
+node scripts/operations/action-protocol.check.mjs
 node_modules/.bin/eslint scripts/operations/capacity-fixture.mjs scripts/operations/capacity-fixture.check.mjs load-tests/dashboard-sustained.js
 ```
 
 The fixture checks use a simulated Auth/REST server: seed/cleanup, unchanged
 cross-container actions, partial creation failure, collision refusal, changed
 identity/company/member/profile refusal, and foreign data beyond a page boundary.
+An isolated real Next.js app reproduces the ignored URL-encoded POST and checks
+the multipart action's 303 success redirect without connecting to production.
 Live acceptance results must be recorded after the Windows/VPS run.
 
 ## Rollback and future deployments

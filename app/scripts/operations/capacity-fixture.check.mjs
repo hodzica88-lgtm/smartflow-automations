@@ -24,12 +24,16 @@ function harness() {
   const request = async (raw, options = {}) => {
     const url = new URL(raw);
     const method = options.method || "GET";
-    const body = options.body === undefined ? null :
-      options.headers?.["Content-Type"] === "application/x-www-form-urlencoded"
-        ? new URLSearchParams(options.body) : JSON.parse(options.body);
     if (url.hostname.startsWith("172.")) {
       assert.equal(options.headers.Host, "varnito.com");
       if (method === "GET") return new Response(`<form method="post"><input name="$ACTION_ID_abc" value=""/><input name="leadId" value="${companies[0].leads[0]}"/>${companies[0].marker}</form>`);
+      // Use native HTTP serialization/parsing, rather than treating URLSearchParams
+      // as an accepted action payload. The previous mock masked a real Next.js error.
+      assert.ok(options.body instanceof FormData);
+      assert.equal(options.headers["Content-Type"], undefined);
+      const wire = new Request(raw, options);
+      assert.match(wire.headers.get("content-type"), /^multipart\/form-data; boundary=/);
+      const body = await wire.formData();
       assert.equal(body.get("leadId"), companies[0].leads[0]);
       assert.equal(body.get("status"), "new");
       assert.equal(body.get("assigned_user_id"), "");
@@ -37,6 +41,7 @@ function harness() {
       actions.push(url.hostname);
       return new Response(null, { status: 303, headers: { location: "/dashboard/leads?success=1" } });
     }
+    const body = options.body === undefined ? null : JSON.parse(options.body);
     if (url.pathname === "/auth/v1/token") return json({ user: { id: companies[0].users[0].id }, access_token: "synthetic-token" });
     assert.equal(options.headers.Authorization, "Bearer private-test-key");
     if (url.pathname.startsWith("/auth/v1/admin/users")) {
