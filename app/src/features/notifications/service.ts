@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
+
 import { isVisibleOwnerBusinessNotification } from "@/features/operator/internal-company";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
@@ -133,7 +136,7 @@ export const getOwnerBusinessNotificationCount = async () => {
   return notifications.length;
 };
 
-export const getCompanyUnreadNotificationCount = async (companyId: string) => {
+const loadCompanyUnreadNotificationCount = async (companyId: string) => {
   const supabase = createSupabaseServiceRoleClient();
   const { count, error } = await supabase
     .from("app_notifications")
@@ -147,6 +150,16 @@ export const getCompanyUnreadNotificationCount = async (companyId: string) => {
 
   return count ?? 0;
 };
+
+const getSharedCompanyUnreadNotificationCount = unstable_cache(
+  loadCompanyUnreadNotificationCount,
+  ["company-unread-notification-count"],
+  { revalidate: 3 },
+);
+
+export const getCompanyUnreadNotificationCount = cache((companyId: string) =>
+  getSharedCompanyUnreadNotificationCount(companyId),
+);
 
 export const markNotificationRead = async (companyId: string, notificationId: string) => {
   const supabase = createSupabaseServiceRoleClient();
