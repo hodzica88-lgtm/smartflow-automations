@@ -11,26 +11,38 @@ const isProtectedRoute = (pathname: string) =>
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, supabase } = createSupabaseMiddlewareClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (isProtectedRoute(pathname) && !user) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", pathname);
+  if (isProtectedRoute(pathname)) {
+    const { data } = await supabase.auth.getClaims();
+    const claims = data?.claims;
 
-    return NextResponse.redirect(loginUrl);
+    if (!claims?.sub) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("next", pathname);
+
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return response;
   }
 
-  if (pathname === "/login" && user) {
-    const nextPath = getSafePostLoginPath(request.nextUrl.searchParams.get("next"));
-    const destinationUrl = request.nextUrl.clone();
-    const destination = nextPath?.startsWith("/operator") ? nextPath : getDefaultPostLoginPath(user);
-    destinationUrl.pathname = destination;
-    destinationUrl.search = "";
+  if (pathname === "/login") {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    return NextResponse.redirect(destinationUrl);
+    if (user) {
+      const nextPath = getSafePostLoginPath(request.nextUrl.searchParams.get("next"));
+      const destinationUrl = request.nextUrl.clone();
+      const destination = nextPath?.startsWith("/operator")
+        ? nextPath
+        : getDefaultPostLoginPath(user);
+      destinationUrl.pathname = destination;
+      destinationUrl.search = "";
+
+      return NextResponse.redirect(destinationUrl);
+    }
   }
 
   return response;

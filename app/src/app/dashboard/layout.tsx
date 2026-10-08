@@ -10,12 +10,14 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { market } = await getRequestMarket();
-  const access = await requireUserCompanyAccess({
-    allowMember: true,
-    enforceBilling: false,
-    nextPath: "/dashboard",
-  });
+  const [{ market }, access] = await Promise.all([
+    getRequestMarket(),
+    requireUserCompanyAccess({
+      allowMember: true,
+      enforceBilling: false,
+      nextPath: "/dashboard",
+    }),
+  ]);
   const unreadCount = await getCompanyUnreadNotificationCount(access.companyId);
 
   return (

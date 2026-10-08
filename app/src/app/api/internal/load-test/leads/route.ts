@@ -1,3 +1,4 @@
+import { getCompanyIntakeContext } from "@/features/companies/intake-context";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { loadServerEnv } from "@/shared/config/env";
 
@@ -59,21 +60,18 @@ export async function POST(request: Request) {
     return jsonResponse({ ok: false, message: "Invalid sequence." }, 400);
   }
 
-  const supabase = createSupabaseServiceRoleClient();
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .select("id, deleted_at")
-    .eq("id", companyId)
-    .maybeSingle();
-
-  if (companyError) {
+  let company;
+  try {
+    company = await getCompanyIntakeContext(companyId);
+  } catch {
     return jsonResponse({ ok: false, message: "Company lookup failed." }, 500);
   }
 
-  if (!company || company.deleted_at) {
+  if (!company || company.deletedAt) {
     return jsonResponse({ ok: false, message: "Company not found." }, 404);
   }
 
+  const supabase = createSupabaseServiceRoleClient();
   const marker = `${runId}-${sequence}`;
   const source = `load_test:${runId}`;
   const { data: lead, error: leadError } = await supabase

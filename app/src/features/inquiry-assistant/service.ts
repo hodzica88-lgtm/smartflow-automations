@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 
 import { trackAnalyticsEvent } from "@/features/analytics/events";
+import { getCompanyIntakeContext } from "@/features/companies/intake-context";
 import { createAppNotification } from "@/features/notifications/service";
 import { loadServerEnv } from "@/shared/config/env";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -633,18 +634,18 @@ export const createPublicInquiryLead = async ({
     return { ok: false as const, error: validation.error };
   }
 
-  const supabase = createSupabaseServiceRoleClient();
-
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .select("id, deleted_at, timezone, business_hours")
-    .eq("id", companyId)
-    .maybeSingle();
-
-  if (companyError || !company || company.deleted_at) {
+  let company;
+  try {
+    company = await getCompanyIntakeContext(companyId);
+  } catch {
     return { ok: false as const, error: "Firma nicht gefunden." };
   }
 
+  if (!company || company.deletedAt) {
+    return { ok: false as const, error: "Firma nicht gefunden." };
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
   const clientIp = await getClientIpForRateLimit();
   if (!clientIp) {
     return { ok: false as const, error: "Anfrage konnte nicht gesendet werden." };
@@ -692,7 +693,7 @@ export const createPublicInquiryLead = async ({
   const customerConfirmationScheduledFor = new Date().toISOString();
   const ownerNewLeadScheduledFor = getOwnerNotificationScheduledFor(
     company.timezone,
-    company.business_hours,
+    company.businessHours,
   );
 
   const { error: queueError } = await supabase.from("notification_queue").insert([

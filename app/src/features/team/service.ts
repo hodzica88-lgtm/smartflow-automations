@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 export type TeamMember = {
@@ -25,7 +27,7 @@ const mapTeamMember = (row: {
   createdAt: row.created_at,
 });
 
-export const getCompanyTeamMembers = async (companyId: string) => {
+const loadCompanyTeamMembers = async (companyId: string) => {
   const supabase = createSupabaseServiceRoleClient();
   const { data: company, error: companyError } = await supabase
     .from("companies")
@@ -56,10 +58,12 @@ export const getCompanyTeamMembers = async (companyId: string) => {
   return (data ?? []).map(mapTeamMember);
 };
 
-export const getActiveCompanyTeamMembers = async (companyId: string) => {
+export const getCompanyTeamMembers = cache(loadCompanyTeamMembers);
+
+export const getActiveCompanyTeamMembers = cache(async (companyId: string) => {
   const members = await getCompanyTeamMembers(companyId);
   return members.filter((member) => member.status === "active");
-};
+});
 
 export const getTeamMemberLabel = (
   member: Pick<TeamMember, "email" | "fullName"> | null | undefined,
