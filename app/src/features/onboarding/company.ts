@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -96,15 +95,9 @@ const loadUserCompanyState = async (
   };
 };
 
-const getSharedUserCompanyState = unstable_cache(
-  loadUserCompanyState,
-  ["user-company-state"],
-  { revalidate: 5 },
-);
-
 const getCachedUserCompanyState = cache(
   (userId: string, allowMember: boolean) =>
-    getSharedUserCompanyState(userId, allowMember),
+    loadUserCompanyState(userId, allowMember),
 );
 
 export const getUserCompanyState = async (
