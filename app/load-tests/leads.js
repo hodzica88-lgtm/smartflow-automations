@@ -33,24 +33,43 @@ const profiles = {
     iterations: 1,
     maxDuration: "10m",
   },
+  "2500": {
+    executor: "per-vu-iterations",
+    vus: 2500,
+    iterations: 1,
+    maxDuration: "15m",
+  },
+  "5000": {
+    executor: "per-vu-iterations",
+    vus: 5000,
+    iterations: 1,
+    maxDuration: "20m",
+  },
 };
 
 const profileName = __ENV.PROFILE || "smoke";
 const selectedProfile = profiles[profileName];
 
 if (!selectedProfile) {
-  fail(`Unknown PROFILE '${profileName}'. Use smoke, 100, 500, or 1000.`);
+  fail(`Unknown PROFILE '${profileName}'. Use smoke, 100, 500, 1000, 2500, or 5000.`);
 }
+
+const capacityOnly = (__ENV.CAPACITY_ONLY || "false").toLowerCase() === "true";
 
 export const options = {
   scenarios: {
     lead_intake: selectedProfile,
   },
-  thresholds: {
-    http_req_failed: ["rate<0.01"],
-    lead_success_rate: ["rate>0.99"],
-    http_req_duration: ["p(95)<1500", "p(99)<3000"],
-  },
+  thresholds: capacityOnly
+    ? {
+        http_req_failed: ["rate<0.01"],
+        lead_success_rate: ["rate>0.99"],
+      }
+    : {
+        http_req_failed: ["rate<0.01"],
+        lead_success_rate: ["rate>0.99"],
+        http_req_duration: ["p(95)<1500", "p(99)<3000"],
+      },
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   discardResponseBodies: false,
 };
