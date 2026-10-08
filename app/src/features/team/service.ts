@@ -11,14 +11,18 @@ export type TeamMember = {
   createdAt: string;
 };
 
-const mapTeamMember = (row: {
+type TeamMemberRow = {
   id: string;
   email: string;
   full_name: string | null;
   role: string;
   team_status: string;
   created_at: string;
-}): TeamMember => ({
+};
+
+const TEAM_MEMBER_SELECT = "id, email, full_name, role, team_status, created_at";
+
+const mapTeamMember = (row: TeamMemberRow): TeamMember => ({
   id: row.id,
   email: row.email,
   fullName: row.full_name,
@@ -29,12 +33,23 @@ const mapTeamMember = (row: {
 
 const loadCompanyTeamMembers = async (companyId: string) => {
   const supabase = createSupabaseServiceRoleClient();
-  const { data: company, error: companyError } = await supabase
-    .from("companies")
-    .select("owner_user_id")
-    .eq("id", companyId)
-    .is("deleted_at", null)
-    .maybeSingle();
+
+  const [companyResult, membersResult] = await Promise.all([
+    supabase
+      .from("companies")
+      .select("owner_user_id")
+      .eq("id", companyId)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    supabase
+      .from("users")
+      .select(TEAM_MEMBER_SELECT)
+      .eq("default_company_id", companyId)
+      .in("role", ["owner", "admin", "member"])
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const { data: company, error: companyError } = companyResult;
 
   if (companyError) {
     throw companyError;
@@ -44,18 +59,33 @@ const loadCompanyTeamMembers = async (companyId: string) => {
     return [];
   }
 
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, email, full_name, role, team_status, created_at")
-    .or(`default_company_id.eq.${companyId},id.eq.${company.owner_user_id}`)
-    .in("role", ["owner", "admin", "member"])
-    .order("created_at", { ascending: true });
+  const { data: companyMembers, error: membersError } = membersResult;
 
-  if (error) {
-    throw error;
+  if (membersError) {
+    throw membersError;
   }
 
-  return (data ?? []).map(mapTeamMember);
+  const rows = [...((companyMembers ?? []) as TeamMemberRow[])];
+
+  if (!rows.some((member) => member.id === company.owner_user_id)) {
+    const { data: owner, error: ownerError } = await supabase
+      .from("users")
+      .select(TEAM_MEMBER_SELECT)
+      .eq("id", company.owner_user_id)
+      .in("role", ["owner", "admin", "member"])
+      .maybeSingle();
+
+    if (ownerError) {
+      throw ownerError;
+    }
+
+    if (owner) {
+      rows.push(owner as TeamMemberRow);
+      rows.sort((left, right) => left.created_at.localeCompare(right.created_at));
+    }
+  }
+
+  return rows.map(mapTeamMember);
 };
 
 export const getCompanyTeamMembers = cache(loadCompanyTeamMembers);
