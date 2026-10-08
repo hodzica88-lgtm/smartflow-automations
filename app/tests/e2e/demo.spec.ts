@@ -1,11 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const closeTourIfVisible = async (page: Page) => {
-  const closeHelpButton = page.getByRole("button", { name: /^(Hilfe schließen|Close help)$/ });
-  if (await closeHelpButton.isVisible()) {
-    await closeHelpButton.click();
-  }
-  const closeButton = page.getByRole("button", { name: /Ueberspringen|Skip/i });
+  const closeButton = page.getByRole("button", { name: /Überspringen|Skip/i });
   if (await closeButton.isVisible()) {
     await closeButton.click();
   }
@@ -22,9 +18,10 @@ test.describe("DE demo", () => {
     await page.goto("/demo/dashboard");
 
     await expect(page).toHaveURL(/\/demo\/dashboard/);
+    await expect(page.getByRole("button", { name: /^(Website-Hilfe öffnen|Open website help)$/ })).toHaveCount(0);
     await expect(page.getByText("Demo-Modus - Änderungen werden nicht gespeichert.")).toBeVisible();
     await expect(page.getByText("Müller Bedachungen GmbH")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ueberspringen" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Überspringen" })).toBeVisible();
     await expect(page.getByText("Hier sehen Sie Kennzahlen und offene Aufgaben.")).toBeVisible();
   });
 

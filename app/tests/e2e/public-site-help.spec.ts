@@ -7,9 +7,13 @@ for (const market of ["de", "us"] as const) {
     for (const action of [
       { label: market === "de" ? "Anmelden" : "Sign in", pathname: "/login" },
       { label: market === "de" ? "Varnito testen" : "Try Varnito", pathname: "/registrierung" },
-      { label: market === "de" ? "Demo ansehen" : "View demo", pathname: "/demo/dashboard" },
+      { label: market === "de" ? "Demo ansehen" : "View demo", pathname: "/demo" },
     ]) {
       test(`opens ${action.pathname} using ${action.label}`, async ({ page }) => {
+        // Isolate the navigation handler from the DB-backed demo-entry guard.
+        if (action.pathname === "/demo") {
+          await page.route("**/demo", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "Demo entry" }));
+        }
         await page.goto("/");
         const origin = new URL(page.url()).origin;
         await page.getByRole("button", { name: action.label, exact: true }).click();

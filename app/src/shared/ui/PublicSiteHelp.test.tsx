@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import PublicSiteHelp from "./PublicSiteHelp";
 
 describe("PublicSiteHelp UX", () => {
+  it("leaves demo pages to their own guide", () => {
+    for (const path of ["/demo", "/demo/dashboard", "/demo/leads", "/demo/billing"]) {
+      expect(renderToStaticMarkup(<PublicSiteHelp market="us" path={path} />)).toBe("");
+    }
+  });
   it("uses the localized titles without mixed-language labels", () => {
     const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
     const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
