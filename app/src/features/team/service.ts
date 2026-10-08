@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -58,7 +59,15 @@ const loadCompanyTeamMembers = async (companyId: string) => {
   return (data ?? []).map(mapTeamMember);
 };
 
-export const getCompanyTeamMembers = cache(loadCompanyTeamMembers);
+const getSharedCompanyTeamMembers = unstable_cache(
+  loadCompanyTeamMembers,
+  ["company-team-members"],
+  { revalidate: 10 },
+);
+
+export const getCompanyTeamMembers = cache((companyId: string) =>
+  getSharedCompanyTeamMembers(companyId),
+);
 
 export const getActiveCompanyTeamMembers = cache(async (companyId: string) => {
   const members = await getCompanyTeamMembers(companyId);
