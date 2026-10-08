@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 type UserRole = "owner" | "admin" | "member";
@@ -14,9 +16,9 @@ type GetUserCompanyStateOptions = {
   allowMember?: boolean;
 };
 
-export const getUserCompanyState = async (
+const loadUserCompanyState = async (
   userId: string,
-  options: GetUserCompanyStateOptions = {},
+  allowMember: boolean,
 ): Promise<UserCompanyState> => {
   const supabase = createSupabaseServiceRoleClient();
   const { data: profile, error: profileError } = await supabase
@@ -47,7 +49,7 @@ export const getUserCompanyState = async (
     if (defaultCompany?.id) {
       const isOwner = role === "owner" && defaultCompany.owner_user_id === userId;
       const isActiveMember =
-        options.allowMember === true &&
+        allowMember &&
         teamStatus === "active" &&
         (role === "admin" || role === "member");
 
@@ -92,3 +94,14 @@ export const getUserCompanyState = async (
     isOwner: false,
   };
 };
+
+const getCachedUserCompanyState = cache(
+  (userId: string, allowMember: boolean) =>
+    loadUserCompanyState(userId, allowMember),
+);
+
+export const getUserCompanyState = async (
+  userId: string,
+  options: GetUserCompanyStateOptions = {},
+): Promise<UserCompanyState> =>
+  getCachedUserCompanyState(userId, options.allowMember === true);
