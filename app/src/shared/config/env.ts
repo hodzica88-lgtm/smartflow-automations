@@ -20,6 +20,7 @@ type ServerEnv = PublicEnv & {
   partnerMeteringEnabled: boolean;
   partnerProvisioningEnabled: boolean;
   partnerApiEnabled: boolean;
+  partnerProviderGatewayEnabled: boolean;
   vapidPrivateKey?: string;
   vapidSubject?: string;
   stripeSecretKey?: string;
@@ -148,6 +149,7 @@ export const loadServerEnv = (): ServerEnv => {
     partnerMeteringEnabled: getBooleanEnv("PARTNER_METERING_ENABLED", false),
     partnerProvisioningEnabled: getBooleanEnv("PARTNER_PROVISIONING_ENABLED", false),
     partnerApiEnabled: getBooleanEnv("PARTNER_API_ENABLED", false),
+    partnerProviderGatewayEnabled: getBooleanEnv("PARTNER_PROVIDER_GATEWAY_ENABLED", false),
     vapidPrivateKey: getOptionalEnv("VAPID_PRIVATE_KEY"),
     vapidSubject: getOptionalEnv("VAPID_SUBJECT"),
     stripeSecretKey: getOptionalEnv("STRIPE_SECRET_KEY"),
