@@ -157,9 +157,26 @@ const getSharedCompanyUnreadNotificationCount = unstable_cache(
   { revalidate: 3 },
 );
 
-export const getCompanyUnreadNotificationCount = cache((companyId: string) =>
-  getSharedCompanyUnreadNotificationCount(companyId),
-);
+const unreadCountInFlight = new Map<string, Promise<number>>();
+
+const loadCoalescedUnreadCount = (companyId: string) => {
+  const existing = unreadCountInFlight.get(companyId);
+
+  if (existing) {
+    return existing;
+  }
+
+  const pending = getSharedCompanyUnreadNotificationCount(companyId).finally(() => {
+    if (unreadCountInFlight.get(companyId) === pending) {
+      unreadCountInFlight.delete(companyId);
+    }
+  });
+
+  unreadCountInFlight.set(companyId, pending);
+  return pending;
+};
+
+export const getCompanyUnreadNotificationCount = cache(loadCoalescedUnreadCount);
 
 export const markNotificationRead = async (companyId: string, notificationId: string) => {
   const supabase = createSupabaseServiceRoleClient();

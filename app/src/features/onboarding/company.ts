@@ -95,10 +95,30 @@ const loadUserCompanyState = async (
   };
 };
 
-const getCachedUserCompanyState = cache(
-  (userId: string, allowMember: boolean) =>
-    loadUserCompanyState(userId, allowMember),
-);
+const userCompanyStateInFlight = new Map<string, Promise<UserCompanyState>>();
+
+const loadCoalescedUserCompanyState = (
+  userId: string,
+  allowMember: boolean,
+) => {
+  const key = `${userId}:${allowMember ? "member" : "owner"}`;
+  const existing = userCompanyStateInFlight.get(key);
+
+  if (existing) {
+    return existing;
+  }
+
+  const pending = loadUserCompanyState(userId, allowMember).finally(() => {
+    if (userCompanyStateInFlight.get(key) === pending) {
+      userCompanyStateInFlight.delete(key);
+    }
+  });
+
+  userCompanyStateInFlight.set(key, pending);
+  return pending;
+};
+
+const getCachedUserCompanyState = cache(loadCoalescedUserCompanyState);
 
 export const getUserCompanyState = async (
   userId: string,
