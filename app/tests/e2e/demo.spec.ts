@@ -1,6 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const closeTourIfVisible = async (page: Page) => {
+  const closeHelpButton = page.getByRole("button", { name: /^(Hilfe schließen|Close help)$/ });
+  if (await closeHelpButton.isVisible()) {
+    await closeHelpButton.click();
+  }
   const closeButton = page.getByRole("button", { name: /Ueberspringen|Skip/i });
   if (await closeButton.isVisible()) {
     await closeButton.click();
@@ -18,18 +22,18 @@ test.describe("DE demo", () => {
     await page.goto("/demo/dashboard");
 
     await expect(page).toHaveURL(/\/demo\/dashboard/);
-    await expect(page.getByText("Demo-Modus - Aenderungen werden nicht gespeichert.")).toBeVisible();
+    await expect(page.getByText("Demo-Modus - Änderungen werden nicht gespeichert.")).toBeVisible();
     await expect(page.getByText("Müller Bedachungen GmbH")).toBeVisible();
     await expect(page.getByRole("button", { name: "Ueberspringen" })).toBeVisible();
     await expect(page.getByText("Hier sehen Sie Kennzahlen und offene Aufgaben.")).toBeVisible();
   });
 
-  test("keeps CTA links on .de domain", async ({ page }) => {
+  test("keeps registration CTA on the current DE origin", async ({ page }) => {
     await page.goto("/demo/dashboard");
 
     await expect(page.getByRole("link", { name: "Jetzt kostenlos starten" }).first()).toHaveAttribute(
       "href",
-      /https:\/\/varnito\.de\/registrierung/,
+      /^\/registrierung\?source=direct&utm_source=direct$/,
     );
   });
 
@@ -71,12 +75,12 @@ test.describe("US demo", () => {
     await expect(page.getByText("See live KPIs and open workload.")).toBeVisible();
   });
 
-  test("keeps CTA links on .com domain", async ({ page }) => {
+  test("keeps registration CTA on the current US origin", async ({ page }) => {
     await page.goto("/demo/dashboard");
 
     await expect(page.getByRole("link", { name: "Start your 30-day free trial" }).first()).toHaveAttribute(
       "href",
-      /https:\/\/varnito\.com\/registrierung/,
+      /^\/registrierung\?source=direct&utm_source=direct$/,
     );
   });
 

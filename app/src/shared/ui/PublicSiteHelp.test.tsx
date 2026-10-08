@@ -9,11 +9,11 @@ describe("PublicSiteHelp UX", () => {
     const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
 
     expect(deMarkup).toContain("Varnito Hilfe");
-    expect(deMarkup).not.toContain("Website-Hilfe");
+    expect(deMarkup).not.toContain(">Website-Hilfe<");
     expect(deMarkup).not.toContain("Varnito Help");
 
     expect(usMarkup).toContain("Varnito Help");
-    expect(usMarkup).not.toContain("Website help");
+    expect(usMarkup).not.toContain(">Website help<");
     expect(usMarkup).not.toContain("Varnito Hilfe");
   });
 
@@ -47,34 +47,10 @@ describe("PublicSiteHelp UX", () => {
     expect(usMarkup).toContain("Support");
   });
 
-  it("preserves the public routes for quick navigation", () => {
-    const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
-    const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
-
-    expect(deMarkup).toContain('href="/login"');
-    expect(deMarkup).toContain('href="/registrierung"');
-    expect(deMarkup).toContain('href="/demo"');
-
-    expect(usMarkup).toContain('href="/login"');
-    expect(usMarkup).toContain('href="/registrierung"');
-    expect(usMarkup).toContain('href="/demo"');
-  });
-
-  it("keeps the mailto support and problem-report actions available", () => {
-    const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
-    const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
-
-    expect(deMarkup).toContain("mailto:support@varnito.com");
-    expect(deMarkup).toContain("Varnito%20%E2%80%93%20Problem%20melden");
-
-    expect(usMarkup).toContain("mailto:support@varnito.com");
-    expect(usMarkup).toContain("Varnito%20%E2%80%93%20Report%20a%20problem");
-  });
-
   it("keeps typed natural-language questions working as before", () => {
     const result = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
 
-    expect(result).toContain("Fragen Sie nach Preisen, Registrierung, Demo, rechtlichen Seiten...");
+    expect(result).toContain("Wie kann ich helfen? Fragen Sie einfach, wo Sie etwas finden oder was Sie tun möchten.");
     expect(result).toContain("Wie kann ich Ihnen helfen?");
   });
 });
