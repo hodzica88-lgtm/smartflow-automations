@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import type Stripe from "stripe";
 
-import { getCurrentUser } from "@/features/auth/current-user";
+import { getCurrentUserId } from "@/features/auth/current-user";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { createStripeServerClient } from "@/shared/lib/stripe/server";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
@@ -410,13 +410,13 @@ type RequireUserCompanyAccessOptions = {
 export const requireUserCompanyAccess = async (
   options: RequireUserCompanyAccessOptions,
 ): Promise<AppCompanyAccess> => {
-  const user = await getCurrentUser();
+  const userId = await getCurrentUserId();
 
-  if (!user) {
+  if (!userId) {
     redirect(`/login?next=${encodeURIComponent(options.nextPath)}`);
   }
 
-  const companyState = await getUserCompanyState(user.id, {
+  const companyState = await getUserCompanyState(userId, {
     allowMember: options.allowMember,
   });
 
@@ -432,7 +432,7 @@ export const requireUserCompanyAccess = async (
 
   return {
     companyId: companyState.companyId,
-    userId: user.id,
+    userId,
     isOwner: companyState.isOwner,
     billing,
   };
