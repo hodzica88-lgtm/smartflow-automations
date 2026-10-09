@@ -58,7 +58,7 @@ function getDashboard(account, page = 1) {
   // Clear any Set-Cookie state from the preceding account, including during setup.
   http.cookieJar().clear(fixture.base_url);
   return http.get(`${fixture.base_url}/dashboard/leads?page=${page}`, {
-    headers: { Cookie: account.cookie }, redirects: 0, timeout: "30s",
+    headers: { Cookie: account.cookie, "Accept-Encoding": "gzip" }, redirects: 0, timeout: "30s",
     tags: { name: "dashboard/leads" },
   });
 }
@@ -87,7 +87,7 @@ export function setup() {
     if (!validateDashboard(preflight, authenticated)) {
       fail("Populated dashboard preflight failed; sustained load was not started");
     }
-    if (accounts.length === 0) console.log(`Runner: ${__ENV.CAPACITY_RUNNER || "windows"}; HTTP: ${preflight.proto}; Content-Encoding: ${preflight.headers["Content-Encoding"] || "identity"}`);
+    if (accounts.length === 0) console.log(`Runner: ${__ENV.CAPACITY_RUNNER || "windows"}; Accept-Encoding: gzip; HTTP: ${preflight.proto}; Content-Encoding: ${preflight.headers["Content-Encoding"] || "identity"}`);
     accounts.push(authenticated);
     // Password-grant requests are paced; only one login per independent account.
     sleep(2.1);
@@ -117,6 +117,7 @@ export function handleSummary(data) {
   return { stdout: [
     "", "Varnito populated dashboard sustained test",
     `Runner: ${__ENV.CAPACITY_RUNNER || "windows"}`,
+    "Requested response encoding: gzip",
     "Fixture: 5 companies / 50 independent accounts / 2500 leads + history",
     `Load: 4 minutes, ramp to ${targetRate} dashboard requests/second`,
     `Successful requests: ${value("dashboard_ok", "count")}`,

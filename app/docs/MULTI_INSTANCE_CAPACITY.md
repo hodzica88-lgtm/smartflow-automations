@@ -40,9 +40,38 @@ receiving p95 6.89s, and average decoded HTML length 777941 characters.
 Sampled per-container CPU peaks were 109–128% and RAM peaks 181–411MiB.
 These non-simultaneous sampled CPU maxima do not establish host saturation;
 receiving includes streamed server generation, not only network transfer.
-The final cleanup output is again pending. The next comparison runs the same
-five-request/s workload from the VPS to distinguish runner/network effects
-from shared server behavior; it does not change the production app.
+The next run's empty-ledger guard confirmed no pending fixtures before starting
+the VPS comparison; no production app configuration was changed.
+
+The version-matched k6 2.2.0 VPS run at five requests/second passed all gates:
+899 valid responses, zero failures/foreign markers/dropped iterations, average
+580.05ms, p95 697.59ms, p99 800.00ms, maximum 1292.29ms. First-byte p95 was
+41.06ms, receiving p95 669.17ms, average decoded HTML again 777941 characters.
+All app containers stayed healthy with no restarts or OOM flags. Sampled app
+CPU peaks were 73–99%, RAM 155–247MiB; the client peaked at 36.81% CPU and
+621.90MiB RAM. The client/private copy were removed, and fixture cleanup
+confirmed five companies and 50 accounts removed.
+
+| Five-request/s populated run | Average | p95 | p99 | Dropped | Valid |
+| --- | --- | --- | --- | --- | --- |
+| Windows, no explicit Accept-Encoding | 1286.92ms | 6937.49ms | 12109.47ms | 0 | 899/899 |
+| VPS, no explicit Accept-Encoding | 580.05ms | 697.59ms | 800.00ms | 0 | 899/899 |
+
+The VPS p95 was approximately 90% lower, but colocated latency does not establish
+external-client performance or sustained capacity at 20 requests/second. The
+difference warrants investigating runner/network/transfer effects rather than
+concluding that server processing alone caused the Windows delay. Protocol and
+negotiated encodings were not included in the supplied preflight log.
+
+The VPS response-header metric reported 0% compressed responses. Neither prior
+script explicitly requested an encoding; this does not by itself prove the
+browser-facing server lacks compression. Subsequent dashboard requests explicitly
+send `Accept-Encoding: gzip`, including setup, and report that negotiation in
+the preflight and summary. The next comparison repeats the Windows five-request/s
+workload with this single request-header change and the same gates; it changes
+no app image or Caddy configuration. Compression support must be confirmed from
+the returned Content-Encoding; requesting gzip does not guarantee its use.
+The body-character metric remains decoded HTML length even for gzip responses.
 
 ## Start and verify replicas
 
