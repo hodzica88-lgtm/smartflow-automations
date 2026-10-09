@@ -57,6 +57,9 @@ jobs:
       - name: Capacity fixture safety checks
         run: node --test scripts/operations/capacity-fixture.check.mjs
 
+      - name: Capacity client safety checks
+        run: python3 scripts/operations/capacity-client.check.py
+
       - name: Verify actual Next.js action transport
         run: node scripts/operations/action-protocol.check.mjs
 

@@ -11,6 +11,7 @@ const duration = new Trend("dashboard_duration", true);
 const waiting = new Trend("dashboard_waiting", true);
 const receiving = new Trend("dashboard_receiving", true);
 const responseChars = new Trend("dashboard_response_chars");
+const compressed = new Rate("dashboard_compressed");
 const success = new Rate("dashboard_success");
 const okCount = new Counter("dashboard_ok");
 const failed = new Counter("dashboard_failed");
@@ -82,9 +83,11 @@ export function setup() {
       cookies.push(`sb-${ref}-auth-token${suffix}=${encoded.slice(offset, offset + 3180)}`);
     }
     const authenticated = { marker: account.marker, pages: account.pages, cookie: cookies.join("; ") };
-    if (!validateDashboard(getDashboard(authenticated), authenticated)) {
+    const preflight = getDashboard(authenticated);
+    if (!validateDashboard(preflight, authenticated)) {
       fail("Populated dashboard preflight failed; sustained load was not started");
     }
+    if (accounts.length === 0) console.log(`Runner: ${__ENV.CAPACITY_RUNNER || "windows"}; HTTP: ${preflight.proto}; Content-Encoding: ${preflight.headers["Content-Encoding"] || "identity"}`);
     accounts.push(authenticated);
     // Password-grant requests are paced; only one login per independent account.
     sleep(2.1);
@@ -103,6 +106,7 @@ export default function loadDashboard(accounts) {
   waiting.add(response.timings.waiting);
   receiving.add(response.timings.receiving);
   responseChars.add((response.body || "").length);
+  compressed.add(/gzip|br|deflate|zstd/i.test(response.headers["Content-Encoding"] || ""));
   const valid = validateDashboard(response, account);
   success.add(valid);
   (valid ? okCount : failed).add(1);
@@ -112,6 +116,7 @@ export function handleSummary(data) {
   const value = (name, field, fallback = 0) => data.metrics[name]?.values?.[field] ?? fallback;
   return { stdout: [
     "", "Varnito populated dashboard sustained test",
+    `Runner: ${__ENV.CAPACITY_RUNNER || "windows"}`,
     "Fixture: 5 companies / 50 independent accounts / 2500 leads + history",
     `Load: 4 minutes, ramp to ${targetRate} dashboard requests/second`,
     `Successful requests: ${value("dashboard_ok", "count")}`,
@@ -126,6 +131,7 @@ export function handleSummary(data) {
     `Time to first byte p95: ${value("dashboard_waiting", "p(95)", "n/a")} ms`,
     `Response receiving p95: ${value("dashboard_receiving", "p(95)", "n/a")} ms`,
     `HTML response characters average: ${value("dashboard_response_chars", "avg", "n/a")}`,
+    `Compressed responses: ${value("dashboard_compressed", "rate") * 100}%`,
     "Dashboard timings exclude setup and login. Acceptance: >99% valid responses, p95 <5s, p99 <10s, zero tenant mismatches or dropped iterations.",
     "",
   ].join("\n") };

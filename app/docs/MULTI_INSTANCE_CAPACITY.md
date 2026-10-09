@@ -33,6 +33,17 @@ These results do not prove where the delay occurred, and increasing the VU
 limit does not address the failed latency target. Cleanup started afterward;
 its final result must be confirmed separately.
 
+The monitored Windows run at five requests/second also missed latency gates:
+899 valid responses, no failures/foreign markers/dropped iterations, average
+1.29s, p95 6.94s, p99 12.11s, maximum 16.29s. First-byte p95 was 71.6ms,
+receiving p95 6.89s, and average decoded HTML length 777941 characters.
+Sampled per-container CPU peaks were 109–128% and RAM peaks 181–411MiB.
+These non-simultaneous sampled CPU maxima do not establish host saturation;
+receiving includes streamed server generation, not only network transfer.
+The final cleanup output is again pending. The next comparison runs the same
+five-request/s workload from the VPS to distinguish runner/network effects
+from shared server behavior; it does not change the production app.
+
 ## Start and verify replicas
 
 Run from `/opt/anfragepilot/app`:
@@ -128,6 +139,27 @@ or a database-timing trace. Dashboard-only time to first byte, response-receivin
 time and HTML character count are also reported. Receiving time may include
 waiting for streamed server content; it is not solely network transfer time.
 
+Add `-RunOnVps` to run through `https://varnito.com` from a temporary k6 Docker
+client on the same VPS, using host networking. The Windows k6 release version
+is parsed and the corresponding official `grafana/k6:<version>` image is pulled
+before creating fixtures; the actual immutable image ID is pinned for the run.
+The client uses the VPS user's UID, read-only fixture/script mounts, no added
+capabilities and no-new-privileges. It has a 2GiB memory cap and no CPU cap;
+client resource samples are reported separately as `k6-client`. This colocated
+runner shares VPS resources, so its CPU/memory use must be considered when
+interpreting the comparison. Runner OS/network routing also differ from Windows.
+
+Its private fixture copy and image/run metadata live under an owner-only
+`runtime/capacity-clients/<run-id>` directory. The temporary container auto-removes
+after a normal exit. Cleanup verifies the exact name, run label and pinned image
+before removing a remaining client, then deletes only its known private files.
+It stops the client before deleting database fixtures; failed stop confirmation
+retains fixture IDs and prints the two cleanup commands. A downloaded k6 image
+may stay cached. Closing the terminal still requires explicit recovery by run ID.
+The dashboard summary reports runner identity, compression rate and the first
+preflight response's HTTP protocol/content encoding. A VPS pass does not replace
+the failed external Windows latency result or prove remote-customer experience.
+
 Acceptance requires >99% valid responses, dashboard-only p95 <5s/p99 <10s,
 zero tenant-marker mismatches and zero dropped iterations. Login and setup are
 excluded from the dashboard trend. A nonzero k6 exit fails the batch even if
@@ -146,6 +178,7 @@ Local verification:
 
 ```bash
 node --test scripts/operations/capacity-fixture.check.mjs
+python3 scripts/operations/capacity-client.check.py
 node scripts/operations/action-protocol.check.mjs
 node_modules/.bin/eslint scripts/operations/capacity-fixture.mjs scripts/operations/capacity-fixture.check.mjs load-tests/dashboard-sustained.js
 ```
@@ -155,6 +188,8 @@ cross-container actions, partial creation failure, collision refusal, changed
 identity/company/member/profile refusal, and foreign data beyond a page boundary.
 An isolated real Next.js app reproduces the ignored URL-encoded POST and checks
 the multipart action's 303 success redirect without connecting to production.
+The client checks verify private file permissions, exact cleanup, mismatched
+container-label and unknown-file refusal, and pinned-image runner arguments.
 Live acceptance results must be recorded after the Windows/VPS run.
 
 ## Rollback and future deployments

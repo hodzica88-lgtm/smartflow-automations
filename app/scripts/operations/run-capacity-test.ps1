@@ -3,7 +3,8 @@ param(
     [ValidatePattern('^[0-9a-f]{40}$')]
     [string]$ToolCommit,
     [ValidateSet(5,10,20)]
-    [int]$RequestsPerSecond = 20
+    [int]$RequestsPerSecond = 20,
+    [switch]$RunOnVps
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,6 +20,9 @@ $savedCapacityRps = $env:CAPACITY_RPS
 $monitorJob = $null
 $seedAttempted = $false
 $testExit = $null
+$clientPrepared = $false
+$clientDirectory = "/opt/anfragepilot/runtime/capacity-clients/$runId"
+$clientName = "varnito-capacity-client-$runId"
 
 function Get-CapacityStatus {
     $command = "docker inspect --format '{{.Name}}|{{.State.Health.Status}}|{{.RestartCount}}|{{.State.OOMKilled}}|{{.Image}}' anfragepilot-app anfragepilot-app-2 anfragepilot-app-3 anfragepilot-app-4"
@@ -41,13 +45,14 @@ function Stop-CapacityMonitor {
     Remove-Job $monitorJob
     $samples = @($lines | ForEach-Object {
         $fields = ([string]$_).Split('|')
-        if ($fields.Count -eq 3 -and $fields[0] -match '^anfragepilot-app(-[234])?$') {
+        if ($fields.Count -eq 3 -and $fields[0] -match '^(anfragepilot-app(-[234])?|varnito-capacity-client-[0-9a-f-]+)$') {
             $memory = [regex]::Match($fields[2], '^\s*([\d.]+)\s*(B|KiB|MiB|GiB)')
             if ($memory.Success) {
                 $cpu = [double]::Parse($fields[1].Trim().TrimEnd('%'), [cultureinfo]::InvariantCulture)
                 $amount = [double]::Parse($memory.Groups[1].Value, [cultureinfo]::InvariantCulture)
                 $factor = @{ B = 1.0 / 1048576; KiB = 1.0 / 1024; MiB = 1.0; GiB = 1024.0 }
-                [pscustomobject]@{ Name = $fields[0]; CPU = $cpu; RAMMiB = $amount * $factor[$memory.Groups[2].Value] }
+                $sampleName = if ($fields[0].StartsWith('varnito-capacity-client-')) { 'k6-client' } else { $fields[0] }
+                [pscustomobject]@{ Name = $sampleName; CPU = $cpu; RAMMiB = $amount * $factor[$memory.Groups[2].Value] }
             }
         }
     })
@@ -73,6 +78,16 @@ $before = @(Get-CapacityStatus)
 New-Item -ItemType Directory -Path $localDirectory | Out-Null
 
 try {
+    if ($RunOnVps) {
+        $versionText = (& $k6 version) -join ''
+        if ($LASTEXITCODE -ne 0 -or $versionText -notmatch '^k6 v([0-9]+\.[0-9]+\.[0-9]+)\b') {
+            throw 'Die Windows-k6-Version konnte nicht eindeutig erkannt werden.'
+        }
+        $clientVersion = $Matches[1]
+        $clientPrepared = $true
+        & ssh $remote "python3 '$toolsApp/scripts/operations/capacity-client.py' prepare '$runId' --version '$clientVersion'"
+        if ($LASTEXITCODE -ne 0) { throw 'Versionsgleicher VPS-Testclient konnte nicht vorbereitet werden.' }
+    }
     & scp "${remote}:$toolsApp/load-tests/dashboard-sustained.js" $scriptPath
     if ($LASTEXITCODE -ne 0) { throw 'Testskript konnte nicht kopiert werden.' }
     Write-Host "=== Testfirmen einrichten; Test-ID: $runId ==="
@@ -87,12 +102,20 @@ try {
     Write-Host '=== Formular auf allen vier Instanzen geprueft. Starte Kontopruefung und Dauerlast. ==='
     $env:FIXTURE_PATH = $fixturePath
     $env:CAPACITY_RPS = [string]$RequestsPerSecond
-    $monitorCommand = "timeout 650s bash -c `"set -e; for sample in {1..90}; do docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}' anfragepilot-app anfragepilot-app-2 anfragepilot-app-3 anfragepilot-app-4; sleep 5; done`""
+    $clientSample = if ($RunOnVps) { "if docker inspect '$clientName' >/dev/null 2>&1; then docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}' '$clientName' 2>/dev/null || true; fi; " } else { '' }
+    $monitorCommand = "timeout 650s bash -c `"set -e; for sample in {1..90}; do docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}' anfragepilot-app anfragepilot-app-2 anfragepilot-app-3 anfragepilot-app-4; $clientSample sleep 5; done`""
     $monitorJob = Start-Job -ArgumentList $remote,$monitorCommand -ScriptBlock {
         param($monitorRemote,$command)
         ssh -o BatchMode=yes $monitorRemote $command
     }
-    & $k6 run $scriptPath
+    if ($RunOnVps) {
+        & scp $fixturePath "${remote}:$clientDirectory/fixture.json"
+        if ($LASTEXITCODE -ne 0) { throw 'Private Fixture konnte nicht zum VPS-Testclient kopiert werden.' }
+        & ssh $remote "chmod 600 '$clientDirectory/fixture.json'"
+        if ($LASTEXITCODE -ne 0) { throw 'Private Fixture-Dateirechte konnten nicht gesetzt werden.' }
+        & ssh $remote "python3 '$toolsApp/scripts/operations/capacity-client.py' run '$runId' --rps '$RequestsPerSecond'"
+    }
+    else { & $k6 run $scriptPath }
     $testExit = $LASTEXITCODE
     Write-Host "=== k6 beendet: Exitcode $testExit ==="
     $after = @(Get-CapacityStatus)
@@ -113,6 +136,15 @@ finally {
     catch { Write-Warning 'CPU-/RAM-Auswertung fehlgeschlagen; Testdaten werden trotzdem bereinigt.' }
     Remove-Variable fixtureText,fixture -ErrorAction SilentlyContinue
     if (Test-Path $fixturePath) { Remove-Item -LiteralPath $fixturePath }
+    if ($clientPrepared) {
+        & ssh $remote "python3 '$toolsApp/scripts/operations/capacity-client.py' cleanup '$runId'"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "VPS-Testclient muss zuerst beendet werden: Test-ID $runId"
+            Write-Host "ssh $remote `"python3 '$toolsApp/scripts/operations/capacity-client.py' cleanup '$runId'`""
+            Write-Host "ssh $remote `"VARNITO_APP_DIR=/opt/anfragepilot/app python3 '$toolsApp/scripts/operations/capacity-fixture.py' cleanup '$runId'`""
+            throw 'VPS-Testclient-Ende nicht bestaetigt; Fixture bleibt fuer die gezielte Bereinigung gespeichert.'
+        }
+    }
     if ($seedAttempted) {
         Write-Host '=== Neue Testdaten gezielt bereinigen ==='
         & ssh $remote "VARNITO_APP_DIR=/opt/anfragepilot/app python3 '$toolsApp/scripts/operations/capacity-fixture.py' cleanup '$runId'"
