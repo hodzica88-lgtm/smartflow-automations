@@ -40,6 +40,15 @@ try {
     module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.Preserve,
   } }).outputText;
   await writeFile(path.join(directory, "app", "ClientCards.js"), transpile(cards));
+  await writeFile(path.join(directory, "app", "ReadyCards.js"), `
+    'use client';
+    import {useEffect} from 'react';
+    import ClientCards from './ClientCards';
+    export default function ReadyCards(props) {
+      useEffect(() => {document.documentElement.dataset.leadRenderReady = 'true';}, []);
+      return <ClientCards {...props}/>;
+    }
+  `);
   await writeFile(path.join(directory, "app", "ServerCards.js"), transpile(cards.replace(/^"use client";\s*/, "")));
   await writeFile(path.join(directory, "app", "lead-presentation.js"), transpile(presentation));
   const teamMembers = Array.from({ length: 10 }, (_, index) => ({ id: `member-${index}`, label: `Team ${index}` }));
@@ -52,7 +61,7 @@ try {
   }));
   await writeFile(path.join(directory, "app", "[variant]", "page.js"), `
     import {redirect} from 'next/navigation';
-    import ClientCards from '../ClientCards';
+    import ClientCards from '../ReadyCards';
     import ServerCards from '../ServerCards';
     export const dynamic = 'force-dynamic';
     const leads = ${JSON.stringify(leads)};
@@ -132,7 +141,8 @@ try {
         hydrationErrors.push(message.text());
       }
     });
-    await page.goto(`${url}/optimized`, { waitUntil: "networkidle" });
+    await page.goto(`${url}/optimized`, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => document.documentElement.dataset.leadRenderReady === "true", { timeout: 15000 });
     assert.equal(await page.locator("article").count(), 50);
     const first = page.locator("article").first();
     await first.locator('select[name="status"]').selectOption("contacted");
