@@ -8,10 +8,15 @@ const fixture = JSON.parse(open(__ENV.FIXTURE_PATH));
 if (!fixture.run_id || fixture.accounts?.length !== 50 || fixture.markers?.length !== 5 ||
     fixture.base_url !== "https://varnito.com") fail("Unexpected capacity fixture");
 const duration = new Trend("dashboard_duration", true);
+const waiting = new Trend("dashboard_waiting", true);
+const receiving = new Trend("dashboard_receiving", true);
+const responseChars = new Trend("dashboard_response_chars");
 const success = new Rate("dashboard_success");
 const okCount = new Counter("dashboard_ok");
 const failed = new Counter("dashboard_failed");
 const isolationFailures = new Counter("tenant_mismatch");
+const targetRate = Number(__ENV.CAPACITY_RPS || "20");
+if (![5, 10, 20].includes(targetRate)) fail("CAPACITY_RPS must be 5, 10, or 20");
 
 export const options = {
   setupTimeout: "5m",
@@ -20,11 +25,11 @@ export const options = {
       executor: "ramping-arrival-rate", startRate: 1, timeUnit: "1s",
       preAllocatedVUs: 100, maxVUs: 200,
       stages: [
-        { duration: "30s", target: 5 },
-        { duration: "30s", target: 10 },
-        { duration: "30s", target: 20 },
-        { duration: "120s", target: 20 },
-        { duration: "30s", target: 5 },
+        { duration: "30s", target: Math.max(1, Math.round(targetRate / 4)) },
+        { duration: "30s", target: Math.round(targetRate / 2) },
+        { duration: "30s", target: targetRate },
+        { duration: "120s", target: targetRate },
+        { duration: "30s", target: Math.max(1, Math.round(targetRate / 4)) },
       ],
       gracefulStop: "30s",
     },
@@ -84,7 +89,7 @@ export function setup() {
     // Password-grant requests are paced; only one login per independent account.
     sleep(2.1);
   }
-  console.log("Preflight passed: 5 companies, 50 accounts, 2500 populated leads. Starting 4-minute load.");
+  console.log(`Preflight passed: 5 companies, 50 accounts, 2500 populated leads. Starting 4-minute load up to ${targetRate} requests/second.`);
   isolationFailures.add(0);
   return accounts;
 }
@@ -95,6 +100,9 @@ export default function loadDashboard(accounts) {
   const page = 1 + (Math.floor(iteration / accounts.length) % account.pages);
   const response = getDashboard(account, page);
   duration.add(response.timings.duration);
+  waiting.add(response.timings.waiting);
+  receiving.add(response.timings.receiving);
+  responseChars.add((response.body || "").length);
   const valid = validateDashboard(response, account);
   success.add(valid);
   (valid ? okCount : failed).add(1);
@@ -105,7 +113,7 @@ export function handleSummary(data) {
   return { stdout: [
     "", "Varnito populated dashboard sustained test",
     "Fixture: 5 companies / 50 independent accounts / 2500 leads + history",
-    "Load: 4 minutes, ramp to 20 dashboard requests/second",
+    `Load: 4 minutes, ramp to ${targetRate} dashboard requests/second`,
     `Successful requests: ${value("dashboard_ok", "count")}`,
     `Failed requests: ${value("dashboard_failed", "count")}`,
     `Success rate: ${value("dashboard_success", "rate") * 100}%`,
@@ -115,6 +123,9 @@ export function handleSummary(data) {
     `Dashboard p95: ${value("dashboard_duration", "p(95)", "n/a")} ms`,
     `Dashboard p99: ${value("dashboard_duration", "p(99)", "n/a")} ms`,
     `Dashboard maximum: ${value("dashboard_duration", "max", "n/a")} ms`,
+    `Time to first byte p95: ${value("dashboard_waiting", "p(95)", "n/a")} ms`,
+    `Response receiving p95: ${value("dashboard_receiving", "p(95)", "n/a")} ms`,
+    `HTML response characters average: ${value("dashboard_response_chars", "avg", "n/a")}`,
     "Dashboard timings exclude setup and login. Acceptance: >99% valid responses, p95 <5s, p99 <10s, zero tenant mismatches or dropped iterations.",
     "",
   ].join("\n") };

@@ -1,7 +1,9 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidatePattern('^[0-9a-f]{40}$')]
-    [string]$ToolCommit
+    [string]$ToolCommit,
+    [ValidateSet(5,10,20)]
+    [int]$RequestsPerSecond = 20
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,6 +15,8 @@ $fixturePath = Join-Path $localDirectory 'fixture.json'
 $scriptPath = Join-Path $localDirectory 'dashboard-sustained.js'
 $k6 = 'C:\Program Files\k6\k6.exe'
 $savedFixturePath = $env:FIXTURE_PATH
+$savedCapacityRps = $env:CAPACITY_RPS
+$monitorJob = $null
 $seedAttempted = $false
 $testExit = $null
 
@@ -28,6 +32,38 @@ function Get-CapacityStatus {
     if (@($rows | Where-Object { $_.Health -ne 'healthy' -or $_.OOM -ne 'false' }).Count -gt 0 -or
         @($rows.Image | Select-Object -Unique).Count -ne 1) { throw 'Vier gesunde Container mit identischem Image sind erforderlich.' }
     return $rows
+}
+
+function Stop-CapacityMonitor {
+    if (-not $monitorJob) { return }
+    if ($monitorJob.State -eq 'Running') { Stop-Job $monitorJob }
+    $lines = @(Receive-Job $monitorJob -ErrorAction Continue)
+    Remove-Job $monitorJob
+    $samples = @($lines | ForEach-Object {
+        $fields = ([string]$_).Split('|')
+        if ($fields.Count -eq 3 -and $fields[0] -match '^anfragepilot-app(-[234])?$') {
+            $memory = [regex]::Match($fields[2], '^\s*([\d.]+)\s*(B|KiB|MiB|GiB)')
+            if ($memory.Success) {
+                $cpu = [double]::Parse($fields[1].Trim().TrimEnd('%'), [cultureinfo]::InvariantCulture)
+                $amount = [double]::Parse($memory.Groups[1].Value, [cultureinfo]::InvariantCulture)
+                $factor = @{ B = 1.0 / 1048576; KiB = 1.0 / 1024; MiB = 1.0; GiB = 1024.0 }
+                [pscustomobject]@{ Name = $fields[0]; CPU = $cpu; RAMMiB = $amount * $factor[$memory.Groups[2].Value] }
+            }
+        }
+    })
+    Write-Host '=== Gemessene CPU-/RAM-Spitzen je Container (Stichproben waehrend Anmeldung und Last) ==='
+    if ($samples.Count -eq 0) {
+        Write-Warning 'Keine CPU-/RAM-Stichproben empfangen; eine Engpasszuordnung ist damit nicht moeglich.'
+        return
+    }
+    $samples | Group-Object Name | ForEach-Object {
+        [pscustomobject]@{
+            Name = $_.Name
+            Samples = $_.Count
+            MaxCPUPercent = [math]::Round(($_.Group.CPU | Measure-Object -Maximum).Maximum, 2)
+            MaxRAMMiB = [math]::Round(($_.Group.RAMMiB | Measure-Object -Maximum).Maximum, 2)
+        }
+    } | Format-Table -AutoSize
 }
 
 if (-not (Test-Path $k6)) { throw 'k6 wurde am erwarteten Windows-Pfad nicht gefunden.' }
@@ -50,6 +86,12 @@ try {
     Remove-Variable fixtureText,fixture -ErrorAction SilentlyContinue
     Write-Host '=== Formular auf allen vier Instanzen geprueft. Starte Kontopruefung und Dauerlast. ==='
     $env:FIXTURE_PATH = $fixturePath
+    $env:CAPACITY_RPS = [string]$RequestsPerSecond
+    $monitorCommand = "timeout 650s bash -c `"set -e; for sample in {1..90}; do docker stats --no-stream --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}' anfragepilot-app anfragepilot-app-2 anfragepilot-app-3 anfragepilot-app-4; sleep 5; done`""
+    $monitorJob = Start-Job -ArgumentList $remote,$monitorCommand -ScriptBlock {
+        param($monitorRemote,$command)
+        ssh -o BatchMode=yes $monitorRemote $command
+    }
     & $k6 run $scriptPath
     $testExit = $LASTEXITCODE
     Write-Host "=== k6 beendet: Exitcode $testExit ==="
@@ -66,6 +108,9 @@ try {
 }
 finally {
     $env:FIXTURE_PATH = $savedFixturePath
+    $env:CAPACITY_RPS = $savedCapacityRps
+    try { Stop-CapacityMonitor }
+    catch { Write-Warning 'CPU-/RAM-Auswertung fehlgeschlagen; Testdaten werden trotzdem bereinigt.' }
     Remove-Variable fixtureText,fixture -ErrorAction SilentlyContinue
     if (Test-Path $fixturePath) { Remove-Item -LiteralPath $fixturePath }
     if ($seedAttempted) {

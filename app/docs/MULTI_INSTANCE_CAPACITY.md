@@ -23,6 +23,16 @@ The 1000-VU p95 improved approximately 70%; the 5-second p95 target is still
 missed at 500 and 1000 VUs. `CAPACITY_ONLY=true` accepted success rate only.
 This does not establish enterprise readiness or independent-user capacity.
 
+The first completed populated four-minute test (5 companies, 50 independent
+accounts, 2500 leads) did **not** pass at a target of 20 requests/second:
+2593 valid responses, no request failures or foreign fixture markers, but
+946 dropped iterations, average 9.97s, p95 19.22s, p99 20.76s, maximum 23.87s.
+All four containers remained healthy with zero restarts and no OOM flag. k6
+reached its 200-VU limit; the target arrival schedule was not delivered in full.
+These results do not prove where the delay occurred, and increasing the VU
+limit does not address the failed latency target. Cleanup started afterward;
+its final result must be confirmed separately.
+
 ## Start and verify replicas
 
 Run from `/opt/anfragepilot/app`:
@@ -102,6 +112,21 @@ holds 20 for two minutes and ramps down. Requests rotate through all accounts
 and ten pages of leads per company. It checks expected company markers and
 aborts on a foreign fixture marker. This is a focused HTML dashboard check,
 not a complete tenant-isolation or browser-asset test.
+The runner also accepts `-RequestsPerSecond 5`, `10` or `20` (default 20), passed
+to the test as `CAPACITY_RPS`. The four-minute ramp/hold pattern and latency,
+success, isolation and dropped-iteration gates stay identical; a lower-rate pass
+must be reported at that rate rather than as a pass at 20. Invalid rates refuse
+to run. Start with five requests/second to establish measured lower-rate behavior.
+
+During setup and load, a temporary SSH job samples CPU and RAM for all four
+containers roughly every seven seconds. The runner reports each container's
+sample count and observed peaks before test-data cleanup, stopping the local job
+after k6 completes or fails. The remote sampling loop has a 650-second cap and
+exits on a broken output stream. Missing samples or monitoring failures warn
+without skipping fixture cleanup. These are sampled peaks, not continuous maxima
+or a database-timing trace. Dashboard-only time to first byte, response-receiving
+time and HTML character count are also reported. Receiving time may include
+waiting for streamed server content; it is not solely network transfer time.
 
 Acceptance requires >99% valid responses, dashboard-only p95 <5s/p99 <10s,
 zero tenant-marker mismatches and zero dropped iterations. Login and setup are
