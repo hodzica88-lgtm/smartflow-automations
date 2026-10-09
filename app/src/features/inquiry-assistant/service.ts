@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { getCompanyIntakeContext } from "@/features/companies/intake-context";
 import { createAppNotification } from "@/features/notifications/service";
-import { loadServerEnv } from "@/shared/config/env";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
 
@@ -114,6 +113,55 @@ const resolveAllowedType = (candidate: string | null | undefined, allowedInquiry
 
 const getNormalizedLeadEmail = (value: string) => value.trim().toLowerCase();
 
+export const MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH = 1500;
+export const MAX_PUBLIC_REQUEST_BODY_BYTES = 16384;
+export const PUBLIC_INQUIRY_ACTIONS = [
+  "track-start",
+  "track-fallback-form",
+  "suggest-type",
+  "submit",
+] as const;
+
+export const validatePublicInquiryActionRequest = ({
+  action,
+  companyId,
+  description,
+  payloadSizeBytes,
+}: {
+  action?: unknown;
+  companyId?: unknown;
+  description?: unknown;
+  payloadSizeBytes?: number;
+}): { ok: true; action: (typeof PUBLIC_INQUIRY_ACTIONS)[number]; companyId: string } | { ok: false; error: string; status: number } => {
+  const resolvedAction = typeof action === "string" ? action.trim() : "submit";
+  const safeCompanyId = typeof companyId === "string" ? companyId.trim() : "";
+  const safeDescription = typeof description === "string" ? description.trim() : "";
+
+  if (typeof payloadSizeBytes === "number" && payloadSizeBytes > MAX_PUBLIC_REQUEST_BODY_BYTES) {
+    return { ok: false, error: "Anfrage zu groß.", status: 413 };
+  }
+
+  if (!PUBLIC_INQUIRY_ACTIONS.includes(resolvedAction as (typeof PUBLIC_INQUIRY_ACTIONS)[number])) {
+    return { ok: false, error: "Unbekannte Anfrage.", status: 400 };
+  }
+
+  if (!safeCompanyId || safeCompanyId.length > 128 || !/^[A-Za-z0-9_-]+$/.test(safeCompanyId)) {
+    return { ok: false, error: "Ungültige Firma.", status: 400 };
+  }
+
+  if (resolvedAction === "suggest-type") {
+    if (!safeDescription) {
+      return { ok: false, error: "Bitte beschreiben Sie Ihr Anliegen.", status: 400 };
+    }
+
+    if (safeDescription.length > MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH) {
+      return { ok: false, error: "Ihre Beschreibung ist zu lang.", status: 413 };
+    }
+  }
+
+  return { ok: true, action: resolvedAction as (typeof PUBLIC_INQUIRY_ACTIONS)[number], companyId: safeCompanyId };
+};
+
 export const getContactDetailsQuestion = (market?: MarketCode | "unknown") => {
   if (market === "us") {
     return "Thanks. Please provide your contact details so the business can reach you.";
@@ -205,6 +253,10 @@ export const validatePublicInquiryInput = ({
     return { ok: false, error: "Ungültige Firma." };
   }
 
+  if (description && description.trim().length > MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH) {
+    return { ok: false, error: "Ihre Beschreibung ist zu lang." };
+  }
+
   if (website && website.trim().length > 0) {
     return { ok: false, error: "Anfrage konnte nicht gesendet werden." };
   }
@@ -281,35 +333,56 @@ const getClientIpForRateLimit = async () => {
   return null;
 };
 
-const maybeRecordRateLimit = async ({
+type InquiryRateLimitBucket = "public_ai_chat_preview" | "public_ai_chat_submit" | "public_form";
+
+export const maybeRecordRateLimit = async ({
   supabase,
   companyId,
   clientIp,
-  source,
+  bucket,
 }: {
   supabase: ReturnType<typeof createSupabaseServiceRoleClient>;
   companyId: string;
   clientIp: string;
-  source: InquirySource;
+  bucket: InquiryRateLimitBucket;
 }) => {
-  const rpcName =
-    source === "public_ai_chat"
-      ? "check_and_record_inquiry_chat_rate_limit"
-      : "check_and_record_inquiry_rate_limit";
+  const isPreviewBucket = bucket === "public_ai_chat_preview";
+  const rpcName = isPreviewBucket
+    ? "check_and_record_inquiry_chat_rate_limit"
+    : "check_and_record_inquiry_rate_limit";
 
   const { data, error } = await supabase.rpc(rpcName, {
     p_company_id: companyId,
     p_client_ip: clientIp,
-    p_max_submissions: source === "public_ai_chat" ? 15 : 5,
-    p_window_minutes: source === "public_ai_chat" ? 30 : 10,
+    p_max_submissions: isPreviewBucket ? 15 : 5,
+    p_window_minutes: isPreviewBucket ? 30 : 10,
   });
 
-  if (error) {
-    return { allowed: true } as const;
+  if (error || !Array.isArray(data) || data.length === 0) {
+    return { allowed: false } as const;
   }
 
-  const allowed = Array.isArray(data) && data.length > 0 && Boolean((data[0] as { allowed?: unknown }).allowed);
+  const allowed = Boolean((data[0] as { allowed?: unknown }).allowed);
   return { allowed } as const;
+};
+
+export const enforcePublicSuggestionRateLimit = async ({
+  companyId,
+}: {
+  companyId: string;
+}) => {
+  const clientIp = await getClientIpForRateLimit();
+  if (!clientIp) {
+    return { allowed: false } as const;
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  return maybeRecordRateLimit({
+    supabase,
+    companyId,
+    clientIp,
+    bucket: "public_ai_chat_preview",
+  });
 };
 
 const getDeterministicSuggestion = ({
@@ -360,35 +433,6 @@ const getDeterministicSuggestion = ({
   }
 
   return allowedInquiryTypes[0] ?? FALLBACK_INQUIRY_TYPE;
-};
-
-const resolveAiInquiryType = (
-  candidate: unknown,
-  allowedInquiryTypes: string[],
-): string | null => {
-  if (typeof candidate !== "string") {
-    return null;
-  }
-
-  const candidateValue = normalizeInquiryTypeName(candidate);
-  if (!candidateValue) {
-    return null;
-  }
-
-  const resolved = resolveAllowedType(candidateValue, allowedInquiryTypes);
-  if (resolved) {
-    return resolved;
-  }
-
-  const lower = candidateValue.toLowerCase();
-  for (const allowedType of allowedInquiryTypes) {
-    const normalizedAllowedType = normalizeInquiryTypeName(allowedType).toLowerCase();
-    if (normalizedAllowedType.includes(lower) || lower.includes(normalizedAllowedType)) {
-      return allowedType;
-    }
-  }
-
-  return null;
 };
 
 const matchesInquiryPattern = (text: string, patterns: RegExp[]) =>
@@ -503,87 +547,6 @@ export const inferInquiryTypeSuggestion = async ({
     description,
     allowedInquiryTypes: safeAllowedInquiryTypes,
   });
-
-  const openAiApiKey = loadServerEnv().openAiApiKey;
-  const openAiModel = process.env.OPENAI_MODEL;
-
-  if (openAiApiKey && openAiModel && description.trim().length > 0) {
-    try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openAiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: openAiModel,
-          temperature: 0.2,
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a safe intake assistant for a service business. You may only suggest an inquiry type from the provided allowedInquiryTypes list. Never invent services, prices, promises, or commitments. Output JSON with keys: suggestedInquiryType, summary, question, confidence.",
-            },
-            {
-              role: "user",
-              content: JSON.stringify({
-                market: market ?? "de",
-                description,
-                allowedInquiryTypes: safeAllowedInquiryTypes,
-              }),
-            },
-          ],
-        }),
-      });
-
-      if (response.ok) {
-        const payload = (await response.json()) as {
-          choices?: Array<{ message?: { content?: string } }>;
-        };
-        const content = payload.choices?.[0]?.message?.content;
-        if (content) {
-          const parsed = JSON.parse(content) as {
-            suggestedInquiryType?: unknown;
-            summary?: unknown;
-            question?: unknown;
-            confidence?: unknown;
-          };
-
-          const suggestedInquiryType = resolveAiInquiryType(parsed.suggestedInquiryType, safeAllowedInquiryTypes) ?? fallbackType;
-          const summary =
-            typeof parsed.summary === "string" && parsed.summary.trim().length > 0
-              ? parsed.summary.trim()
-              : `${description.trim().slice(0, 120)}${description.length > 120 ? "…" : ""}`;
-          const contextualQuestion = buildContextualFollowUpQuestion({
-            description,
-            market,
-          });
-          const question = requiresTypeSelection
-            ? market === "us"
-              ? "What type of request would you like to send?"
-              : "Welche Art von Anfrage möchten Sie senden?"
-            : contextualQuestion;
-          const confidence = typeof parsed.confidence === "number" ? Math.max(0.2, Math.min(0.99, parsed.confidence)) : 0.8;
-
-          const options = requiresTypeSelection ? safeAllowedInquiryTypes.slice(0, 4) : [];
-
-          return {
-            suggestedInquiryType,
-            summary,
-            question,
-            options,
-            method: "ai",
-            confidence,
-            requiresTypeSelection,
-          };
-        }
-      }
-    } catch {
-      // Safe fallback below.
-    }
-  }
-
   const summary = `${description.trim().slice(0, 120)}${description.length > 120 ? "…" : ""}`;
   const question = requiresTypeSelection
     ? market === "us"
@@ -655,7 +618,7 @@ export const createPublicInquiryLead = async ({
     supabase,
     companyId,
     clientIp,
-    source,
+    bucket: source === "public_form" ? "public_form" : "public_ai_chat_submit",
   });
 
   if (!rateLimit.allowed) {

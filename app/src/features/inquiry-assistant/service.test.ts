@@ -1,10 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
+  enforcePublicSuggestionRateLimit,
   getContactDetailsFields,
   getContactDetailsQuestion,
   inferInquiryTypeSuggestion,
+  MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH,
+  maybeRecordRateLimit,
   validateContactDetailsInput,
+  validatePublicInquiryActionRequest,
   validatePublicInquiryInput,
 } from "@/features/inquiry-assistant/service";
 import {
@@ -16,7 +20,125 @@ import {
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
 
+vi.mock("next/headers", () => ({
+  headers: vi.fn(async () => new Headers({ "x-forwarded-for": "203.0.113.7" })),
+}));
+
+vi.mock("@/shared/lib/supabase/server", () => ({
+  createSupabaseServiceRoleClient: () => ({
+    rpc: vi.fn(async () => ({ error: new Error("db rate limit unavailable"), data: null })),
+  }),
+}));
+
 describe("inquiry assistant service", () => {
+  it("fails closed when the rate-limit backend is unavailable", async () => {
+    const result = await enforcePublicSuggestionRateLimit({ companyId: "company-123" });
+    expect(result.allowed).toBe(false);
+  });
+
+  it("allows preview requests when the backend says yes and blocks them when it says no", async () => {
+    const allowedSupabase = {
+      rpc: vi.fn(async () => ({ data: [{ allowed: true }], error: null })),
+    };
+    const blockedSupabase = {
+      rpc: vi.fn(async () => ({ data: [{ allowed: false }], error: null })),
+    };
+
+    await expect(
+      maybeRecordRateLimit({
+        supabase: allowedSupabase as unknown as Parameters<typeof maybeRecordRateLimit>[0]["supabase"],
+        companyId: "company-123",
+        clientIp: "203.0.113.7",
+        bucket: "public_ai_chat_preview",
+      }),
+    ).resolves.toEqual({ allowed: true });
+
+    await expect(
+      maybeRecordRateLimit({
+        supabase: blockedSupabase as unknown as Parameters<typeof maybeRecordRateLimit>[0]["supabase"],
+        companyId: "company-123",
+        clientIp: "203.0.113.7",
+        bucket: "public_ai_chat_preview",
+      }),
+    ).resolves.toEqual({ allowed: false });
+  });
+
+  it("uses a separate rate-limit bucket for preview suggestions and final submissions", async () => {
+    const previewSupabase = {
+      rpc: vi.fn(async () => ({ data: [{ allowed: true }], error: null })),
+    };
+    const submitSupabase = {
+      rpc: vi.fn(async () => ({ data: [{ allowed: true }], error: null })),
+    };
+
+    await maybeRecordRateLimit({
+      supabase: previewSupabase as unknown as Parameters<typeof maybeRecordRateLimit>[0]["supabase"],
+      companyId: "company-123",
+      clientIp: "203.0.113.7",
+      bucket: "public_ai_chat_preview",
+    });
+
+    await maybeRecordRateLimit({
+      supabase: submitSupabase as unknown as Parameters<typeof maybeRecordRateLimit>[0]["supabase"],
+      companyId: "company-123",
+      clientIp: "203.0.113.7",
+      bucket: "public_ai_chat_submit",
+    });
+
+    expect(previewSupabase.rpc).toHaveBeenCalledWith(
+      "check_and_record_inquiry_chat_rate_limit",
+      expect.objectContaining({
+        p_company_id: "company-123",
+        p_client_ip: "203.0.113.7",
+        p_max_submissions: 15,
+        p_window_minutes: 30,
+      }),
+    );
+
+    expect(submitSupabase.rpc).toHaveBeenCalledWith(
+      "check_and_record_inquiry_rate_limit",
+      expect.objectContaining({
+        p_company_id: "company-123",
+        p_client_ip: "203.0.113.7",
+        p_max_submissions: 5,
+        p_window_minutes: 10,
+      }),
+    );
+  });
+
+  it("rejects oversized descriptions and invalid route payloads before the AI call", () => {
+    const oversizedDescription = validatePublicInquiryActionRequest({
+      action: "suggest-type",
+      companyId: "company-123",
+      description: "x".repeat(MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH + 1),
+    });
+    const invalidAction = validatePublicInquiryActionRequest({
+      action: "pwned",
+      companyId: "company-123",
+      description: "Heizung kaputt",
+    });
+    const invalidCompany = validatePublicInquiryActionRequest({
+      action: "suggest-type",
+      companyId: "bad company",
+      description: "Heizung kaputt",
+    });
+
+    expect(oversizedDescription.ok).toBe(false);
+    if (!oversizedDescription.ok) {
+      expect(oversizedDescription.status).toBe(413);
+    }
+
+    expect(invalidAction.ok).toBe(false);
+    if (!invalidAction.ok) {
+      expect(invalidAction.status).toBe(400);
+    }
+
+    expect(invalidCompany.ok).toBe(false);
+    if (!invalidCompany.ok) {
+      expect(invalidCompany.status).toBe(400);
+    }
+  });
+
   it("infers the right German inquiry type from a heating problem", async () => {
     const result = await inferInquiryTypeSuggestion({
       description: "Meine Heizung funktioniert seit heute Morgen nicht mehr.",
@@ -187,6 +309,39 @@ describe("inquiry assistant service", () => {
     });
 
     expect(result.ok).toBe(true);
+  });
+
+  it("never calls the OpenAI API for the public inquiry classification and works without a key", async () => {
+    const fetchSpy = vi.spyOn(global, "fetch");
+    const previousApiKey = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+
+    const result = await inferInquiryTypeSuggestion({
+      description: "Meine Heizung funktioniert nicht.",
+      allowedInquiryTypes: ["Heizungsreparatur", "Allgemeine Anfrage"],
+      market: "de",
+    });
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result.method).toBe("deterministic");
+    expect(result.suggestedInquiryType).toBe("Heizungsreparatur");
+
+    fetchSpy.mockRestore();
+    if (previousApiKey) {
+      process.env.OPENAI_API_KEY = previousApiKey;
+    }
+  });
+
+  it("keeps the deterministic selection within the allowed inquiry-type list when no AI route exists", async () => {
+    const result = await inferInquiryTypeSuggestion({
+      description: "Meine Heizung funktioniert nicht.",
+      allowedInquiryTypes: ["Heizungsreparatur", "Allgemeine Anfrage"],
+      market: "de",
+    });
+
+    expect(result.suggestedInquiryType).toBe("Heizungsreparatur");
+    expect(result.requiresTypeSelection).toBe(false);
+    expect(result.options).toEqual([]);
   });
 
   it("never stores arbitrary free text as inquiryType", () => {
