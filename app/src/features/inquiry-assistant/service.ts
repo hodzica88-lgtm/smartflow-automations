@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 
 import { trackAnalyticsEvent } from "@/features/analytics/events";
-import { getCompanyIntakeContext } from "@/features/companies/intake-context";
 import { createAppNotification } from "@/features/notifications/service";
 import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 import { getOwnerNotificationScheduledFor } from "@/shared/utils/businessHours";
@@ -597,18 +596,18 @@ export const createPublicInquiryLead = async ({
     return { ok: false as const, error: validation.error };
   }
 
-  let company;
-  try {
-    company = await getCompanyIntakeContext(companyId);
-  } catch {
-    return { ok: false as const, error: "Firma nicht gefunden." };
-  }
-
-  if (!company || company.deletedAt) {
-    return { ok: false as const, error: "Firma nicht gefunden." };
-  }
-
   const supabase = createSupabaseServiceRoleClient();
+
+  const { data: company, error: companyError } = await supabase
+    .from("companies")
+    .select("id, deleted_at, timezone, business_hours")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  if (companyError || !company || company.deleted_at) {
+    return { ok: false as const, error: "Firma nicht gefunden." };
+  }
+
   const clientIp = await getClientIpForRateLimit();
   if (!clientIp) {
     return { ok: false as const, error: "Anfrage konnte nicht gesendet werden." };
@@ -632,55 +631,33 @@ export const createPublicInquiryLead = async ({
   }
 
   const normalized = validation.normalized;
-  const { data: leadData, error: insertError } = await supabase
-    .from("leads")
-    .insert({
-      company_id: companyId,
-      first_name: normalized.firstName,
-      last_name: normalized.lastName,
-      address: normalized.address,
-      phone: normalized.phone,
-      email: normalized.email,
-      inquiry_type: normalized.inquiryType,
-      source,
-      status: "new",
-      notes: normalized.description,
-    })
-    .select("id")
-    .single();
-
-  if (insertError || !leadData?.id) {
-    return { ok: false as const, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." };
-  }
-
   const customerConfirmationScheduledFor = new Date().toISOString();
   const ownerNewLeadScheduledFor = getOwnerNotificationScheduledFor(
     company.timezone,
-    company.businessHours,
+    company.business_hours,
   );
 
-  const { error: queueError } = await supabase.from("notification_queue").insert([
+  const { data: leadData, error: insertError } = await supabase.rpc(
+    "create_public_inquiry_lead_with_notifications",
     {
-      company_id: companyId,
-      lead_id: leadData.id,
-      notification_type: "owner_new_lead",
-      status: "pending",
-      scheduled_for: ownerNewLeadScheduledFor,
+      p_company_id: companyId,
+      p_first_name: normalized.firstName,
+      p_last_name: normalized.lastName,
+      p_address: normalized.address,
+      p_phone: normalized.phone,
+      p_email: normalized.email,
+      p_inquiry_type: normalized.inquiryType,
+      p_source: source,
+      p_notes: normalized.description,
+      p_customer_confirmation_scheduled_for: customerConfirmationScheduledFor,
+      p_owner_new_lead_scheduled_for: ownerNewLeadScheduledFor,
     },
-    {
-      company_id: companyId,
-      lead_id: leadData.id,
-      notification_type: "customer_confirmation",
-      status: "pending",
-      scheduled_for: customerConfirmationScheduledFor,
-    },
-  ]);
+  );
 
-  if (queueError) {
-    return {
-      ok: false as const,
-      error: "Beim Planen der Benachrichtigungen ist ein Fehler aufgetreten.",
-    };
+  const createdLeadId = Array.isArray(leadData) ? leadData[0]?.lead_id : leadData?.lead_id;
+
+  if (insertError || !createdLeadId) {
+    return { ok: false as const, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." };
   }
 
   await createAppNotification({
@@ -691,9 +668,9 @@ export const createPublicInquiryLead = async ({
       source === "public_ai_chat"
         ? "Eine neue Anfrage wurde über den AI-Assistenten erfasst."
         : "Eine neue Anfrage wurde über das Formular erfasst.",
-    dedupeKey: `new_inquiry:${leadData.id}`,
+    dedupeKey: `new_inquiry:${createdLeadId}`,
     metadata: {
-      leadId: leadData.id,
+      leadId: createdLeadId,
       source,
     },
   });
@@ -732,7 +709,7 @@ export const createPublicInquiryLead = async ({
 
   return {
     ok: true as const,
-    leadId: leadData.id,
+    leadId: createdLeadId,
     source,
   };
 };
