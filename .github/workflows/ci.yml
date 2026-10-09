@@ -54,5 +54,31 @@ jobs:
       - name: Unit and integration tests
         run: pnpm test
 
+      - name: Capacity fixture safety checks
+        run: node --test scripts/operations/capacity-fixture.check.mjs
+
+      - name: Capacity client safety checks
+        run: python3 scripts/operations/capacity-client.check.py
+
+      - name: Verify actual Next.js action transport
+        run: node scripts/operations/action-protocol.check.mjs
+
+      - name: Verify compact lead rendering and native actions
+        run: node scripts/operations/lead-render.check.mjs
+
+      - name: Parse Windows capacity runner
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD 'scripts/operations/run-capacity-test.ps1'),
+            [ref]$tokens, [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List
+            throw 'Capacity runner has PowerShell syntax errors.'
+          }
+
       - name: Build
         run: pnpm build
