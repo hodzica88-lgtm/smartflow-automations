@@ -21,10 +21,19 @@ import {
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
 
+type RpcResult = {
+  error: Error | null;
+  data: unknown | null;
+};
+
 const { mockSupabaseClient, mockCreateAppNotification, mockTrackAnalyticsEvent } = vi.hoisted(() => ({
   mockSupabaseClient: {
     from: vi.fn(),
-    rpc: vi.fn(async (_name: string, _args?: unknown): Promise<any> => ({ error: new Error("db rate limit unavailable"), data: null })),
+    rpc: vi.fn(async (name: string, args?: Record<string, unknown>): Promise<RpcResult> => {
+      void name;
+      void args;
+      return { error: new Error("db rate limit unavailable"), data: null };
+    }),
   },
   mockCreateAppNotification: vi.fn(),
   mockTrackAnalyticsEvent: vi.fn(),
