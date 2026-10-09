@@ -80,7 +80,7 @@ New-Item -ItemType Directory -Path $localDirectory | Out-Null
 try {
     if ($RunOnVps) {
         $versionText = (& $k6 version) -join ''
-        if ($LASTEXITCODE -ne 0 -or $versionText -notmatch '^k6 v([0-9]+\.[0-9]+\.[0-9]+)\b') {
+        if ($LASTEXITCODE -ne 0 -or $versionText -notmatch '^k6(?:\.exe)? v([0-9]+\.[0-9]+\.[0-9]+)\b') {
             throw 'Die Windows-k6-Version konnte nicht eindeutig erkannt werden.'
         }
         $clientVersion = $Matches[1]
