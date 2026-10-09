@@ -63,6 +63,9 @@ jobs:
       - name: Verify actual Next.js action transport
         run: node scripts/operations/action-protocol.check.mjs
 
+      - name: Verify compact lead rendering and native actions
+        run: node scripts/operations/lead-render.check.mjs
+
       - name: Parse Windows capacity runner
         shell: pwsh
         run: |

@@ -73,6 +73,49 @@ no app image or Caddy configuration. Compression support must be confirmed from
 the returned Content-Encoding; requesting gzip does not guarantee its use.
 The body-character metric remains decoded HTML length even for gzip responses.
 
+The external Windows gzip run at five requests/second passed: 900 valid
+responses, no errors/foreign markers/dropped iterations, average 579.04ms,
+p95 680.36ms, p99 754.30ms, maximum 946.90ms, 100% gzip responses. First-byte
+p95 was 59.97ms and receiving p95 630.33ms. All containers stayed healthy with
+zero restarts/OOM; cleanup confirmed five companies and 50 accounts removed.
+The observed p95 reduction of approximately 90% supports compression/transfer
+effects as a major factor in the previous lower-rate external latency.
+
+The later Windows gzip run at 20 requests/second did not pass: 2857 valid
+responses, no HTTP failures or foreign fixture markers, 682 dropped iterations,
+average 8888.45ms, p95 14841.49ms, p99 15548.95ms, maximum 16101.53ms. Responses
+were 100% gzip over HTTP/2, first-byte p95 960.77ms, receiving p95 14505.03ms,
+decoded HTML average 777933 characters. Sampled individual CPU peaks were
+199–319%, RAM 878–1139MiB; peaks were not necessarily simultaneous. Containers
+stayed healthy with zero restarts/OOM and cleanup confirmed 5/50 removal. k6
+reached 200 VUs. Raising that cap would not fix the failed latency gates.
+The sequential batch reached this step only after the 10-request/s step
+succeeded; the numerical 10-request/s summary has not yet been supplied.
+
+## Prepared lead-rendering improvement
+
+The candidate keeps 50 leads per page, the same cards, fields, outcomes,
+assignment choices, full displayed history, filtering and existing tenant checks.
+`LeadCards` renders behind one client boundary, carrying only the displayed
+card data and one shared assignee list instead of serializing the entire repeated
+card/form element tree into the RSC payload. It still prerenders the initial
+HTML and passes the existing authenticated Server Action as a prop; native
+multipart submission works before JavaScript. The component imports presentation
+constants only, never server clients or credentials. Dates and history labels
+are assembled on the server to preserve timezone and keep extra user/profile
+fields out of the client props. The formatter is reused within the process.
+
+An isolated production Next.js check with 50 synthetic cards compared the
+same presentation as a server tree and as the new client boundary: 610012 vs
+257362 response characters, mean 48ms vs 15ms across 12 interleaved samples.
+The 50 initial article/form HTML fragments were identical, synthetic script text
+was escaped, and native multipart status/assignee changes returned the expected
+303 redirect. This isolates transport/render behavior without a database; it
+does not predict the live 20-request/s result. The client boundary adds browser
+JavaScript/hydration, and production acceptance must be repeated after all four
+instances are deployed from the same new immutable image. No database query,
+authorization, update logic, caching or schema change is part of this patch.
+
 ## Start and verify replicas
 
 Run from `/opt/anfragepilot/app`:
@@ -209,6 +252,7 @@ Local verification:
 node --test scripts/operations/capacity-fixture.check.mjs
 python3 scripts/operations/capacity-client.check.py
 node scripts/operations/action-protocol.check.mjs
+node scripts/operations/lead-render.check.mjs
 node_modules/.bin/eslint scripts/operations/capacity-fixture.mjs scripts/operations/capacity-fixture.check.mjs load-tests/dashboard-sustained.js
 ```
 
