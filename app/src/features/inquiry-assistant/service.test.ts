@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  createPublicInquiryLead,
   enforcePublicSuggestionRateLimit,
   getContactDetailsFields,
   getContactDetailsQuestion,
@@ -20,17 +21,157 @@ import {
   resolveInquiryTypeOption,
 } from "@/features/inquiry-assistant/summary";
 
+const { mockSupabaseClient, mockCreateAppNotification, mockTrackAnalyticsEvent } = vi.hoisted(() => ({
+  mockSupabaseClient: {
+    from: vi.fn(),
+    rpc: vi.fn(async (_name: string, _args?: unknown): Promise<any> => ({ error: new Error("db rate limit unavailable"), data: null })),
+  },
+  mockCreateAppNotification: vi.fn(),
+  mockTrackAnalyticsEvent: vi.fn(),
+}));
+
 vi.mock("next/headers", () => ({
   headers: vi.fn(async () => new Headers({ "x-forwarded-for": "203.0.113.7" })),
 }));
 
+vi.mock("@/features/analytics/events", () => ({
+  trackAnalyticsEvent: mockTrackAnalyticsEvent,
+}));
+
+vi.mock("@/features/notifications/service", () => ({
+  createAppNotification: mockCreateAppNotification,
+}));
+
 vi.mock("@/shared/lib/supabase/server", () => ({
-  createSupabaseServiceRoleClient: () => ({
-    rpc: vi.fn(async () => ({ error: new Error("db rate limit unavailable"), data: null })),
-  }),
+  createSupabaseServiceRoleClient: () => mockSupabaseClient,
 }));
 
 describe("inquiry assistant service", () => {
+  beforeEach(() => {
+    mockSupabaseClient.from.mockReset();
+    mockSupabaseClient.rpc.mockReset();
+    mockCreateAppNotification.mockReset();
+    mockTrackAnalyticsEvent.mockReset();
+    mockSupabaseClient.rpc.mockImplementation(async () => ({ error: new Error("db rate limit unavailable"), data: null }));
+  });
+
+  it("creates the lead and notification queue atomically via the transactional DB function", async () => {
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table !== "companies") {
+        return {};
+      }
+
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: "company-123",
+                deleted_at: null,
+                timezone: "Europe/Berlin",
+                business_hours: "Mon-Fri 08:00-18:00",
+              },
+              error: null,
+            }),
+          }),
+        }),
+      };
+    });
+
+    mockSupabaseClient.rpc.mockImplementation(async (name: string) => {
+      if (name === "check_and_record_inquiry_rate_limit") {
+        return { data: [{ allowed: true }], error: null };
+      }
+
+      if (name === "create_public_inquiry_lead_with_notifications") {
+        return {
+          data: [{ lead_id: "lead-123", company_id: "company-123", source: "public_form" }],
+          error: null,
+        };
+      }
+
+      return { data: null, error: null };
+    });
+
+    const result = await createPublicInquiryLead({
+      companyId: "company-123",
+      firstName: "Max",
+      lastName: "Mustermann",
+      address: "Musterstraße 1, Stuttgart",
+      phone: "+49 711 123456",
+      email: "max@example.com",
+      inquiryType: "Heizungsreparatur",
+      description: "Meine Heizung funktioniert nicht.",
+      allowedInquiryTypes: ["Heizungsreparatur"],
+      source: "public_form",
+    });
+
+    expect(result).toEqual({ ok: true, leadId: "lead-123", source: "public_form" });
+    expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
+      "create_public_inquiry_lead_with_notifications",
+      expect.objectContaining({
+        p_company_id: "company-123",
+        p_inquiry_type: "Heizungsreparatur",
+        p_source: "public_form",
+      }),
+    );
+    expect(mockCreateAppNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ dedupeKey: "new_inquiry:lead-123" }),
+    );
+  });
+
+  it("fails closed when the transactional lead creation RPC reports a queue or DB failure", async () => {
+    mockSupabaseClient.from.mockImplementation((table: string) => {
+      if (table !== "companies") {
+        return {};
+      }
+
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: {
+                id: "company-123",
+                deleted_at: null,
+                timezone: "Europe/Berlin",
+                business_hours: "Mon-Fri 08:00-18:00",
+              },
+              error: null,
+            }),
+          }),
+        }),
+      };
+    });
+
+    mockSupabaseClient.rpc.mockImplementation(async (name: string) => {
+      if (name === "check_and_record_inquiry_rate_limit") {
+        return { data: [{ allowed: true }], error: null };
+      }
+
+      if (name === "create_public_inquiry_lead_with_notifications") {
+        return { data: null, error: new Error("queue insert failed") };
+      }
+
+      return { data: null, error: null };
+    });
+
+    const result = await createPublicInquiryLead({
+      companyId: "company-123",
+      firstName: "Max",
+      lastName: "Mustermann",
+      address: "Musterstraße 1, Stuttgart",
+      phone: "+49 711 123456",
+      email: "max@example.com",
+      inquiryType: "Heizungsreparatur",
+      description: "Meine Heizung funktioniert nicht.",
+      allowedInquiryTypes: ["Heizungsreparatur"],
+      source: "public_form",
+    });
+
+    expect(result).toEqual({ ok: false, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." });
+    expect(mockCreateAppNotification).not.toHaveBeenCalled();
+  });
+
   it("fails closed when the rate-limit backend is unavailable", async () => {
     const result = await enforcePublicSuggestionRateLimit({ companyId: "company-123" });
     expect(result.allowed).toBe(false);
