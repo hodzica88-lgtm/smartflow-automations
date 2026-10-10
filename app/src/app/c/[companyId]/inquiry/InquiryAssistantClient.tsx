@@ -20,6 +20,33 @@ type AssistantMessages = Array<{
   content: string;
 }>;
 
+const stableStringify = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "null";
+  }
+
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => stableStringify(entry)).join(",")}]`;
+  }
+
+  if (typeof value === "object") {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+};
+
+const createClientIdempotencyKey = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `inq-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 type InquiryAssistantProps = {
   companyId: string;
   market: MarketCode;
@@ -106,9 +133,29 @@ export default function InquiryAssistantClient({
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [assistantUnavailable, setAssistantUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
+  const [formPending, setFormPending] = useState(false);
   const [errorText, setErrorText] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [formError, setFormError] = useState("");
+  const [activeSubmission, setActiveSubmission] = useState<{ key: string; fingerprint: string } | null>(null);
+
+  const resolveSubmissionIdempotencyKey = (payload: Record<string, unknown>) => {
+    const fingerprint = stableStringify(payload);
+
+    if (activeSubmission && activeSubmission.fingerprint === fingerprint) {
+      return activeSubmission.key;
+    }
+
+    const nextSubmission = {
+      key: createClientIdempotencyKey(),
+      fingerprint,
+    };
+
+    setActiveSubmission(nextSubmission);
+    return nextSubmission.key;
+  };
+
+  const resetSubmissionIdempotency = () => setActiveSubmission(null);
 
   useEffect(() => {
     fetch("/api/public/inquiry-chat", {
@@ -322,21 +369,27 @@ export default function InquiryAssistantClient({
 
       if (step === "summary") {
         const combinedDescription = combineInquiryDescription(description, contextualAnswer);
+        const submitPayload = {
+          action: "submit",
+          companyId,
+          firstName,
+          lastName,
+          address,
+          phone,
+          email,
+          inquiryType: lockedInquiryType,
+          description: combinedDescription,
+          source: "public_ai_chat",
+          turnCount: 7,
+        } as const;
+        const idempotencyKey = resolveSubmissionIdempotencyKey(submitPayload);
+
         const response = await fetch("/api/public/inquiry-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            action: "submit",
-            companyId,
-            firstName,
-            lastName,
-            address,
-            phone,
-            email,
-            inquiryType: lockedInquiryType,
-            description: combinedDescription,
-            source: "public_ai_chat",
-            turnCount: 7,
+            ...submitPayload,
+            idempotencyKey,
           }),
         });
 
@@ -347,6 +400,7 @@ export default function InquiryAssistantClient({
           return;
         }
 
+        resetSubmissionIdempotency();
         setDraft("");
         setFormSuccess("");
         setStep("success");
@@ -361,6 +415,10 @@ export default function InquiryAssistantClient({
 
   const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (formPending) {
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const payload = {
       action: "submit",
@@ -377,22 +435,32 @@ export default function InquiryAssistantClient({
 
     setFormError("");
     setFormSuccess("");
+    setFormPending(true);
 
-    const response = await fetch("/api/public/inquiry-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const idempotencyKey = resolveSubmissionIdempotencyKey(payload);
+      const response = await fetch("/api/public/inquiry-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          idempotencyKey,
+        }),
+      });
 
-    const result = (await response.json()) as { ok?: boolean; error?: string };
+      const result = (await response.json()) as { ok?: boolean; error?: string };
 
-    if (!response.ok || !result.ok) {
-      setFormError(result.error ?? (market === "us" ? "The request could not be sent." : "Die Anfrage konnte nicht gesendet werden."));
-      return;
+      if (!response.ok || !result.ok) {
+        setFormError(result.error ?? (market === "us" ? "The request could not be sent." : "Die Anfrage konnte nicht gesendet werden."));
+        return;
+      }
+
+      resetSubmissionIdempotency();
+      setFormSuccess(market === "us" ? "Thanks! Your request has been sent." : "Vielen Dank! Ihre Anfrage wurde gesendet.");
+      event.currentTarget.reset();
+    } finally {
+      setFormPending(false);
     }
-
-    setFormSuccess(market === "us" ? "Thanks! Your request has been sent." : "Vielen Dank! Ihre Anfrage wurde gesendet.");
-    event.currentTarget.reset();
   };
 
   const selectInquiryType = (value: string) => {
@@ -585,8 +653,8 @@ export default function InquiryAssistantClient({
               <div style={{ padding: 10, borderRadius: 12, background: "rgba(46,204,113,0.12)", border: "1px solid rgba(46,204,113,0.32)", color: "var(--text)" }}>{formSuccess}</div>
             ) : null}
 
-            <button type="submit" style={{ padding: "16px 18px", background: "var(--gold)", color: "#101010", borderRadius: 12, border: "none", fontWeight: 700, cursor: "pointer" }}>
-              {market === "us" ? "Send request" : "Anfrage senden"}
+            <button type="submit" disabled={formPending} style={{ padding: "16px 18px", background: formPending ? "rgba(212,175,55,0.5)" : "var(--gold)", color: "#101010", borderRadius: 12, border: "none", fontWeight: 700, cursor: formPending ? "not-allowed" : "pointer" }}>
+              {formPending ? (market === "us" ? "Sending..." : "Senden...") : market === "us" ? "Send request" : "Anfrage senden"}
             </button>
           </form>
         )}

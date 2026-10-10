@@ -24,7 +24,13 @@ import {
 const { mockSupabaseClient, mockCreateAppNotification, mockTrackAnalyticsEvent } = vi.hoisted(() => ({
   mockSupabaseClient: {
     from: vi.fn(),
-    rpc: vi.fn(async (_name: string, _args?: unknown): Promise<any> => ({ error: new Error("db rate limit unavailable"), data: null })),
+    rpc: vi.fn(async (...args: unknown[]): Promise<{ error: Error | null; data: unknown }> => {
+      void args;
+      return {
+        error: new Error("db rate limit unavailable"),
+        data: null,
+      };
+    }),
   },
   mockCreateAppNotification: vi.fn(),
   mockTrackAnalyticsEvent: vi.fn(),
@@ -78,14 +84,16 @@ describe("inquiry assistant service", () => {
       };
     });
 
-    mockSupabaseClient.rpc.mockImplementation(async (name: string) => {
+    mockSupabaseClient.rpc.mockImplementation(async (...args: unknown[]) => {
+      const name = typeof args[0] === "string" ? args[0] : "";
+
       if (name === "check_and_record_inquiry_rate_limit") {
         return { data: [{ allowed: true }], error: null };
       }
 
-      if (name === "create_public_inquiry_lead_with_notifications") {
+      if (name === "create_public_inquiry_lead_with_notifications_idempotent") {
         return {
-          data: [{ lead_id: "lead-123", company_id: "company-123", source: "public_form" }],
+          data: [{ lead_id: "lead-123", company_id: "company-123", source: "public_form", duplicate: false }],
           error: null,
         };
       }
@@ -104,11 +112,12 @@ describe("inquiry assistant service", () => {
       description: "Meine Heizung funktioniert nicht.",
       allowedInquiryTypes: ["Heizungsreparatur"],
       source: "public_form",
+      idempotencyKey: "request-123",
     });
 
-    expect(result).toEqual({ ok: true, leadId: "lead-123", source: "public_form" });
+    expect(result).toEqual({ ok: true, leadId: "lead-123", source: "public_form", duplicate: false });
     expect(mockSupabaseClient.rpc).toHaveBeenCalledWith(
-      "create_public_inquiry_lead_with_notifications",
+      "create_public_inquiry_lead_with_notifications_idempotent",
       expect.objectContaining({
         p_company_id: "company-123",
         p_inquiry_type: "Heizungsreparatur",
@@ -143,7 +152,9 @@ describe("inquiry assistant service", () => {
       };
     });
 
-    mockSupabaseClient.rpc.mockImplementation(async (name: string) => {
+    mockSupabaseClient.rpc.mockImplementation(async (...args: unknown[]) => {
+      const name = typeof args[0] === "string" ? args[0] : "";
+
       if (name === "check_and_record_inquiry_rate_limit") {
         return { data: [{ allowed: true }], error: null };
       }
@@ -166,6 +177,7 @@ describe("inquiry assistant service", () => {
       description: "Meine Heizung funktioniert nicht.",
       allowedInquiryTypes: ["Heizungsreparatur"],
       source: "public_form",
+      idempotencyKey: "request-456",
     });
 
     expect(result).toEqual({ ok: false, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." });

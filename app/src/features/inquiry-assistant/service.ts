@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { headers } from "next/headers";
 
 import { trackAnalyticsEvent } from "@/features/analytics/events";
@@ -35,6 +37,7 @@ export type PublicInquiryInput = {
   allowedInquiryTypes?: string[];
   source: InquirySource;
   turnCount?: number;
+  idempotencyKey?: string;
 };
 
 export type PublicInquiryValidationResult =
@@ -111,6 +114,89 @@ const resolveAllowedType = (candidate: string | null | undefined, allowedInquiry
 };
 
 const getNormalizedLeadEmail = (value: string) => value.trim().toLowerCase();
+
+const hashPublicInquiryValue = (value: string) =>
+  createHash("sha256").update(value).digest("hex");
+
+export const createPublicInquiryIdempotencyKey = ({
+  companyId,
+  firstName,
+  lastName,
+  address,
+  phone,
+  email,
+  inquiryType,
+  description,
+  website,
+  allowedInquiryTypes,
+  source,
+}: {
+  companyId: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  phone: string;
+  email: string;
+  inquiryType: string;
+  description?: string | null;
+  website?: string | null;
+  allowedInquiryTypes?: string[];
+  source: InquirySource;
+}) => {
+  const canonicalInput = JSON.stringify([
+    String(companyId ?? "").trim(),
+    String(source ?? ""),
+    String(firstName ?? "").trim(),
+    String(lastName ?? "").trim(),
+    String(address ?? "").trim(),
+    String(phone ?? "").trim(),
+    String(email ?? "").trim().toLowerCase(),
+    String(inquiryType ?? "").trim(),
+    String(description ?? "").trim(),
+    String(website ?? "").trim(),
+    ...(allowedInquiryTypes ?? []).map((entry) => normalizeInquiryTypeName(String(entry ?? ""))).filter(Boolean).sort(),
+  ]);
+
+  return hashPublicInquiryValue(canonicalInput);
+};
+
+export const createPublicInquiryRequestHash = ({
+  companyId,
+  firstName,
+  lastName,
+  address,
+  phone,
+  email,
+  inquiryType,
+  description,
+  website,
+  allowedInquiryTypes,
+  source,
+}: {
+  companyId: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  phone: string;
+  email: string;
+  inquiryType: string;
+  description?: string | null;
+  website?: string | null;
+  allowedInquiryTypes?: string[];
+  source: InquirySource;
+}) => createPublicInquiryIdempotencyKey({
+  companyId,
+  firstName,
+  lastName,
+  address,
+  phone,
+  email,
+  inquiryType,
+  description,
+  website,
+  allowedInquiryTypes,
+  source,
+});
 
 export const MAX_PUBLIC_INQUIRY_DESCRIPTION_LENGTH = 1500;
 export const MAX_PUBLIC_REQUEST_BODY_BYTES = 16384;
@@ -577,6 +663,7 @@ export const createPublicInquiryLead = async ({
   allowedInquiryTypes,
   source,
   turnCount,
+  idempotencyKey,
 }: PublicInquiryInput) => {
   const validation = validatePublicInquiryInput({
     companyId,
@@ -631,6 +718,25 @@ export const createPublicInquiryLead = async ({
   }
 
   const normalized = validation.normalized;
+  const effectiveIdempotencyKey = (idempotencyKey ?? "").trim();
+
+  if (!effectiveIdempotencyKey) {
+    return { ok: false as const, error: "Eindeutiger Anfrage-Schlüssel fehlt.", status: 400 };
+  }
+
+  const requestHash = createPublicInquiryRequestHash({
+    companyId,
+    firstName: normalized.firstName,
+    lastName: normalized.lastName,
+    address: normalized.address,
+    phone: normalized.phone,
+    email: normalized.email,
+    inquiryType: normalized.inquiryType,
+    description: normalized.description,
+    website: website ?? null,
+    allowedInquiryTypes,
+    source,
+  });
   const customerConfirmationScheduledFor = new Date().toISOString();
   const ownerNewLeadScheduledFor = getOwnerNotificationScheduledFor(
     company.timezone,
@@ -638,7 +744,7 @@ export const createPublicInquiryLead = async ({
   );
 
   const { data: leadData, error: insertError } = await supabase.rpc(
-    "create_public_inquiry_lead_with_notifications",
+    "create_public_inquiry_lead_with_notifications_idempotent",
     {
       p_company_id: companyId,
       p_first_name: normalized.firstName,
@@ -651,13 +757,35 @@ export const createPublicInquiryLead = async ({
       p_notes: normalized.description,
       p_customer_confirmation_scheduled_for: customerConfirmationScheduledFor,
       p_owner_new_lead_scheduled_for: ownerNewLeadScheduledFor,
+      p_idempotency_key: effectiveIdempotencyKey,
+      p_request_hash: requestHash,
+      p_idempotency_ttl_hours: 24,
     },
   );
 
-  const createdLeadId = Array.isArray(leadData) ? leadData[0]?.lead_id : leadData?.lead_id;
+  const leadPayload = Array.isArray(leadData) ? leadData[0] : leadData;
+  const createdLeadId = leadPayload?.lead_id;
+  const isDuplicate = Boolean(leadPayload?.duplicate === true);
 
-  if (insertError || !createdLeadId) {
+  if (insertError) {
+    const message = String(insertError.message ?? "").toLowerCase();
+    if (message.includes("idempotency") || message.includes("different payload") || message.includes("duplicate key")) {
+      return { ok: false as const, error: "Diese Anfrage wurde bereits mit anderem Inhalt gesendet.", status: 409 };
+    }
     return { ok: false as const, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." };
+  }
+
+  if (!createdLeadId) {
+    return { ok: false as const, error: "Beim Speichern Ihrer Anfrage ist ein Fehler aufgetreten." };
+  }
+
+  if (isDuplicate) {
+    return {
+      ok: true as const,
+      leadId: createdLeadId,
+      source,
+      duplicate: true,
+    };
   }
 
   await createAppNotification({
@@ -711,5 +839,6 @@ export const createPublicInquiryLead = async ({
     ok: true as const,
     leadId: createdLeadId,
     source,
+    duplicate: false,
   };
 };

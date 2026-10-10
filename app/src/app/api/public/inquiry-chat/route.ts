@@ -133,6 +133,12 @@ export async function POST(request: Request) {
 
   if (action === "submit") {
     const source = body?.source === "public_form" ? "public_form" : "public_ai_chat";
+    const idempotencyKey = readString(body?.idempotencyKey);
+
+    if (!idempotencyKey) {
+      return NextResponse.json({ ok: false, error: "Eindeutiger Anfrage-Schlüssel fehlt." }, { status: 400 });
+    }
+
     const result = await createPublicInquiryLead({
       companyId: safeCompanyId,
       firstName: readString(body?.firstName),
@@ -146,13 +152,14 @@ export async function POST(request: Request) {
       allowedInquiryTypes: safeAllowedTypes,
       source,
       turnCount: typeof body?.turnCount === "number" ? body.turnCount : undefined,
+      idempotencyKey,
     });
 
     if (!result.ok) {
-      return NextResponse.json({ ok: false, error: result.error }, { status: 400 });
+      return NextResponse.json({ ok: false, error: result.error }, { status: result.status ?? 400 });
     }
 
-    return NextResponse.json({ ok: true, leadId: result.leadId, source });
+    return NextResponse.json({ ok: true, leadId: result.leadId, source, duplicate: Boolean(result.duplicate) });
   }
 
   return NextResponse.json({ ok: false, error: "Unbekannte Anfrage." }, { status: 400 });
