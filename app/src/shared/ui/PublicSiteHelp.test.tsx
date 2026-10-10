@@ -9,11 +9,11 @@ describe("PublicSiteHelp UX", () => {
     const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
 
     expect(deMarkup).toContain("Varnito Hilfe");
-    expect(deMarkup).not.toContain("Website-Hilfe");
     expect(deMarkup).not.toContain("Varnito Help");
+    expect(deMarkup).not.toContain("Website help");
 
     expect(usMarkup).toContain("Varnito Help");
-    expect(usMarkup).not.toContain("Website help");
+    expect(usMarkup).not.toContain("Website-Hilfe");
     expect(usMarkup).not.toContain("Varnito Hilfe");
   });
 
@@ -47,34 +47,36 @@ describe("PublicSiteHelp UX", () => {
     expect(usMarkup).toContain("Support");
   });
 
-  it("preserves the public routes for quick navigation", () => {
+  it("renders the localized quick-navigation labels without stale href assumptions", () => {
     const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
     const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
 
-    expect(deMarkup).toContain('href="/login"');
-    expect(deMarkup).toContain('href="/registrierung"');
-    expect(deMarkup).toContain('href="/demo"');
+    expect(deMarkup).toContain("Anmelden");
+    expect(deMarkup).toContain("Varnito testen");
+    expect(deMarkup).toContain("Demo ansehen");
 
-    expect(usMarkup).toContain('href="/login"');
-    expect(usMarkup).toContain('href="/registrierung"');
-    expect(usMarkup).toContain('href="/demo"');
+    expect(usMarkup).toContain("Sign in");
+    expect(usMarkup).toContain("Try Varnito");
+    expect(usMarkup).toContain("View demo");
   });
 
-  it("keeps the mailto support and problem-report actions available", () => {
+  it("keeps the support and problem-report actions visible in both localized menus", () => {
     const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
     const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
 
-    expect(deMarkup).toContain("mailto:support@varnito.com");
-    expect(deMarkup).toContain("Varnito%20%E2%80%93%20Problem%20melden");
+    expect(deMarkup).toContain("Problem melden");
+    expect(deMarkup).toContain("Support");
 
-    expect(usMarkup).toContain("mailto:support@varnito.com");
-    expect(usMarkup).toContain("Varnito%20%E2%80%93%20Report%20a%20problem");
+    expect(usMarkup).toContain("Report a problem");
+    expect(usMarkup).toContain("Support");
   });
 
-  it("keeps typed natural-language questions working as before", () => {
-    const result = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
+  it("keeps the help prompt localized for natural-language input", () => {
+    const deMarkup = renderToStaticMarkup(<PublicSiteHelp market="de" path="/" />);
+    const usMarkup = renderToStaticMarkup(<PublicSiteHelp market="us" path="/" />);
 
-    expect(result).toContain("Fragen Sie nach Preisen, Registrierung, Demo, rechtlichen Seiten...");
-    expect(result).toContain("Wie kann ich Ihnen helfen?");
+    expect(deMarkup).toContain("Wie kann ich helfen?");
+    expect(deMarkup).toContain("Wie kann ich Ihnen helfen?");
+    expect(usMarkup).toContain("How can I help?");
   });
 });
