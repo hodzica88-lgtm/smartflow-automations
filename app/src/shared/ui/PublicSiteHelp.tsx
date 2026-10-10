@@ -74,7 +74,7 @@ export default function PublicSiteHelp({
     setInput("");
 
     if (href) {
-      window.location.href = href;
+      window.location.assign(href);
     }
 
     if (isMailto) {
