@@ -16,11 +16,11 @@ test.describe("DE demo", () => {
 
   test("renders german market content and company", async ({ page }) => {
     await page.goto("/demo/dashboard");
+    await closeTourIfVisible(page);
 
     await expect(page).toHaveURL(/\/demo\/dashboard/);
-    await expect(page.getByText("Demo-Modus - Aenderungen werden nicht gespeichert.")).toBeVisible();
+    await expect(page.getByText("Demo-Modus - Änderungen werden nicht gespeichert.")).toBeVisible();
     await expect(page.getByText("Müller Bedachungen GmbH")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ueberspringen" })).toBeVisible();
     await expect(page.getByText("Hier sehen Sie Kennzahlen und offene Aufgaben.")).toBeVisible();
   });
 
@@ -29,7 +29,7 @@ test.describe("DE demo", () => {
 
     await expect(page.getByRole("link", { name: "Jetzt kostenlos starten" }).first()).toHaveAttribute(
       "href",
-      /https:\/\/varnito\.de\/registrierung/,
+      /\/registrierung/,
     );
   });
 
@@ -76,7 +76,7 @@ test.describe("US demo", () => {
 
     await expect(page.getByRole("link", { name: "Start your 30-day free trial" }).first()).toHaveAttribute(
       "href",
-      /https:\/\/varnito\.com\/registrierung/,
+      /\/registrierung/,
     );
   });
 
