@@ -50,9 +50,10 @@ export default function PublicSiteHelp({
 }) {
   const pathname = usePathname();
   const currentPath = path ?? pathname ?? "/";
-  const isVisible = !currentPath.startsWith("/api") && !currentPath.startsWith("/operator") && !currentPath.startsWith("/dashboard") && currentPath !== "/demo" && !currentPath.startsWith("/demo/") && !(currentPath.startsWith("/c/") && currentPath.includes("/inquiry"));
+  const isVisible = !currentPath.startsWith("/api") && !currentPath.startsWith("/operator") && !currentPath.startsWith("/dashboard") && !currentPath.startsWith("/demo") && !(currentPath.startsWith("/c/") && currentPath.includes("/inquiry"));
   const marketCode = market ?? normalizeMarketFromPath(currentPath);
-  const [open, setOpen] = useState(true);
+  const isDemoRoute = currentPath.startsWith("/demo");
+  const [open, setOpen] = useState(false);
   const [input, setInput] = useState(getDefaultMessage());
   const [result, setResult] = useState<SiteHelpResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -135,7 +136,14 @@ export default function PublicSiteHelp({
   }
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      style={{
+        left: isDemoRoute ? "20px" : "auto",
+        right: isDemoRoute ? "auto" : "20px",
+        pointerEvents: open ? "auto" : "none",
+      }}
+    >
       {open ? (
         <div className={styles.panel} aria-live="polite">
           <div className={styles.header}>
@@ -202,6 +210,7 @@ export default function PublicSiteHelp({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-label={marketCode === "us" ? "Open website help" : "Website-Hilfe öffnen"}
+        style={{ pointerEvents: "auto" }}
       >
         <span className={styles.launcherIcon}>✦</span>
         <span>{marketCode === "us" ? "Help" : "Hilfe"}</span>
