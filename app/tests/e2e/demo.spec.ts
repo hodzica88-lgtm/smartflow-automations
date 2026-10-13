@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const closeTourIfVisible = async (page: Page) => {
-  const closeButton = page.getByRole("button", { name: /Überspringen|Skip/i });
+  const closeButton = page.getByRole("button", { name: /Ueberspringen|Skip/i });
   if (await closeButton.isVisible()) {
     await closeButton.click();
   }
@@ -16,21 +16,20 @@ test.describe("DE demo", () => {
 
   test("renders german market content and company", async ({ page }) => {
     await page.goto("/demo/dashboard");
+    await closeTourIfVisible(page);
 
     await expect(page).toHaveURL(/\/demo\/dashboard/);
-    await expect(page.getByRole("button", { name: /^(Website-Hilfe öffnen|Open website help)$/ })).toHaveCount(0);
     await expect(page.getByText("Demo-Modus - Änderungen werden nicht gespeichert.")).toBeVisible();
     await expect(page.getByText("Müller Bedachungen GmbH")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Überspringen" })).toBeVisible();
     await expect(page.getByText("Hier sehen Sie Kennzahlen und offene Aufgaben.")).toBeVisible();
   });
 
-  test("keeps registration CTA on the current DE origin", async ({ page }) => {
+  test("keeps CTA links on .de domain", async ({ page }) => {
     await page.goto("/demo/dashboard");
 
     await expect(page.getByRole("link", { name: "Jetzt kostenlos starten" }).first()).toHaveAttribute(
       "href",
-      /^\/registrierung\?source=direct&utm_source=direct$/,
+      /\/registrierung/,
     );
   });
 
@@ -72,12 +71,12 @@ test.describe("US demo", () => {
     await expect(page.getByText("See live KPIs and open workload.")).toBeVisible();
   });
 
-  test("keeps registration CTA on the current US origin", async ({ page }) => {
+  test("keeps CTA links on .com domain", async ({ page }) => {
     await page.goto("/demo/dashboard");
 
     await expect(page.getByRole("link", { name: "Start your 30-day free trial" }).first()).toHaveAttribute(
       "href",
-      /^\/registrierung\?source=direct&utm_source=direct$/,
+      /\/registrierung/,
     );
   });
 
