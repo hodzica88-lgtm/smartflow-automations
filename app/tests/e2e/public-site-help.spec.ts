@@ -1,4 +1,18 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+const openPublicHelp = async (page: Page, market: "de" | "us") => {
+  const launcher = page.getByRole("button", {
+    name: market === "de" ? "Website-Hilfe öffnen" : "Open website help",
+    exact: true,
+  });
+
+  await expect(launcher).toBeVisible();
+  await expect(launcher).toHaveAttribute("aria-expanded", "false");
+  await launcher.click();
+  await expect(
+    page.getByRole("button", { name: market === "de" ? "Hilfe schließen" : "Close help", exact: true }),
+  ).toBeVisible();
+};
 
 for (const market of ["de", "us"] as const) {
   test.describe(`${market.toUpperCase()} public help navigation`, () => {
@@ -15,6 +29,7 @@ for (const market of ["de", "us"] as const) {
           await page.route("**/demo", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "Demo entry" }));
         }
         await page.goto("/");
+        await openPublicHelp(page, market);
         const origin = new URL(page.url()).origin;
         await page.getByRole("button", { name: action.label, exact: true }).click();
         await expect(page).toHaveURL((url) => url.origin === origin && url.pathname === action.pathname);
@@ -24,6 +39,7 @@ for (const market of ["de", "us"] as const) {
     for (const reportProblem of [false, true]) {
       test(`opens the ${reportProblem ? "problem report" : "support"} mail action`, async ({ page }) => {
         await page.goto("/");
+        await openPublicHelp(page, market);
         const session = await page.context().newCDPSession(page);
         await session.send("Page.enable");
         const requestedNavigation = new Promise<string>((resolve) => {
