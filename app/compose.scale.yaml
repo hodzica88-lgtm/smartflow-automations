@@ -1,0 +1,44 @@
+# Use with compose.yaml. Start replicas explicitly with scale-app.sh.
+# All replicas run the immutable image of the existing primary container.
+x-replica: &replica
+  image: ${VARNITO_SCALE_IMAGE:?Run scripts/operations/scale-app.sh start}
+  pull_policy: never
+  env_file:
+    - .env.production
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+  volumes:
+    - /opt/anfragepilot/runtime:/app/runtime:ro
+  healthcheck:
+    test:
+      - CMD
+      - node
+      - -e
+      - "fetch('http://127.0.0.1:3000/api/internal/health',{headers:{'x-internal-api-secret':process.env.INTERNAL_API_SECRET||''}}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 30s
+
+services:
+  app-2:
+    <<: *replica
+    container_name: anfragepilot-app-2
+    ports:
+      - "127.0.0.1:3001:3000"
+  app-3:
+    <<: *replica
+    container_name: anfragepilot-app-3
+    ports:
+      - "127.0.0.1:3002:3000"
+  app-4:
+    <<: *replica
+    container_name: anfragepilot-app-4
+    ports:
+      - "127.0.0.1:3003:3000"

@@ -55,6 +55,9 @@ jobs:
       - name: Run Playwright tests
         run: pnpm test:e2e
 
+      - name: Verify hydrated lead cards and Server Action
+        run: LEAD_RENDER_BROWSER=1 node scripts/operations/lead-render.check.mjs
+
       - name: Print Playwright failure contexts
         if: failure()
         run: |
