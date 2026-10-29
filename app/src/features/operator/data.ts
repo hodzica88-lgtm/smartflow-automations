@@ -18,6 +18,50 @@ import { createSupabaseServiceRoleClient } from "@/shared/lib/supabase/server";
 
 const BACKUP_STATUS_PATH = process.env.VARNITO_RUNTIME_BACKUP_STATUS_PATH ?? "/app/runtime/backup-status.json";
 const EXPECTED_BACKUP_INTERVAL_MS = 8 * 24 * 60 * 60 * 1000;
+const ANALYTICS_EVENT_PAGE_SIZE = 1000;
+
+type AnalyticsQueryPageResult<T> = {
+  data: T[] | null;
+  error: unknown;
+};
+
+type AnalyticsQueryRangeOptions = {
+  foreignTable?: string;
+  referencedTable?: string;
+};
+
+type AnalyticsEventQuery<T> = {
+  range: (
+    from: number,
+    to: number,
+    options?: AnalyticsQueryRangeOptions,
+  ) => PromiseLike<AnalyticsQueryPageResult<T>>;
+};
+
+export const fetchAllAnalyticsEventsForQuery = async <T>(query: AnalyticsEventQuery<T>): Promise<T[]> => {
+  const rows: T[] = [];
+  let offset = 0;
+
+  while (true) {
+    const response = await query.range(offset, offset + ANALYTICS_EVENT_PAGE_SIZE - 1);
+    const { data, error } = response ?? {};
+
+    if (error) {
+      throw error;
+    }
+
+    const pageRows = Array.isArray(data) ? data : [];
+    rows.push(...pageRows);
+
+    if (pageRows.length < ANALYTICS_EVENT_PAGE_SIZE) {
+      break;
+    }
+
+    offset += ANALYTICS_EVENT_PAGE_SIZE;
+  }
+
+  return rows;
+};
 
 export const parseBackupStatusFile = (raw: string | null): {
   lastSuccessfulBackupAt: string | null;
@@ -975,9 +1019,9 @@ export const getOwnerGrowthMonthData = async (monthKey?: string) => {
   const currentRange = getGrowthMonthRange(selectedMonthKey);
   const previousRange = currentRange.previousMonthKey ? getGrowthMonthRange(currentRange.previousMonthKey) : null;
 
-  const { data: growthEventsResult, error: growthEventsError } = await supabase
+  const baseQuery = supabase
     .from("analytics_events")
-    .select("event_name, metadata, occurred_at, company_id, market, market")
+    .select("event_name, metadata, occurred_at, company_id, market")
     .in("event_name", [
       "visitor",
       "landing_view",
@@ -991,11 +1035,8 @@ export const getOwnerGrowthMonthData = async (monthKey?: string) => {
     .gte("occurred_at", GROWTH_ANALYTICS_V1_START_AT)
     .order("occurred_at", { ascending: true });
 
-  if (growthEventsError) {
-    throw growthEventsError;
-  }
-
-  const events = ((growthEventsResult ?? []) as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null; occurred_at?: string | null; company_id?: string | null; market?: "de" | "us" | "unknown" | null }>).filter(
+  const growthEvents = await fetchAllAnalyticsEventsForQuery(baseQuery);
+  const events = (growthEvents as Array<{ event_name?: string | null; metadata?: Record<string, unknown> | null; occurred_at?: string | null; company_id?: string | null; market?: "de" | "us" | "unknown" | null }>).filter(
     (event) => !isInternalOwnerCompany(event.company_id ?? null),
   );
 
@@ -1015,6 +1056,7 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
   const now = new Date();
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const [dashboard, newCompaniesLast7d, recentErrorsResult, growthEventsResult, recentHumanVisits] = await Promise.all([
     getOperatorDashboardData(),
@@ -1034,20 +1076,24 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
       .gte("updated_at", last24Hours)
       .order("updated_at", { ascending: false })
       .limit(5),
-    supabase
-      .from("analytics_events")
-      .select("event_name, metadata, company_id")
-      .in("event_name", [
-        "visitor",
-        "landing_view",
-        "demo_opened",
-        "demo_entry",
-        "trial_started",
-        "trial_cancelled",
-        "paid_customer",
-        "subscription_cancelled",
-      ])
-      .gte("occurred_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+    (async () => {
+      const growthQuery = supabase
+        .from("analytics_events")
+        .select("event_name, metadata, occurred_at, company_id")
+        .in("event_name", [
+          "visitor",
+          "landing_view",
+          "demo_opened",
+          "demo_entry",
+          "trial_started",
+          "trial_cancelled",
+          "paid_customer",
+          "subscription_cancelled",
+        ])
+        .gte("occurred_at", last30Days)
+        .order("occurred_at", { ascending: true });
+      return fetchAllAnalyticsEventsForQuery(growthQuery);
+    })(),
     getRecentHumanVisits(10),
   ]);
 
@@ -1075,13 +1121,13 @@ export const getOwnerControlCenterData = async (): Promise<OwnerControlCenterDat
   ].filter((entry): entry is string => Boolean(entry));
 
   const growth = buildGrowthSummary(
-    (((growthEventsResult.data ?? []) as Array<{
+    (((growthEventsResult as Array<{
       event_name?: string | null;
       metadata?: Record<string, unknown> | null;
       occurred_at?: string | null;
       company_id?: string | null;
       market?: "de" | "us" | "unknown" | null;
-    }>) ?? []).filter((event) => !isInternalOwnerCompany(event.company_id ?? null)),
+    }>) ?? []).filter((event) => !isInternalOwnerCompany(event.company_id ?? null))),
     { startAt: GROWTH_ANALYTICS_V1_START_AT },
   );
 
