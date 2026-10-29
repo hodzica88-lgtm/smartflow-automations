@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import OwnerControlCenterPage from "@/app/operator/owner/page";
 import {
   deriveBackupStatus,
+  fetchAllAnalyticsEventsForQuery,
   normalizeBackupTimestamp,
   parseBackupStatusFile,
   readOwnerBackupState,
@@ -126,6 +127,38 @@ describe("internal owner business filtering", () => {
         created_at: "2026-10-01T00:00:00.000Z",
       }),
     ).toBe(true);
+  });
+});
+
+describe("fetchAllAnalyticsEventsForQuery", () => {
+  it("loads every page and counts each analytics event exactly once across 2500 rows", async () => {
+    const totalRows = 2500;
+    const pages: Array<Array<{ id: number }>> = [];
+    const allRows = Array.from({ length: totalRows }, (_, index) => ({ id: index, event_name: "visitor" }));
+
+    const query = {
+      range: vi.fn(async (offset: number, end: number) => {
+        const page = allRows.slice(offset, end + 1);
+        pages.push(page);
+        return { data: page, error: null };
+      }),
+    };
+
+    const rows = await fetchAllAnalyticsEventsForQuery(query as any);
+
+    expect(query.range).toHaveBeenCalledTimes(3);
+    expect(rows).toHaveLength(totalRows);
+    expect(new Set(rows.map((event) => event.id)).size).toBe(totalRows);
+    expect(pages.flat()).toHaveLength(totalRows);
+    expect(pages.map((page) => page.length)).toEqual([1000, 1000, 500]);
+  });
+
+  it("throws when a paginated request returns an error instead of silently swallowing partial data", async () => {
+    const query = {
+      range: vi.fn(async () => ({ data: null, error: { message: "backend failure" } })),
+    };
+
+    await expect(fetchAllAnalyticsEventsForQuery(query as any)).rejects.toMatchObject({ message: "backend failure" });
   });
 });
 
