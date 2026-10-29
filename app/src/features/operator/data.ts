@@ -20,12 +20,31 @@ const BACKUP_STATUS_PATH = process.env.VARNITO_RUNTIME_BACKUP_STATUS_PATH ?? "/a
 const EXPECTED_BACKUP_INTERVAL_MS = 8 * 24 * 60 * 60 * 1000;
 const ANALYTICS_EVENT_PAGE_SIZE = 1000;
 
-export const fetchAllAnalyticsEventsForQuery = async (query: any): Promise<any[]> => {
-  const rows: any[] = [];
+type AnalyticsQueryPageResult<T> = {
+  data: T[] | null;
+  error: unknown;
+};
+
+type AnalyticsQueryRangeOptions = {
+  foreignTable?: string;
+  referencedTable?: string;
+};
+
+type AnalyticsEventQuery<T> = {
+  range: (
+    from: number,
+    to: number,
+    options?: AnalyticsQueryRangeOptions,
+  ) => PromiseLike<AnalyticsQueryPageResult<T>>;
+};
+
+export const fetchAllAnalyticsEventsForQuery = async <T>(query: AnalyticsEventQuery<T>): Promise<T[]> => {
+  const rows: T[] = [];
   let offset = 0;
 
   while (true) {
-    const { data, error } = await query.range(offset, offset + ANALYTICS_EVENT_PAGE_SIZE - 1);
+    const response = await query.range(offset, offset + ANALYTICS_EVENT_PAGE_SIZE - 1);
+    const { data, error } = response ?? {};
 
     if (error) {
       throw error;

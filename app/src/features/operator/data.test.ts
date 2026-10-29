@@ -133,7 +133,7 @@ describe("internal owner business filtering", () => {
 describe("fetchAllAnalyticsEventsForQuery", () => {
   it("loads every page and counts each analytics event exactly once across 2500 rows", async () => {
     const totalRows = 2500;
-    const pages: Array<Array<{ id: number }>> = [];
+    const pages: Array<Array<{ id: number; event_name: string }>> = [];
     const allRows = Array.from({ length: totalRows }, (_, index) => ({ id: index, event_name: "visitor" }));
 
     const query = {
@@ -144,7 +144,7 @@ describe("fetchAllAnalyticsEventsForQuery", () => {
       }),
     };
 
-    const rows = await fetchAllAnalyticsEventsForQuery(query as any);
+    const rows = await fetchAllAnalyticsEventsForQuery<{ id: number; event_name: string }>(query);
 
     expect(query.range).toHaveBeenCalledTimes(3);
     expect(rows).toHaveLength(totalRows);
@@ -158,7 +158,7 @@ describe("fetchAllAnalyticsEventsForQuery", () => {
       range: vi.fn(async () => ({ data: null, error: { message: "backend failure" } })),
     };
 
-    await expect(fetchAllAnalyticsEventsForQuery(query as any)).rejects.toMatchObject({ message: "backend failure" });
+    await expect(fetchAllAnalyticsEventsForQuery<{ id: number }>(query)).rejects.toMatchObject({ message: "backend failure" });
   });
 });
 
