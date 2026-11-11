@@ -93,6 +93,12 @@ type SharedCopy = {
     forgotSubmit: string;
     forgotBackToLogin: string;
     forgotSent: string;
+    resetTitle: string;
+    resetLead: string;
+    resetPasswordLabel: string;
+    resetConfirmLabel: string;
+    resetSubmit: string;
+    resetSuccess: string;
     onboardingEyebrow: string;
     onboardingTitle: string;
     onboardingLead: string;
@@ -134,6 +140,11 @@ type SharedCopy = {
       registerRateLimited: string;
       registerFailed: string;
       confirmationLinkInvalid: string;
+      resetLinkInvalid: string;
+      resetMismatch: string;
+      resetSamePassword: string;
+      resetRateLimited: string;
+      resetFailed: string;
     };
   };
   team: {
@@ -241,6 +252,12 @@ const COPY: Record<MarketCode, MarketCopy> = {
         forgotSubmit: "E-Mail zum Zurücksetzen senden",
         forgotBackToLogin: "Zurück zur Anmeldung",
         forgotSent: "Prüfen Sie Ihr E-Mail-Postfach auf Anweisungen zum Zurücksetzen des Passworts.",
+        resetTitle: "Neues Passwort festlegen",
+        resetLead: "Wählen Sie ein neues Passwort mit 10 bis 72 Zeichen, bestehend aus Buchstaben und Zahlen.",
+        resetPasswordLabel: "Neues Passwort",
+        resetConfirmLabel: "Neues Passwort wiederholen",
+        resetSubmit: "Passwort speichern",
+        resetSuccess: "Ihr Passwort wurde geändert. Bitte melden Sie sich mit dem neuen Passwort an.",
         onboardingEyebrow: "Varnito Einrichtung",
         onboardingTitle: "Unternehmen anlegen",
         onboardingLead: "Geben Sie die wichtigsten Daten ein, damit Varnito Ihren Arbeitsbereich vorbereiten kann.",
@@ -286,6 +303,11 @@ const COPY: Record<MarketCode, MarketCopy> = {
           registerRateLimited: "Zu viele Registrierungsversuche. Bitte versuchen Sie es später erneut.",
           registerFailed: "Die Registrierung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
           confirmationLinkInvalid: "Der Bestätigungslink ist ungültig oder abgelaufen. Falls Sie Ihre E-Mail-Adresse bereits bestätigt haben, melden Sie sich an.",
+          resetLinkInvalid: "Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen Link an.",
+          resetMismatch: "Die beiden Passwörter stimmen nicht überein.",
+          resetSamePassword: "Das neue Passwort muss sich vom bisherigen Passwort unterscheiden.",
+          resetRateLimited: "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+          resetFailed: "Das Passwort konnte nicht geändert werden. Bitte fordern Sie einen neuen Link an.",
         },
       },
       team: {
@@ -469,6 +491,12 @@ const COPY: Record<MarketCode, MarketCopy> = {
         forgotSubmit: "Send reset email",
         forgotBackToLogin: "Back to login",
         forgotSent: "Check your inbox for password reset instructions.",
+        resetTitle: "Set a new password",
+        resetLead: "Choose a new password with 10 to 72 characters, containing letters and numbers.",
+        resetPasswordLabel: "New password",
+        resetConfirmLabel: "Repeat new password",
+        resetSubmit: "Save password",
+        resetSuccess: "Your password has been changed. Please sign in with your new password.",
         onboardingEyebrow: "Varnito setup",
         onboardingTitle: "Create your company",
         onboardingLead: "Enter the details Varnito needs to set up your workspace.",
@@ -514,6 +542,11 @@ const COPY: Record<MarketCode, MarketCopy> = {
           registerRateLimited: "Too many registration attempts. Please try again later.",
           registerFailed: "Registration could not be completed. Please try again.",
           confirmationLinkInvalid: "The confirmation link is invalid or expired. If you already confirmed your email address, please sign in.",
+          resetLinkInvalid: "The password reset link is invalid or has expired. Please request a new link.",
+          resetMismatch: "The two passwords do not match.",
+          resetSamePassword: "The new password must be different from your current password.",
+          resetRateLimited: "Too many attempts. Please try again later.",
+          resetFailed: "The password could not be changed. Please request a new link.",
         },
       },
       team: {

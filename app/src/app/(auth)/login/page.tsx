@@ -14,13 +14,14 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string;
     next?: string;
+    reset?: string;
     source?: string;
     utm_source?: string;
   }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error, next, source, utm_source } = await searchParams;
+  const { error, next, reset, source, utm_source } = await searchParams;
   const { market } = await getRequestMarket();
   const copy = getMarketCopy(market).shared.auth;
   const nextPath = getSafePostLoginPath(next);
@@ -49,6 +50,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {error ? (
           <p className={`${styles.message} ${styles.error}`}>{error}</p>
+        ) : null}
+
+        {reset === "1" ? (
+          <p className={`${styles.message} ${styles.success}`}>{copy.resetSuccess}</p>
         ) : null}
 
         <form action={loginAction} className={styles.form}>

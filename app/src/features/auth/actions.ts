@@ -18,6 +18,7 @@ import { getMarketCopy } from "@/shared/i18n/copy";
 import { getMarketConfig } from "@/shared/i18n/market";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
+import { createEventId, logServerEvent } from "@/shared/lib/observability/logger";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
 
 const getStringValue = (formData: FormData, key: string) => {
@@ -38,6 +39,24 @@ const redirectWithError = (
   }
 
   redirect(`${path}?${searchParams.toString()}`);
+};
+
+const EMAIL_PATTERN = /[^\s@]+@[^\s@]+/g;
+
+const logAuthMailFailure = (eventPrefix: string, message: string, error: unknown, market: string) => {
+  const authError = error as { code?: string; status?: number; name?: string; message?: string };
+
+  logServerEvent("error", {
+    eventId: createEventId(eventPrefix),
+    message,
+    context: {
+      market,
+      authCode: authError.code ?? null,
+      authStatus: authError.status ?? null,
+      authErrorName: authError.name ?? null,
+      authErrorMessage: (authError.message ?? "").replace(EMAIL_PATTERN, "[email]").slice(0, 200),
+    },
+  });
 };
 
 export const loginAction = async (formData: FormData) => {
@@ -250,6 +269,10 @@ export const registerAction = async (formData: FormData) => {
   if (error) {
     const code = (error as { code?: string }).code ?? "";
 
+    if (code !== "user_already_exists" && code !== "email_exists") {
+      logAuthMailFailure("auth_register_failed", "Registration sign-up failed", error, requestMarket);
+    }
+
     // Existing accounts must not be distinguishable from new ones.
     if (code === "user_already_exists" || code === "email_exists") {
       redirect(`${REGISTRATION_PATH}?sent=1`);
@@ -325,7 +348,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     );
   }
 
-  const { config } = await getRequestMarket();
+  const { config, host: requestHost } = await getRequestMarket();
   trackAnalyticsEvent({
     eventName: "auth_forgot_password_requested",
     market: config.code,
@@ -333,9 +356,81 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${config.siteUrl}/login`,
+  const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: new URL("/auth/recovery", resolveAuthRedirectBase(requestHost, config.siteUrl)).toString(),
   });
 
+  // The response stays neutral so account existence is never revealed.
+  if (resetError) {
+    logAuthMailFailure("auth_forgot_password_send_failed", "Password reset email request failed", resetError, config.code);
+  }
+
   redirect("/forgot-password?sent=1");
+};
+
+export const resetPasswordAction = async (formData: FormData) => {
+  const rawPassword = formData.get("password");
+  const rawConfirm = formData.get("confirmPassword");
+  const password = typeof rawPassword === "string" ? rawPassword : "";
+  const confirmPassword = typeof rawConfirm === "string" ? rawConfirm : "";
+  let requestMarket: "de" | "us" = "de";
+
+  try {
+    requestMarket = (await getRequestMarket()).market;
+  } catch {
+    // Fallback to German defaults outside request scope.
+  }
+
+  const authCopy = getMarketCopy(requestMarket).shared.auth;
+  const failBack = (message: string): never =>
+    redirectWithError("/reset-password", message);
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirectWithError("/forgot-password", authCopy.errors.resetLinkInvalid);
+  }
+
+  if (!isValidRegistrationPassword(password)) {
+    failBack(authCopy.errors.registerWeakPassword);
+  }
+
+  if (password !== confirmPassword) {
+    failBack(authCopy.errors.resetMismatch);
+  }
+
+  const resetRateLimit = await enforceActionRateLimit({
+    scope: "auth_reset_password",
+    maxSubmissions: 10,
+    windowMinutes: 60,
+  });
+
+  if (!resetRateLimit.allowed) {
+    failBack(authCopy.errors.resetRateLimited);
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    const code = (error as { code?: string }).code ?? "";
+
+    if (code === "same_password") {
+      failBack(authCopy.errors.resetSamePassword);
+    }
+
+    if (code === "weak_password") {
+      failBack(authCopy.errors.registerWeakPassword);
+    }
+
+    logAuthMailFailure("auth_reset_password_failed", "Password update failed", error, requestMarket);
+    failBack(authCopy.errors.resetFailed);
+  }
+
+  // End every session so the new password is required everywhere.
+  await supabase.auth.signOut({ scope: "global" });
+
+  redirect("/login?reset=1");
 };
