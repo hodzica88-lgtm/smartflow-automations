@@ -3,6 +3,12 @@
   padding: 1.4rem 1rem 2.5rem;
   display: grid;
   gap: 0.9rem;
+  /* The dashboard workspace is light, while global colors target dark pages. */
+  color: #1b2b42;
+  --text: #1b2b42;
+  --muted: #4b5c73;
+  --border: #bfccdc;
+  --shadow-xl: 0 18px 42px rgba(15, 23, 42, 0.12);
 }
 
 .header,
@@ -11,7 +17,7 @@
   margin-inline: auto;
   border: 1px solid var(--border);
   border-radius: 24px;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  background: linear-gradient(155deg, #ffffff, #f8fafd);
   box-shadow: var(--shadow-xl);
 }
 
@@ -22,19 +28,19 @@
 }
 
 .backLink {
-  color: var(--gold);
+  color: #805500;
   font-weight: 700;
   text-decoration: none;
 }
 
 .backLink:hover {
-  color: var(--gold-hover);
+  color: #614100;
 }
 
 .eyebrow {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--gold);
+  color: #805500;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -97,7 +103,7 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: #f5f8fc;
 }
 
 .statusLabel {
@@ -170,13 +176,23 @@
 
 .buttonSecondary {
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: #edf2f8;
   color: var(--text);
 }
 
-.buttonSecondary:hover {
+.buttonSecondary:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--gold) 40%, var(--border));
   transform: translateY(-1px);
+}
+
+.buttonSecondary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.shell footer a[href^="mailto:"] {
+  /* LegalFooter uses inline gold text, which is too pale on the light workspace. */
+  color: #805500 !important;
 }
 
 @media (min-width: 48rem) {
