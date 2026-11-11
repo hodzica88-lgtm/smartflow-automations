@@ -14,6 +14,12 @@ build
 .env*.local
 .env.production
 .env.production-*
+.env.test
+.env.test.*
+.env.development
+.env.development.*
+!.env.example
+!.env.local.example
 
 # logs
 npm-debug.log*

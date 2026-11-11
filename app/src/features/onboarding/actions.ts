@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { ensureUserProfile } from "@/features/auth/profile";
 import { recordCompanyAuditLog } from "@/features/audit-log/service";
-import { BILLING_TRIAL_DAYS } from "@/features/billing/service";
+import { BILLING_ROUTE } from "@/features/billing/service";
 import { parseAverageOrderValue } from "@/features/customer-value/service";
 import { normalizeGrowthSource } from "@/features/analytics/growth";
 import { addMissingIndustryTemplateInquiryTypes } from "@/features/inquiry-types/service";
@@ -103,8 +103,6 @@ export const completeOnboardingAction = async (formData: FormData) => {
   }
 
   const onboardingCopy = getMarketCopy(market).shared.auth;
-  const trialStart = new Date();
-  const trialEnd = new Date(trialStart.getTime() + BILLING_TRIAL_DAYS * 24 * 60 * 60 * 1000);
   const source = getStringValue(formData, "source") || getStringValue(formData, "utm_source");
   const companyName = getStringValue(formData, "companyName");
   const contactPerson = getStringValue(formData, "contactPerson");
@@ -221,11 +219,7 @@ export const completeOnboardingAction = async (formData: FormData) => {
       .from("subscriptions")
       .insert({
         company_id: companyId,
-        current_period_end: trialEnd.toISOString(),
-        current_period_start: trialStart.toISOString(),
-        status: "trialing",
-        trial_ends_at: trialEnd.toISOString(),
-        trial_started_at: trialStart.toISOString(),
+        status: "inactive",
       });
 
     if (subscriptionError) {
@@ -276,5 +270,5 @@ export const completeOnboardingAction = async (formData: FormData) => {
     redirectWithError(onboardingCopy.errors.onboardingFailed);
   }
 
-  redirect("/dashboard");
+  redirect(`${BILLING_ROUTE}?billing=no_subscription`);
 };

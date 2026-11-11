@@ -20,7 +20,7 @@ describe("market copy", () => {
     const us = getMarketCopy("us").shared;
 
     expect(us.auth.registrationTitle).toBe("Start registration");
-    expect(us.auth.registrationLead).toBe("Sign in to create your company and start the 30-day free trial.");
+    expect(us.auth.registrationLead).toBe("Create your account and set up your company. The 30 free days start only after Stripe checkout, where a payment method is added.");
     expect(us.auth.registrationPrice).toBe("$399 / month");
     expect(us.auth.registrationTaxNote).toBe("Taxes calculated at checkout where applicable.");
     expect(us.auth.loginForgotPassword).toBe("Forgot your password?");

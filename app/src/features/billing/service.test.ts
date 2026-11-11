@@ -21,6 +21,19 @@ const {
 } = await import("./service");
 
 describe("billing access", () => {
+  it("keeps a freshly registered company locked until Stripe confirms the subscription", () => {
+    const input = {
+      cancelAt: null,
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      status: "inactive" as const,
+      trialEndsAt: null,
+    };
+
+    expect(hasBillingAccess(input)).toBe(false);
+    expect(getBillingLockReason(input)).toBe("no_subscription");
+  });
+
   it("allows active subscriptions", () => {
     expect(
       hasBillingAccess({

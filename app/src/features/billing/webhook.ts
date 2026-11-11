@@ -160,11 +160,43 @@ const syncSubscription = async (companyId: string, subscription: Stripe.Subscrip
     currentPeriodStart: toIsoString(currentPeriodStart),
     currentPeriodEnd: toIsoString(currentPeriodEnd),
     cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
-    trialStartedAt: toIsoString(subscription.trial_start),
-    trialEndsAt: toIsoString(subscription.trial_end),
-    trialUsedAt: toIsoString(subscription.trial_start) ?? new Date().toISOString(),
+    trialStartedAt: toIsoString(subscription.trial_start) ?? undefined,
+    trialEndsAt: toIsoString(subscription.trial_end) ?? undefined,
+    trialUsedAt: toIsoString(subscription.trial_start) ?? undefined,
     canceledAt: toIsoString(subscription.canceled_at),
   });
+};
+
+const LIVE_STATUSES = new Set(["active", "trialing", "past_due", "unpaid", "paused"]);
+
+// A second subscription for a company that already has a live one is cancelled in Stripe
+// and never written to the company record.
+const rejectDuplicateSubscription = async (
+  companyId: string,
+  subscription: Pick<Stripe.Subscription, "id" | "status">,
+  stripe: Stripe,
+) => {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("stripe_subscription_id, status")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  const currentId = data?.stripe_subscription_id ?? null;
+
+  if (!currentId || currentId === subscription.id || !LIVE_STATUSES.has(String(data?.status))) {
+    return false;
+  }
+
+  if (subscription.status !== "canceled" && subscription.status !== "incomplete_expired") {
+    try {
+      await stripe.subscriptions.cancel(subscription.id);
+    } catch {
+      // Already cancelled or not cancellable; the company record stays untouched either way.
+    }
+  }
+
+  return true;
 };
 
 type SubscriptionEventType =
@@ -262,6 +294,14 @@ const handleCheckoutCompleted = async (
       : session.subscription?.id ?? null;
   const customerId =
     typeof session.customer === "string" ? session.customer : session.customer?.id ?? null;
+
+  if (subscriptionId) {
+    const existingSubscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+    if (await rejectDuplicateSubscription(companyId, existingSubscription, stripe)) {
+      return;
+    }
+  }
 
   await upsertCompanySubscription({
     companyId,
@@ -367,6 +407,11 @@ const handleSubscriptionEvent = async (
   }
 
   const supabase = createSupabaseServiceRoleClient();
+
+  if (await rejectDuplicateSubscription(companyId, subscription, stripe)) {
+    return;
+  }
+
   const { data: previousSub } = await supabase
     .from("subscriptions")
     .select("status, cancel_at_period_end")
