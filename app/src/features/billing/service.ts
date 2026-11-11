@@ -345,9 +345,14 @@ export const syncOwnerCompanyBillingFromStripe = async (
       stripe_price_id: stripePriceId,
       stripe_product_id: stripeProductId,
       stripe_subscription_id: subscription.id,
-      trial_ends_at: toIsoString(subscription.trial_end),
-      trial_started_at: toIsoString(subscription.trial_start),
-      trial_used_at: subscription.trial_start ? toIsoString(subscription.trial_start) : null,
+      // Never erase trial history: only write trial fields Stripe actually reports.
+      ...(subscription.trial_end ? { trial_ends_at: toIsoString(subscription.trial_end) } : {}),
+      ...(subscription.trial_start
+        ? {
+            trial_started_at: toIsoString(subscription.trial_start),
+            trial_used_at: toIsoString(subscription.trial_start),
+          }
+        : {}),
     })
     .eq("company_id", input.companyId);
 

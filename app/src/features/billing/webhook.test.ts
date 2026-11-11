@@ -2,6 +2,8 @@ import Stripe from "stripe";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
+  cancelSubscription: vi.fn(),
+  currentSubscriptionRow: null as { status: string; stripe_subscription_id: string | null } | null,
   createAppNotification: vi.fn(),
   resolveCompanyGrowthSource: vi.fn().mockResolvedValue("direct"),
   trackGrowthEvent: vi.fn(),
@@ -83,6 +85,13 @@ vi.mock("@/shared/lib/supabase/server", () => ({
         return {
           select() {
             return {
+              eq() {
+                return {
+                  async maybeSingle() {
+                    return { data: testState.currentSubscriptionRow, error: null };
+                  },
+                };
+              },
               limit() {
                 return {
                   eq(_column: string, value: string) {
@@ -135,6 +144,10 @@ vi.mock("@/shared/lib/stripe/server", async () => {
     testState.retrievedSubscription as unknown as Stripe.Response<Stripe.Subscription>,
   );
 
+  vi.spyOn(stripeClient.subscriptions, "cancel").mockImplementation(
+    testState.cancelSubscription as never,
+  );
+
   return {
     createStripeServerClient: () => stripeClient,
   };
@@ -174,6 +187,8 @@ describe("processStripeWebhookRequest", () => {
     testState.trackGrowthEvent.mockReset();
     testState.resolveCompanyGrowthSource.mockResolvedValue("direct");
     testState.upsertCompanySubscription.mockReset();
+    testState.cancelSubscription.mockReset();
+    testState.currentSubscriptionRow = null;
     process.env.STRIPE_WEBHOOK_SECRET = webhookSecret;
     testState.retrievedSubscription.cancel_at_period_end = false;
     testState.retrievedSubscription.cancel_at = null;
@@ -460,4 +475,113 @@ describe("processStripeWebhookRequest", () => {
       }),
     );
   });
-});
+
+  const sendEvent = async (event: Record<string, unknown>) => {
+    const payload = JSON.stringify({ object: "event", ...event });
+    const signature = stripeClient.webhooks.generateTestHeaderString({
+      payload,
+      secret: webhookSecret,
+    });
+
+    return processStripeWebhookRequest(
+      new Request("http://localhost/api/stripe/webhook", {
+        method: "POST",
+        headers: { "content-type": "application/json", "stripe-signature": signature },
+        body: payload,
+      }),
+    );
+  };
+
+  const checkoutCompletedEvent = (id: string) => ({
+    id,
+    type: "checkout.session.completed",
+    data: {
+      object: {
+        id: "cs_test_1",
+        object: "checkout.session",
+        mode: "subscription",
+        client_reference_id: "company_test_123",
+        customer: "cus_test_123",
+        subscription: "sub_test_123",
+        metadata: { company_id: "company_test_123" },
+      },
+    },
+  });
+
+  it("starts the trial only from the confirmed Stripe subscription after checkout", async () => {
+    testState.retrievedSubscription.status = "trialing";
+    testState.retrievedSubscription.trial_start = 1_999_000_000;
+    testState.retrievedSubscription.trial_end = 2_001_592_000;
+
+    const response = await sendEvent(checkoutCompletedEvent("evt_trial_checkout"));
+
+    expect(response.status).toBe(200);
+    expect(testState.upsertCompanySubscription).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: "trialing",
+        trialStartedAt: new Date(1_999_000_000 * 1000).toISOString(),
+        trialEndsAt: new Date(2_001_592_000 * 1000).toISOString(),
+        trialUsedAt: new Date(1_999_000_000 * 1000).toISOString(),
+      }),
+    );
+  });
+
+  it("does not touch trial history when a subscription has no trial", async () => {
+    await sendEvent(checkoutCompletedEvent("evt_no_trial"));
+
+    const lastCall = testState.upsertCompanySubscription.mock.calls.at(-1)?.[0];
+    expect(lastCall.trialUsedAt).toBeUndefined();
+    expect(lastCall.trialStartedAt).toBeUndefined();
+    expect(lastCall.trialEndsAt).toBeUndefined();
+  });
+
+  it("ignores an abandoned or expired checkout without changing the company record", async () => {
+    const response = await sendEvent({
+      id: "evt_checkout_expired",
+      type: "checkout.session.expired",
+      data: {
+        object: {
+          id: "cs_test_expired",
+          object: "checkout.session",
+          mode: "subscription",
+          client_reference_id: "company_test_123",
+          subscription: null,
+        },
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(testState.upsertCompanySubscription).not.toHaveBeenCalled();
+  });
+
+  it("cancels a parallel duplicate subscription and keeps the existing company record", async () => {
+    testState.currentSubscriptionRow = { status: "trialing", stripe_subscription_id: "sub_existing" };
+
+    const response = await sendEvent(checkoutCompletedEvent("evt_duplicate_checkout"));
+
+    expect(response.status).toBe(200);
+    expect(testState.cancelSubscription).toHaveBeenCalledWith("sub_test_123");
+    expect(testState.upsertCompanySubscription).not.toHaveBeenCalled();
+  });
+
+  it("does not let the deletion of a duplicate subscription cancel the active company", async () => {
+    testState.currentSubscriptionRow = { status: "active", stripe_subscription_id: "sub_existing" };
+    testState.retrievedSubscription.status = "canceled";
+
+    await sendEvent({
+      id: "evt_duplicate_deleted",
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          id: "sub_test_123",
+          object: "subscription",
+          customer: "cus_test_123",
+          metadata: { company_id: "company_test_123" },
+          items: { data: [] },
+          status: "canceled",
+        },
+      },
+    });
+
+    expect(testState.upsertCompanySubscription).not.toHaveBeenCalled();
+  });});

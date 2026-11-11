@@ -44,6 +44,7 @@ const state = vi.hoisted(() => ({
   market: "de" as "de" | "us",
   priceCurrency: "eur" as "eur" | "usd",
   priceRetrieveId: null as string | null,
+  stripeSubscriptions: [] as Array<{ id: string; status: string }>,
   subscriptionsUpdatePayload: null as Record<string, unknown> | null,
 }));
 
@@ -117,6 +118,9 @@ vi.mock("@/shared/lib/stripe/server", () => ({
           };
         }),
       },
+    },
+    subscriptions: {
+      list: vi.fn(async () => ({ data: state.stripeSubscriptions })),
     },
     prices: {
       retrieve: vi.fn(async (priceId: string) => {
@@ -233,6 +237,7 @@ describe("stripe billing checkout trial", () => {
       trialUsedAt: null,
     };
     state.checkoutPayload = null;
+    state.stripeSubscriptions = [];
     state.subscriptionsUpdatePayload = null;
   });
 
@@ -267,20 +272,117 @@ describe("stripe billing checkout trial", () => {
     expect(subscriptionData.trial_period_days).toBeUndefined();
   });
 
-  it("does not grant trial when active subscription already exists", async () => {
-    state.billingSnapshot.status = "active";
-    state.billingSnapshot.stripeSubscriptionId = "sub_existing_1";
+  const getSubscriptionData = () =>
+    (state.checkoutPayload?.subscription_data ?? {}) as {
+      trial_end?: number;
+      trial_period_days?: number;
+      trial_settings?: unknown;
+    };
 
+  it("requires a payment method and cancels the trial if none is present at its end", async () => {
     await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
       "REDIRECT:https://checkout.stripe.test/session_1",
     );
 
-    const subscriptionData = (state.checkoutPayload?.subscription_data ?? {}) as {
-      trial_period_days?: number;
-    };
-    expect(subscriptionData.trial_period_days).toBeUndefined();
+    expect(state.checkoutPayload?.payment_method_collection).toBe("always");
+    expect(getSubscriptionData().trial_settings).toEqual({
+      end_behavior: { missing_payment_method: "cancel" },
+    });
+    expect(state.checkoutPayload?.line_items).toEqual([{ price: "price_test_1", quantity: 1 }]);
   });
 
+  it.each(["active", "trialing", "past_due", "unpaid", "paused"])(
+    "blocks a parallel checkout when a %s subscription exists",
+    async (status) => {
+      state.billingSnapshot.status = status;
+      state.billingSnapshot.stripeSubscriptionId = "sub_existing_1";
+
+      await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+        "REDIRECT:/dashboard/billing?error=",
+      );
+      expect(state.checkoutPayload).toBeNull();
+    },
+  );
+
+  it("blocks a checkout while a cancellation is scheduled but access is still running", async () => {
+    state.billingSnapshot.status = "canceled";
+    state.billingSnapshot.hasAppAccess = true;
+    state.billingSnapshot.stripeSubscriptionId = "sub_existing_1";
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:/dashboard/billing?error=",
+    );
+    expect(state.checkoutPayload).toBeNull();
+  });
+
+  it("blocks a checkout when Stripe already holds a live subscription for the customer", async () => {
+    state.billingSnapshot.stripeCustomerId = "cus_test_1";
+    state.stripeSubscriptions = [{ id: "sub_other", status: "trialing" }];
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:/dashboard/billing?error=",
+    );
+    expect(state.checkoutPayload).toBeNull();
+  });
+
+  it("allows a new subscription without trial after a fully ended subscription", async () => {
+    state.billingSnapshot.status = "canceled";
+    state.billingSnapshot.hasAppAccess = false;
+    state.billingSnapshot.stripeSubscriptionId = "sub_old";
+    state.billingSnapshot.stripeCustomerId = "cus_test_1";
+    state.billingSnapshot.trialUsedAt = new Date().toISOString();
+    state.stripeSubscriptions = [{ id: "sub_old", status: "canceled" }];
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+    expect(getSubscriptionData().trial_period_days).toBeUndefined();
+    expect(getSubscriptionData().trial_end).toBeUndefined();
+  });
+
+  it("does not create a trial in the database when checkout is only started", async () => {
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+
+    expect(state.subscriptionsUpdatePayload).not.toHaveProperty("trial_used_at");
+    expect(state.subscriptionsUpdatePayload).not.toHaveProperty("trial_started_at");
+    expect(state.subscriptionsUpdatePayload).not.toHaveProperty("trial_ends_at");
+    expect(state.subscriptionsUpdatePayload).not.toHaveProperty("status");
+  });
+
+  it("allows a retry after an abandoned checkout and still grants the single trial", async () => {
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow("REDIRECT:");
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+    expect(getSubscriptionData().trial_period_days).toBe(30);
+  });
+
+  it("does not grant a new trial to a company whose legacy local trial already expired", async () => {
+    state.billingSnapshot.status = "trialing";
+    state.billingSnapshot.trialStartedAt = "2020-01-01T00:00:00.000Z";
+    state.billingSnapshot.trialEndsAt = "2020-01-31T00:00:00.000Z";
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+    expect(getSubscriptionData().trial_period_days).toBeUndefined();
+    expect(getSubscriptionData().trial_end).toBeUndefined();
+  });
+
+  it("keeps the end date of a still running legacy local trial instead of extending it", async () => {
+    const endsAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+    state.billingSnapshot.status = "trialing";
+    state.billingSnapshot.trialStartedAt = new Date().toISOString();
+    state.billingSnapshot.trialEndsAt = endsAt.toISOString();
+
+    await expect(startBillingCheckoutAction(createCheckoutFormData())).rejects.toThrow(
+      "REDIRECT:https://checkout.stripe.test/session_1",
+    );
+    expect(getSubscriptionData().trial_end).toBe(Math.floor(endsAt.getTime() / 1000));
+    expect(getSubscriptionData().trial_period_days).toBeUndefined();
+  });
   it("uses US checkout locale, currency-matched price and varnito.com return URLs with automatic tax enabled", async () => {
     state.market = "us";
     state.priceCurrency = "usd";

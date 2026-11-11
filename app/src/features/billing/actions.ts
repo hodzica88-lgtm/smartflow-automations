@@ -24,22 +24,62 @@ const redirectBillingError = (message: string): never => {
   redirect(`${BILLING_ROUTE}?error=${encodeURIComponent(message)}`);
 };
 
-const canGrantCheckoutTrial = (
-  billing: Awaited<ReturnType<typeof getCompanyBillingSnapshot>>,
-) => {
-  if (billing.trialUsedAt) {
+type CheckoutBilling = Awaited<ReturnType<typeof getCompanyBillingSnapshot>>;
+type CheckoutTrial = { kind: "none" } | { kind: "days"; days: number } | { kind: "until"; unix: number };
+
+// Stripe requires trial_end to be at least 48 hours in the future.
+const MIN_TRIAL_END_LEAD_MS = 48 * 60 * 60 * 1000 + 10 * 60 * 1000;
+const LIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing", "past_due", "unpaid", "paused"]);
+
+const hasLiveSubscription = (billing: CheckoutBilling) => {
+  if (!billing.stripeSubscriptionId) {
     return false;
   }
 
-  if (billing.stripeSubscriptionId) {
+  if (LIVE_SUBSCRIPTION_STATUSES.has(billing.status)) {
+    return true;
+  }
+
+  return billing.status === "canceled" && billing.hasAppAccess;
+};
+
+const resolveCheckoutTrial = (billing: CheckoutBilling, now: Date): CheckoutTrial => {
+  if (billing.trialUsedAt || billing.stripeSubscriptionId || billing.status === "active") {
+    return { kind: "none" };
+  }
+
+  // Legacy company with a still-running local trial: keep its end date, never extend it.
+  if (billing.trialStartedAt) {
+    const trialEndsAtMs = billing.trialEndsAt ? Date.parse(billing.trialEndsAt) : Number.NaN;
+
+    if (
+      billing.status === "trialing" &&
+      Number.isFinite(trialEndsAtMs) &&
+      trialEndsAtMs - now.getTime() >= MIN_TRIAL_END_LEAD_MS
+    ) {
+      return { kind: "until", unix: Math.floor(trialEndsAtMs / 1000) };
+    }
+
+    return { kind: "none" };
+  }
+
+  return { kind: "days", days: BILLING_TRIAL_DAYS };
+};
+
+const hasLiveStripeSubscription = async (stripe: Stripe, customerId: string | null) => {
+  if (!customerId) {
     return false;
   }
 
-  if (billing.status === "active") {
-    return false;
-  }
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 20,
+  });
 
-  return true;
+  return subscriptions.data.some((subscription) =>
+    LIVE_SUBSCRIPTION_STATUSES.has(subscription.status),
+  );
 };
 
 const getCompanyForBilling = async (companyId: string) => {
@@ -110,6 +150,15 @@ export async function startBillingCheckoutAction(formData: FormData) {
   const priceProductId =
     typeof price.product === "string" ? price.product : price.product.id;
 
+  if (
+    hasLiveSubscription(billing) ||
+    (await hasLiveStripeSubscription(stripe, billing.stripeCustomerId))
+  ) {
+    redirectBillingError(
+      "Für diese Firma besteht bereits ein Abonnement. Bitte verwalten Sie es über „Abonnement verwalten“.",
+    );
+  }
+
   const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
     metadata: {
       company_id: access.companyId,
@@ -118,14 +167,25 @@ export async function startBillingCheckoutAction(formData: FormData) {
     },
   };
 
-  const shouldGrantTrial = canGrantCheckoutTrial(billing);
+  const trial = resolveCheckoutTrial(billing, new Date());
 
-  if (shouldGrantTrial) {
-    subscriptionData.trial_period_days = BILLING_TRIAL_DAYS;
+  if (trial.kind === "days") {
+    subscriptionData.trial_period_days = trial.days;
+  } else if (trial.kind === "until") {
+    subscriptionData.trial_end = trial.unix;
   }
+
+  if (trial.kind !== "none") {
+    subscriptionData.trial_settings = {
+      end_behavior: { missing_payment_method: "cancel" },
+    };
+  }
+
+  const shouldGrantTrial = trial.kind !== "none";
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
+    payment_method_collection: "always",
     success_url: `${siteUrl}${BILLING_ROUTE}?success=checkout`,
     cancel_url: `${siteUrl}${BILLING_ROUTE}?canceled=1`,
     line_items: [{ price: price.id, quantity: 1 }],
