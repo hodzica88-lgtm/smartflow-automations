@@ -73,6 +73,15 @@ type SharedCopy = {
     registrationTaxNote: string;
     registrationLoginCta: string;
     registrationHomeCta: string;
+    registrationEmail: string;
+    registrationPassword: string;
+    registrationPasswordHint: string;
+    registrationConsentPrefix: string;
+    registrationConsentMiddle: string;
+    registrationConsentSuffix: string;
+    registrationSubmit: string;
+    registrationHaveAccount: string;
+    registrationSent: string;
     loginEyebrow: string;
     loginTitle: string;
     loginLead: string;
@@ -120,6 +129,11 @@ type SharedCopy = {
       inactiveMember: string;
       forgotMissingEmail: string;
       forgotRateLimited: string;
+      registerWeakPassword: string;
+      registerConsentRequired: string;
+      registerRateLimited: string;
+      registerFailed: string;
+      confirmationLinkInvalid: string;
     };
   };
   team: {
@@ -202,11 +216,20 @@ const COPY: Record<MarketCode, MarketCopy> = {
       auth: {
         registrationEyebrow: "Varnito",
         registrationTitle: "Registrierung starten",
-        registrationLead: "Für den Testzugang melden Sie sich an und legen im Anschluss Ihre Firma an. Danach kann die 30-Tage-Testphase gestartet werden.",
+        registrationLead: "Erstellen Sie Ihr Konto und legen Sie Ihre Firma an. Die 30 kostenlosen Tage beginnen erst nach dem Stripe-Checkout, in dem eine Zahlungsmethode hinterlegt wird.",
         registrationPrice: "299 € / Monat",
         registrationTaxNote: "zzgl. gesetzlicher Umsatzsteuer",
         registrationLoginCta: "Zum Login",
         registrationHomeCta: "Zur Startseite",
+        registrationEmail: "E-Mail",
+        registrationPassword: "Passwort",
+        registrationPasswordHint: "Mindestens 10 Zeichen, mit Buchstaben und Zahlen.",
+        registrationConsentPrefix: "Ich habe die",
+        registrationConsentMiddle: "und die",
+        registrationConsentSuffix: "gelesen und akzeptiere sie.",
+        registrationSubmit: "Konto erstellen",
+        registrationHaveAccount: "Bereits registriert?",
+        registrationSent: "Falls diese E-Mail-Adresse noch nicht registriert ist, haben wir Ihnen eine Bestätigungs-E-Mail gesendet. Bitte öffnen Sie den Link darin, um Ihre Firma anzulegen. Falls Sie bereits ein Konto haben, melden Sie sich an oder setzen Sie Ihr Passwort zurück.",
         loginEyebrow: "Varnito",
         loginTitle: "Anmelden",
         loginLead: "Melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an.",
@@ -258,6 +281,11 @@ const COPY: Record<MarketCode, MarketCopy> = {
           inactiveMember: "Dieser Mitarbeiterzugang ist nicht mehr aktiv.",
           forgotMissingEmail: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
           forgotRateLimited: "Zu viele Anfragen zum Zurücksetzen des Passworts. Bitte versuchen Sie es später erneut.",
+          registerWeakPassword: "Das Passwort muss 10 bis 72 Zeichen lang sein und Buchstaben und Zahlen enthalten.",
+          registerConsentRequired: "Bitte akzeptieren Sie AGB und Datenschutzerklärung.",
+          registerRateLimited: "Zu viele Registrierungsversuche. Bitte versuchen Sie es später erneut.",
+          registerFailed: "Die Registrierung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.",
+          confirmationLinkInvalid: "Der Bestätigungslink ist ungültig oder abgelaufen. Falls Sie Ihre E-Mail-Adresse bereits bestätigt haben, melden Sie sich an.",
         },
       },
       team: {
@@ -416,11 +444,20 @@ const COPY: Record<MarketCode, MarketCopy> = {
       auth: {
         registrationEyebrow: "Varnito",
         registrationTitle: "Start registration",
-        registrationLead: "Sign in to create your company and start the 30-day free trial.",
+        registrationLead: "Create your account and set up your company. The 30 free days start only after Stripe checkout, where a payment method is added.",
         registrationPrice: "$399 / month",
         registrationTaxNote: "Taxes calculated at checkout where applicable.",
         registrationLoginCta: "Go to login",
         registrationHomeCta: "Back to home",
+        registrationEmail: "Email",
+        registrationPassword: "Password",
+        registrationPasswordHint: "At least 10 characters, with letters and numbers.",
+        registrationConsentPrefix: "I have read and accept the",
+        registrationConsentMiddle: "and the",
+        registrationConsentSuffix: ".",
+        registrationSubmit: "Create account",
+        registrationHaveAccount: "Already registered?",
+        registrationSent: "If this email address is not registered yet, we have sent you a confirmation email. Please open the link in it to set up your company. If you already have an account, sign in or reset your password.",
         loginEyebrow: "Varnito",
         loginTitle: "Sign in",
         loginLead: "Use your email address and password to continue.",
@@ -472,6 +509,11 @@ const COPY: Record<MarketCode, MarketCopy> = {
           inactiveMember: "This team access is no longer active.",
           forgotMissingEmail: "Please enter your email address.",
           forgotRateLimited: "Too many password reset requests. Please try again later.",
+          registerWeakPassword: "The password must be 10 to 72 characters long and contain letters and numbers.",
+          registerConsentRequired: "Please accept the Terms and the Privacy Policy.",
+          registerRateLimited: "Too many registration attempts. Please try again later.",
+          registerFailed: "Registration could not be completed. Please try again.",
+          confirmationLinkInvalid: "The confirmation link is invalid or expired. If you already confirmed your email address, please sign in.",
         },
       },
       team: {

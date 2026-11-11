@@ -12,6 +12,7 @@ import {
 } from "@/features/billing/service";
 import { getStripeMonthlyPriceForMarket } from "@/features/billing/pricing";
 import { trackAnalyticsEvent } from "@/features/analytics/events";
+import { resolveAuthRedirectBase } from "@/features/auth/registration";
 import { acceptBillingLegalTerms } from "@/features/legal/billing";
 import { publicEnv } from "@/shared/config/env";
 import { type MarketCode } from "@/shared/i18n/market";
@@ -105,7 +106,7 @@ export async function startBillingCheckoutAction(formData: FormData) {
   try {
     const requestMarket = await getRequestMarket();
     market = requestMarket.market;
-    siteUrl = requestMarket.config.siteUrl;
+    siteUrl = resolveAuthRedirectBase(requestMarket.host, requestMarket.config.siteUrl);
   } catch {
     // Fall back to existing environment URL outside request scope.
   }
@@ -241,7 +242,7 @@ export async function openBillingPortalAction() {
   try {
     const requestMarket = await getRequestMarket();
     market = requestMarket.market;
-    siteUrl = requestMarket.config.siteUrl;
+    siteUrl = resolveAuthRedirectBase(requestMarket.host, requestMarket.config.siteUrl);
   } catch {
     // Fall back to existing environment URL outside request scope.
   }

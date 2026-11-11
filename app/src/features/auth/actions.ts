@@ -6,8 +6,16 @@ import { trackAnalyticsEvent } from "@/features/analytics/events";
 import { BILLING_ROUTE, getCompanyBillingSnapshot } from "@/features/billing/service";
 import { ensureUserProfile } from "@/features/auth/profile";
 import { getSafePostLoginPath, isOperatorUser } from "@/features/auth/redirects";
+import {
+  isValidRegistrationEmail,
+  isValidRegistrationPassword,
+  normalizeRegistrationEmail,
+  resolveAuthRedirectBase,
+  sanitizeRegistrationSource,
+} from "@/features/auth/registration";
 import { getUserCompanyState } from "@/features/onboarding/company";
 import { getMarketCopy } from "@/shared/i18n/copy";
+import { getMarketConfig } from "@/shared/i18n/market";
 import { getRequestMarket } from "@/shared/i18n/request";
 import { enforceActionRateLimit } from "@/shared/lib/rate-limit/service";
 import { createSupabaseServerClient } from "@/shared/lib/supabase/server";
@@ -163,6 +171,122 @@ export const loginAction = async (formData: FormData) => {
   }
 
   redirect(nextPath ?? "/dashboard");
+};
+
+const REGISTRATION_PATH = "/registrierung";
+
+const redirectRegistrationError = (message: string, source: string): never => {
+  const searchParams = new URLSearchParams({ error: message });
+
+  if (source) {
+    searchParams.set("source", source);
+  }
+
+  redirect(`${REGISTRATION_PATH}?${searchParams.toString()}`);
+};
+
+export const registerAction = async (formData: FormData) => {
+  const email = normalizeRegistrationEmail(getStringValue(formData, "email"));
+  const rawPassword = formData.get("password");
+  const password = typeof rawPassword === "string" ? rawPassword : "";
+  const consent = getStringValue(formData, "consent") === "on";
+  const source = sanitizeRegistrationSource(
+    getStringValue(formData, "source") || getStringValue(formData, "utm_source"),
+  );
+  let requestMarket: "de" | "us" = "de";
+  let siteUrl = getMarketConfig("de").siteUrl;
+  let host: string | null = null;
+
+  try {
+    const request = await getRequestMarket();
+    requestMarket = request.market;
+    siteUrl = request.config.siteUrl;
+    host = request.host;
+  } catch {
+    // Fallback to German defaults outside request scope.
+  }
+
+  const authCopy = getMarketCopy(requestMarket).shared.auth;
+
+  if (!email || !password) {
+    redirectRegistrationError(authCopy.errors.missingRequired, source);
+  }
+
+  if (!isValidRegistrationEmail(email)) {
+    redirectRegistrationError(authCopy.errors.invalidEmail, source);
+  }
+
+  if (!isValidRegistrationPassword(password)) {
+    redirectRegistrationError(authCopy.errors.registerWeakPassword, source);
+  }
+
+  if (!consent) {
+    redirectRegistrationError(authCopy.errors.registerConsentRequired, source);
+  }
+
+  const registerRateLimit = await enforceActionRateLimit({
+    scope: "auth_register",
+    maxSubmissions: 5,
+    windowMinutes: 60,
+  });
+
+  if (!registerRateLimit.allowed) {
+    redirectRegistrationError(authCopy.errors.registerRateLimited, source);
+  }
+
+  const callbackUrl = new URL("/auth/callback", resolveAuthRedirectBase(host, siteUrl));
+
+  if (source) {
+    callbackUrl.searchParams.set("source", source);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: callbackUrl.toString() },
+  });
+
+  if (error) {
+    const code = (error as { code?: string }).code ?? "";
+
+    // Existing accounts must not be distinguishable from new ones.
+    if (code === "user_already_exists" || code === "email_exists") {
+      redirect(`${REGISTRATION_PATH}?sent=1`);
+    }
+
+    if (code === "weak_password") {
+      redirectRegistrationError(authCopy.errors.registerWeakPassword, source);
+    }
+
+    if (code === "email_address_invalid" || code === "validation_failed") {
+      redirectRegistrationError(authCopy.errors.invalidEmail, source);
+    }
+
+    if (
+      error.status === 429 ||
+      code === "over_email_send_rate_limit" ||
+      code === "over_request_rate_limit"
+    ) {
+      redirectRegistrationError(authCopy.errors.registerRateLimited, source);
+    }
+
+    redirectRegistrationError(authCopy.errors.registerFailed, source);
+  }
+
+  // A session is only returned when the project does not require email confirmation.
+  if (data?.session && data.user) {
+    try {
+      await ensureUserProfile(data.user);
+    } catch {
+      await supabase.auth.signOut();
+      redirectRegistrationError(authCopy.errors.profilePreparationFailed, source);
+    }
+
+    redirect(source ? `/onboarding?source=${encodeURIComponent(source)}` : "/onboarding");
+  }
+
+  redirect(`${REGISTRATION_PATH}?sent=1`);
 };
 
 export const logoutAction = async () => {
