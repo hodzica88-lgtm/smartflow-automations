@@ -10,52 +10,16 @@ import {
   createSupabaseServiceRoleClient,
 } from "@/shared/lib/supabase/server";
 
-const STATUS_LABELS: Record<string, string> = {
-  new: "Neue Anfrage",
-  contacted: "Kontaktiert",
-  successful: "Erfolgreich",
-  unsuccessful: "Nicht erfolgreich",
-};
+import LeadCards from "./LeadCards";
+import {
+  LEAD_STATUSES,
+  STATUS_LABELS,
+  primaryActionStyle,
+  secondaryActionStyle,
+  type LeadCard,
+} from "./lead-presentation";
 
-const SUCCESSFUL_OUTCOMES = [
-  { value: "appointment_scheduled", label: "Termin vereinbart" },
-  { value: "offer_created", label: "Angebot erstellt" },
-  { value: "job_won", label: "Auftrag erhalten" },
-];
-
-const UNSUCCESSFUL_OUTCOMES = [
-  { value: "price_comparison", label: "Preisvergleich" },
-  { value: "no_interest", label: "Kein Interesse" },
-  { value: "unreachable", label: "Nicht erreichbar" },
-  { value: "outside_service_area", label: "Außerhalb Einsatzgebiet" },
-  { value: "too_expensive", label: "Zu teuer" },
-  { value: "other", label: "Sonstiges" },
-];
-
-const LEAD_STATUSES = ["new", "contacted", "successful", "unsuccessful"];
 const LEADS_PAGE_SIZE = 50;
-
-const primaryActionStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minHeight: "2.75rem",
-  padding: "12px 18px",
-  borderRadius: 8,
-  background: "var(--gold)",
-  color: "var(--card)",
-  textDecoration: "none",
-  border: "none",
-  cursor: "pointer",
-  fontWeight: 700,
-} as const;
-
-const secondaryActionStyle = {
-  ...primaryActionStyle,
-  background: "var(--card)",
-  color: "var(--text)",
-  border: "1px solid var(--border)",
-} as const;
 
 type LeadListItem = {
   id: string;
@@ -86,12 +50,15 @@ const getString = (formData: FormData, key: string) => {
   return typeof value === "string" ? value.trim() : "";
 };
 
+const createdAtFormatter = new Intl.DateTimeFormat("de-DE", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 const formatCreatedAt = (createdAt: string) => {
   try {
-    return new Date(createdAt).toLocaleString("de-DE", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
+    const date = new Date(createdAt);
+    return Number.isNaN(date.getTime()) ? "Invalid Date" : createdAtFormatter.format(date);
   } catch {
     return createdAt;
   }
@@ -313,6 +280,29 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
     acc[entry.lead_id].push(entry);
     return acc;
   }, {});
+  // Only the fields already displayed in the cards cross the client boundary.
+  // Dates are formatted on the server to keep its timezone during hydration.
+  const assigneeOptions = teamMembers.map((member) => ({
+    id: member.id,
+    label: getTeamMemberLabel(member),
+  }));
+  const leadCards: LeadCard[] = leads.map((lead) => ({
+    id: lead.id,
+    leadName: [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt",
+    contactLabel: (lead.email ?? lead.phone) || "Keine Kontaktdaten",
+    inquiryType: lead.inquiry_type ?? "Nicht angegeben",
+    notes: lead.notes,
+    status: lead.status,
+    createdAtLabel: formatCreatedAt(lead.created_at),
+    assignedUserId: lead.assigned_user_id,
+    assignedLabel: getTeamMemberLabel(lead.assigned_user_id ? memberById.get(lead.assigned_user_id) : null),
+    successfulOutcome: lead.successful_outcome,
+    unsuccessfulOutcome: lead.unsuccessful_outcome,
+    history: (historyByLeadId[lead.id] ?? []).map((entry) => ({
+      id: entry.id,
+      label: `${formatCreatedAt(entry.created_at)}: ${getStatusLabel(entry.from_status)} → ${getStatusLabel(entry.to_status)} · ${entry.changed_by_user_id ? getTeamMemberLabel(memberById.get(entry.changed_by_user_id)) : "Nicht erfasst"}`,
+    })),
+  }));
   const getPageHref = (pageNumber: number) => {
     const params = new URLSearchParams();
 
@@ -416,173 +406,11 @@ export default async function LeadsPage({ searchParams }: LeadsPageProps) {
       </section>
 
       <section>
-        <div style={{ display: "grid", gap: 16 }}>
-          {leads.length === 0 ? (
-            <div style={{ padding: 24, border: "1px solid var(--border)", borderRadius: 8 }}>
-              <h2>Keine Leads vorhanden</h2>
-              <p>Für diese Auswahl sind aktuell keine Anfragen vorhanden.</p>
-            </div>
-          ) : (
-            leads.map((lead) => {
-              const leadName = [lead.first_name, lead.last_name].filter(Boolean).join(" ") || "Unbekannter Kontakt";
-              const isNew = lead.status === "new";
-              const assignedMember = lead.assigned_user_id
-                ? memberById.get(lead.assigned_user_id)
-                : null;
-
-              return (
-                <article
-                  key={lead.id}
-                  style={{
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
-                    padding: 18,
-                    background: isNew ? "rgba(46,204,113,0.08)" : "var(--card)",
-                    boxShadow: "0 1px 2px rgba(0,0,0,.04)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: 14, color: "var(--muted)" }}>Lead</p>
-                      <h2 style={{ margin: "4px 0 0", fontSize: 20 }}>
-                        <Link href={`/dashboard/leads/${lead.id}`} style={{ color: "inherit", textDecoration: "none" }}>
-                          {leadName}
-                        </Link>
-                      </h2>
-                      <p style={{ margin: "8px 0 0", color: "var(--muted)", overflowWrap: "anywhere" }}>
-                        {(lead.email ?? lead.phone) || "Keine Kontaktdaten"}
-                      </p>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          padding: "4px 10px",
-                          borderRadius: 9999,
-                          background: isNew ? "rgba(212,175,55,0.14)" : "rgba(167,170,176,0.22)",
-                          color: "var(--text)",
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {STATUS_LABELS[lead.status] ?? lead.status}
-                      </span>
-                      <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 13 }}>
-                        {formatCreatedAt(lead.created_at)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Zuständig</span>
-                      <span style={{ overflowWrap: "anywhere" }}>{getTeamMemberLabel(assignedMember)}</span>
-                    </div>
-
-                    <div style={{ display: "grid", gap: 6 }}>
-                      <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Anfrage-Typ</span>
-                      <span style={{ overflowWrap: "anywhere" }}>{lead.inquiry_type ?? "Nicht angegeben"}</span>
-                    </div>
-
-                    {lead.notes ? (
-                      <div style={{ display: "grid", gap: 6 }}>
-                        <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 600 }}>Beschreibung</span>
-                        <span style={{ overflowWrap: "anywhere" }}>{lead.notes}</span>
-                      </div>
-                    ) : null}
-
-                    <form action={updateLeadAction} style={{ display: "grid", gap: 12 }}>
-                      <input type="hidden" name="leadId" value={lead.id} />
-
-                      <label style={{ display: "grid", gap: 4 }}>
-                        Zuständig
-                        <select name="assigned_user_id" defaultValue={lead.assigned_user_id ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
-                          <option value="">Nicht zugewiesen</option>
-                          {teamMembers.map((member) => (
-                            <option key={member.id} value={member.id}>
-                              {getTeamMemberLabel(member)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label style={{ display: "grid", gap: 4 }}>
-                        Status
-                        <select name="status" defaultValue={lead.status} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
-                          {LEAD_STATUSES.map((value) => (
-                            <option key={value} value={value}>
-                              {STATUS_LABELS[value]}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <div style={{ display: "grid", gap: 12 }}>
-                        <label style={{ display: "grid", gap: 4 }}>
-                          Erfolgreiches Ergebnis
-                          <select name="successful_outcome" defaultValue={lead.successful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
-                            <option value="" disabled>Bitte wählen</option>
-                            {SUCCESSFUL_OUTCOMES.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                            Nur wählen, wenn Status auf „Erfolgreich“ gesetzt ist.
-                          </span>
-                        </label>
-
-                        <label style={{ display: "grid", gap: 4 }}>
-                          Nicht erfolgreich
-                          <select name="unsuccessful_outcome" defaultValue={lead.unsuccessful_outcome ?? ""} style={{ padding: 10, borderRadius: 8, border: "1px solid var(--border)" }}>
-                            <option value="" disabled>Bitte wählen</option>
-                            {UNSUCCESSFUL_OUTCOMES.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                            Nur wählen, wenn Status auf „Nicht erfolgreich“ gesetzt ist.
-                          </span>
-                        </label>
-                      </div>
-
-                      <button
-                        type="submit"
-                        style={{ ...primaryActionStyle, alignSelf: "flex-start" }}
-                      >
-                        Aktualisieren
-                      </button>
-                    </form>
-
-                    {historyByLeadId[lead.id]?.length ? (
-                      <div style={{ display: "grid", gap: 8, marginTop: 18 }}>
-                        <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", fontWeight: 700 }}>
-                          Verlauf
-                        </p>
-                        <ul style={{ margin: 0, paddingLeft: 16, color: "var(--muted)" }}>
-                          {historyByLeadId[lead.id].map((entry) => {
-                            const actor = entry.changed_by_user_id
-                              ? getTeamMemberLabel(memberById.get(entry.changed_by_user_id))
-                              : "Nicht erfasst";
-
-                            return (
-                              <li key={entry.id} style={{ marginBottom: 4, overflowWrap: "anywhere" }}>
-                                {formatCreatedAt(entry.created_at)}: {getStatusLabel(entry.from_status)} → {getStatusLabel(entry.to_status)} · {actor}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </div>
-                </article>
-              );
-            })
-          )}
-        </div>
+        <LeadCards
+          leads={leadCards}
+          teamMembers={assigneeOptions}
+          updateLeadAction={updateLeadAction}
+        />
 
         {page > 1 || hasNext ? (
           <nav
