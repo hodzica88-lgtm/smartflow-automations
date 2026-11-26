@@ -15,6 +15,7 @@ export const LEGAL_DOC_VERSION = "2026-08-07";
 
 export const SEO_INDEXABLE_PAGES = [
   "/",
+  "/partner",
   "/impressum",
   "/datenschutz",
   "/agb",

@@ -48,6 +48,16 @@ export default async function DatenschutzPage() {
       </section>
 
       <section style={{ display: "grid", gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 20 }}>Partnerbewerbungen</h2>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
+          Für Partnerbewerbungen verarbeiten wir Name, Unternehmen oder Agentur, geschäftliche E-Mail-Adresse, Website (optional), Land, Beschreibung der Zusammenarbeit sowie die Einwilligung zum Datenschutzhinweis. Diese Daten werden ausschließlich zur Prüfung und Bearbeitung der Bewerbung genutzt, nicht für Werbezwecke oder automatisch aktivierte Partnerkonten.
+        </p>
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.7 }}>
+          Die Daten werden nur so lange gespeichert, wie dies zur Bearbeitung der Bewerbung und der von uns im Rahmen des Partnerprogramms erforderlichen Organisation erforderlich ist. Eine Weitergabe erfolgt nur an autorisierte interne Stellen oder an die für den Versand transaktionaler E-Mails zuständigen Infrastrukturpartner, sofern dies für den jeweiligen Verarbeitungszweck notwendig ist.
+        </p>
+      </section>
+
+      <section style={{ display: "grid", gap: 8 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Betroffenenrechte</h2>
         <ul style={listStyle}>
           <li>Auskunft über gespeicherte personenbezogene Daten</li>
