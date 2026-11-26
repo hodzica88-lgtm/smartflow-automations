@@ -9,11 +9,11 @@ import {
 } from "@/features/partners/application";
 
 export function PartnerApplicationReviewPanel({
-  applications,
+  applications = [],
 }: {
-  applications: PartnerApplicationRecord[];
+  applications?: PartnerApplicationRecord[];
 }) {
-  const [localApplications, setLocalApplications] = useState(applications);
+  const [localApplications, setLocalApplications] = useState<PartnerApplicationRecord[]>(applications);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 

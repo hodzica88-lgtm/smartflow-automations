@@ -55,6 +55,7 @@ describe("technical SEO routes", () => {
     expect(robotsConfig.rules).toHaveLength(1);
     expect(rule.allow).toEqual([
       "/",
+      "/partner",
       "/impressum",
       "/datenschutz",
       "/agb",
