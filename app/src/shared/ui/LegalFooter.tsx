@@ -7,6 +7,7 @@ export default async function LegalFooter() {
   const { market, config } = await getRequestMarket();
   const copy = getMarketCopy(market);
   const legalLinks = [
+    { href: "/partner", label: market === "us" ? "Partner" : "Partner" },
     { href: "/impressum", label: copy.shared.legalLinks.imprint },
     { href: "/datenschutz", label: copy.shared.legalLinks.privacy },
     { href: "/agb", label: copy.shared.legalLinks.terms },
