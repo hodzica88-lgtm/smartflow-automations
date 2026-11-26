@@ -93,6 +93,9 @@ export default async function Home({
       <header className={styles.topBar}>
         <VarnitoLogo subtitle={market === "us" ? "Lead Operating System" : "Lead-Betriebssystem"} />
         <div className={styles.topActions}>
+          <Link className={styles.secondaryButton} href="/partner">
+            {market === "us" ? "Become a partner" : "Partner werden"}
+          </Link>
           <Link className={styles.secondaryButton} href={demoHref}>
             {market === "us" ? "View demo" : "Demo ansehen"}
           </Link>

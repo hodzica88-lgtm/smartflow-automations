@@ -21,6 +21,8 @@ export type TransactionalEmailType =
   | "team_invited"
   | "invite_accepted"
   | "new_inquiry"
+  | "partner_application_received"
+  | "partner_application_internal_notice"
   | "customer_confirmation"
   | "trial_started"
   | "trial_ends_7_days"
@@ -63,6 +65,14 @@ const EMAIL_TEMPLATES_DE: Record<TransactionalEmailType, EmailTemplate> = {
   new_inquiry: {
     subject: "Neue Anfrage fuer {{company_name}}",
     body: ["Neue Anfrage eingegangen.", "", "Name: {{lead_name}}", "Telefon: {{lead_phone}}", "E-Mail: {{lead_email}}", "Anfrageart: {{lead_inquiry_type}}", "Nachricht: {{lead_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n"),
+  },
+  partner_application_received: {
+    subject: "Ihre Partner-Bewerbung bei Varnito ist eingegangen",
+    body: ["Hallo {{partner_name}},", "", "vielen Dank fuer Ihr Interesse an einer Partnerschaft mit Varnito. Wir haben Ihre Bewerbung erhalten und prüfen sie gern.", "", "Ihre Angaben werden nur zur Bearbeitung der Partner-Bewerbung verwendet. Wir melden uns mit dem naechsten Schritt zeitnah bei Ihnen.", "", "Viele Gruesse", "{{signature}}"].join("\n"),
+  },
+  partner_application_internal_notice: {
+    subject: "Neue Partner-Bewerbung von {{company_name}}",
+    body: ["Neue Partner-Bewerbung eingegangen.", "", "Name: {{partner_name}}", "Unternehmen: {{company_name}}", "E-Mail: {{partner_email}}", "Land: {{partner_country}}", "Beschreibung: {{partner_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n"),
   },
   customer_confirmation: {
     subject: "Ihre Anfrage bei {{company_name}} ist eingegangen",
@@ -118,6 +128,8 @@ const EMAIL_TEMPLATES_US: Record<TransactionalEmailType, EmailTemplate> = {
   team_invited: { subject: "You were invited to Varnito", body: ["Hi {{name}},", "", "You were invited to {{company_name}} in Varnito.", "Accept your invitation and activate your access:", "{{invite_url}}", "", "Best regards", "{{signature}}"].join("\n") },
   invite_accepted: { subject: "Invitation accepted", body: ["Hi {{name}},", "", "{{full_name}} accepted the invitation and activated access.", "", "Dashboard: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
   new_inquiry: { subject: "New inquiry for {{company_name}}", body: ["A new inquiry was received.", "", "Name: {{lead_name}}", "Phone: {{lead_phone}}", "Email: {{lead_email}}", "Inquiry type: {{lead_inquiry_type}}", "Message: {{lead_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n") },
+  partner_application_received: { subject: "Your partner application at Varnito has been received", body: ["Hi {{partner_name}},", "", "Thank you for your interest in becoming a Varnito partner. We have received your application and will review it.", "", "We will use your information only to process this partner inquiry and will be in touch with the next steps.", "", "Best regards", "{{signature}}"].join("\n") },
+  partner_application_internal_notice: { subject: "New partner application from {{company_name}}", body: ["A new partner application was received.", "", "Name: {{partner_name}}", "Company: {{company_name}}", "Email: {{partner_email}}", "Country: {{partner_country}}", "Description: {{partner_message}}", "", "Dashboard: {{dashboard_url}}", "", "{{signature}}"].join("\n") },
   customer_confirmation: { subject: "Your inquiry at {{company_name}} was received", body: ["Hi {{lead_name}},", "", "thanks for contacting {{company_name}}. We will follow up shortly.", "", "Best regards", "{{signature}}"].join("\n") },
   trial_started: { subject: "Your Varnito trial has started", body: ["Hi {{name}},", "", "Your 30-day Varnito trial has started.", "Manage your account here: {{dashboard_url}}", "", "Best regards", "{{signature}}"].join("\n") },
   trial_ends_7_days: { subject: "Your trial ends in 7 days", body: ["Hi {{name}},", "", "Your trial for {{company_name}} ends in 7 days.", "Review billing and access here: {{billing_url}}", "", "Best regards", "{{signature}}"].join("\n") },

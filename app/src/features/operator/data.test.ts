@@ -44,6 +44,26 @@ vi.mock("@/features/support/service", () => ({
   })),
 }));
 
+vi.mock("@/features/partners/application-server", () => ({
+  listPartnerApplications: vi.fn(async () => []),
+}));
+
+vi.mock("@/features/partners/operator-data", () => ({
+  getOwnerPartnerMeteringOverview: vi.fn(async () => ({
+    enabled: false,
+    partners: [],
+    summary: {
+      activePartners: 0,
+      activeCustomers: 0,
+      newThisMonth: 0,
+      deactivatedThisMonth: 0,
+      netChangeThisMonth: 0,
+      billableCustomers: 0,
+      mrrByCurrency: {},
+    },
+  })),
+}));
+
 vi.mock("@/features/operator/data", async () => {
   const actual = await vi.importActual<typeof import("@/features/operator/data")>("@/features/operator/data");
   const { GROWTH_SOURCES } = await import("@/features/analytics/growth");

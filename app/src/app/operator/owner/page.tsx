@@ -12,7 +12,9 @@ import { requireOperatorUser } from "@/features/operator/access";
 import OwnerInstallPrompt from "@/features/operator/OwnerInstallPrompt";
 import { listOwnerBusinessNotifications } from "@/features/notifications/service";
 import { getOwnerControlCenterData, getOwnerGrowthMonthData } from "@/features/operator/data";
+import { listPartnerApplications } from "@/features/partners/application-server";
 import { getOwnerPartnerMeteringOverview } from "@/features/partners/operator-data";
+import { PartnerApplicationReviewPanel } from "@/features/partners/PartnerApplicationReviewPanel";
 import { PartnerMeteringPanel } from "@/features/partners/PartnerMeteringPanel";
 import { getInboxPreview, getSupportInboxCounts } from "@/features/support/service";
 import { loadServerEnv } from "@/shared/config/env";
@@ -125,6 +127,7 @@ export default async function OwnerControlCenterPage({
           mrrByCurrency: {},
         },
       };
+  const partnerApplications = await listPartnerApplications({ limit: 25 });
   const recentNotifications = await listOwnerBusinessNotifications(3);
   const [mailCounts, inboxPreview] = await Promise.all([
     getSupportInboxCounts(),
@@ -488,6 +491,8 @@ export default async function OwnerControlCenterPage({
             primaryOwner={primaryOwner}
             partnerApiEnabled={partnerApiEnabled}
           />
+
+          <PartnerApplicationReviewPanel applications={partnerApplications} />
 
           <section className={styles.ownerLowerGrid}>
             <article className={styles.ownerPanel}>
