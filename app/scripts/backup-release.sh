@@ -20,7 +20,7 @@ DRY_RUN=0
 VERSION=""
 SIMULATION_MODE=0
 SIMULATION_NOTES=""
-GIT_CONTEXT_ROOT="${PROJECT_ROOT}"
+GIT_CONTEXT_ROOT="${VARNITO_GIT_CONTEXT_ROOT:-${PROJECT_ROOT}}"
 HAS_SERVER_PROJECT=0
 HAS_SERVER_ENV=0
 HAS_SERVER_DOCKER_IMAGE=0
@@ -238,7 +238,10 @@ detect_or_simulate_server_prerequisites() {
     fail "Required path not found: ${BACKUP_BASE_DIR}"
   fi
 
-  if [[ "${HAS_SERVER_PROJECT}" -eq 1 && -d "${PROJECT_ROOT}/.git" ]]; then
+  if [[ -n "${VARNITO_GIT_CONTEXT_ROOT:-}" && -d "${VARNITO_GIT_CONTEXT_ROOT}/.git" ]]; then
+    GIT_CONTEXT_ROOT="${VARNITO_GIT_CONTEXT_ROOT}"
+    log "Using explicit git context root: ${GIT_CONTEXT_ROOT}"
+  elif [[ "${HAS_SERVER_PROJECT}" -eq 1 && -d "${PROJECT_ROOT}/.git" ]]; then
     GIT_CONTEXT_ROOT="${PROJECT_ROOT}"
   elif [[ "${DRY_RUN}" -eq 1 ]]; then
     GIT_CONTEXT_ROOT="${LOCAL_REPO_ROOT}"
