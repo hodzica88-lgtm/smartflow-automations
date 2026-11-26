@@ -20,7 +20,10 @@ The existing weekly cron backup remains the normal unattended backup flow. It ru
 
 Manual release backups are only intended after real Varnito changes or releases.
 
+The script intentionally refuses to run from a dirty live worktree because that would back up an in-progress release rather than a validated release state. For server-side release work, create a clean release worktree or checkout first and point the script at that git context:
+
 ```bash
+export VARNITO_GIT_CONTEXT_ROOT=/opt/anfragepilot/releases/release-154a363
 bash scripts/backup-release.sh v1.2.0
 ```
 
